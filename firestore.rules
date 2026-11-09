@@ -1,0 +1,49 @@
+rules_version = '2';
+// Top Potada — Firestore güvenlik kuralları
+// Misafir (anonim) oturumlar okuyabilir ve kendi oda/oyuncu kaydını yazabilir.
+// Turnuva ve lig yazmaları yalnızca Google ile giriş yapmış üyelere açıktır.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isGoogle() { return signedIn() && request.auth.token.firebase.sign_in_provider == 'google.com'; }
+    function self(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Oyuncu kaydı: herkes yalnızca kendininkini yazar; "member: true" yalnızca Google girişiyle
+    match /pl/{uid} {
+      allow read: if signedIn();
+      allow create, update: if self(uid)
+        && (!('member' in request.resource.data) || request.resource.data.member != true || isGoogle());
+      allow delete: if self(uid);
+    }
+
+    // Turnuvalar: üyeler kurar; yalnızca kurucu başlatır/iptal eder
+    match /tours/{tid} {
+      allow read: if signedIn();
+      allow create: if isGoogle() && request.resource.data.host == request.auth.uid
+        && request.resource.data.status == 'open'
+        && request.resource.data.size in [8, 16]
+        && request.resource.data.type in ['ko', 'grp'];
+      allow update: if isGoogle() && resource.data.host == request.auth.uid
+        && request.resource.data.host == resource.data.host;
+      allow delete: if false;
+    }
+
+    // Lig kayıtları: belge adı "<sezon>_<uid>"; yalnızca sahibi (üye) yazar
+    match /ligkayit/{rid} {
+      allow read: if signedIn();
+      allow create, update: if isGoogle()
+        && request.resource.data.uid == request.auth.uid
+        && rid == request.resource.data.season + '_' + request.auth.uid
+        && request.resource.data.tier is int && request.resource.data.tier >= 0 && request.resource.data.tier <= 3;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Online odalar: herkes yalnızca kendi katılımcı belgesini yazar
+    match /rooms/{room}/peers/{uid} {
+      allow read: if signedIn();
+      allow write: if self(uid);
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}

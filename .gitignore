@@ -1,0 +1,8 @@
+node_modules/
+.firebase/
+*.log
+.DS_Store
+# Android imzalama anahtarları asla depoya girmesin
+*.keystore
+*.jks
+android.keystore
