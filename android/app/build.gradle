@@ -9,7 +9,25 @@ android {
     versionCode 1
     versionName '1.0'
   }
-  buildTypes { release { minifyEnabled false } }
+  signingConfigs {
+    // Sabit test anahtarı: deneme APK'ları birbirinin üzerine kurulabilsin ve Google girişi çalışsın.
+    // Play Store'a giden AAB bununla değil, yalnızca sahibinde duran yükleme anahtarıyla imzalanır.
+    test {
+      storeFile rootProject.file('test-imza.keystore')
+      storePassword 'toppotada-test'
+      keyAlias 'test'
+      keyPassword 'toppotada-test'
+    }
+  }
+  buildTypes {
+    debug { signingConfig signingConfigs.test }
+    release { minifyEnabled false }
+  }
   compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
-dependencies { implementation 'androidx.webkit:webkit:1.12.1' }
+dependencies {
+  implementation 'androidx.webkit:webkit:1.12.1'
+  implementation 'androidx.credentials:credentials:1.5.0'
+  implementation 'androidx.credentials:credentials-play-services-auth:1.5.0'
+  implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+}

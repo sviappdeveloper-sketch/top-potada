@@ -51,7 +51,27 @@ async function initFirebase(){
     return false;
   }
   const provider = () => { const p=new A.GoogleAuthProvider(); p.setCustomParameters({ prompt:'select_account' }); return p; };
+  // Android uygulaması: telefonun kendi Google hesap seçicisi (WebView'da açılır pencere çalışmaz)
+  const NATIVE = window.TPAndroid && typeof window.TPAndroid.googleSignIn === 'function';
+  const nativeToken = () => new Promise((res, rej)=>{
+    window.__tpGoogle = (ok, val)=>{ window.__tpGoogle = null; ok ? res(val) : (val==='cancel' ? res(null) : rej(new Error(val||'google'))); };
+    try{ window.TPAndroid.googleSignIn(); }catch(e){ rej(e); }
+  });
+  async function signInNative(){
+    const token = await nativeToken(); if(!token) return;
+    const cred = A.GoogleAuthProvider.credential(token), cur = auth.currentUser;
+    try{
+      if(cur && cur.isAnonymous) await A.linkWithCredential(cur, cred);   // misafir ilerlemesi korunur
+      else await A.signInWithCredential(auth, cred);
+    }catch(e){
+      if(e && (e.code==='auth/credential-already-in-use' || e.code==='auth/email-already-in-use')) await A.signInWithCredential(auth, A.GoogleAuthProvider.credentialFromError(e) || cred);
+      else throw e;
+    }
+    await auth.currentUser.reload();
+    setUser(info(auth.currentUser));
+  }
   TP.signInGoogle = async ()=>{
+    if(NATIVE) return signInNative();
     const cur = auth.currentUser, prov = provider();
     try{
       if(cur && cur.isAnonymous) await A.linkWithPopup(cur, prov);     // misafir ilerlemesi korunur
@@ -67,12 +87,16 @@ async function initFirebase(){
     await auth.currentUser.reload();
     setUser(info(auth.currentUser));     // bağlama işleminde onAuthStateChanged tetiklenmez
   };
-  TP.signOut = async ()=>{ await A.signOut(auth); };
+  TP.signOut = async ()=>{ if(NATIVE){ try{ window.TPAndroid.googleSignOut(); }catch(e){} } await A.signOut(auth); };
   TP.deleteAuthUser = async ()=>{
     const u=auth.currentUser; if(!u) return;
     try{ await A.deleteUser(u); }
     catch(e){
-      if(e && e.code==='auth/requires-recent-login'){ await A.reauthenticateWithPopup(u, provider()); await A.deleteUser(u); }
+      if(e && e.code==='auth/requires-recent-login'){
+        if(NATIVE){ const t=await nativeToken(); if(!t) return; await A.reauthenticateWithCredential(u, A.GoogleAuthProvider.credential(t)); }
+        else await A.reauthenticateWithPopup(u, provider());
+        await A.deleteUser(u);
+      }
       else throw e;
     }
   };

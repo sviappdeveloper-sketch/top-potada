@@ -1,4 +1,4 @@
-name: Android APK
+name: Android APK + AAB
 on:
   push:
     branches: [main]
@@ -15,23 +15,24 @@ jobs:
         with: { distribution: temurin, java-version: '17' }
       - uses: gradle/actions/setup-gradle@v4
         with: { gradle-version: '8.14.3' }
-      - name: Oyun dosyalarını APK içine kopyala
+      - name: Oyun dosyalarını uygulamanın içine kopyala
         run: |
           mkdir -p android/app/src/main/assets/www
           cp -r public/. android/app/src/main/assets/www/
           rm -rf android/app/src/main/assets/www/.well-known
-      - name: APK derle
+      - name: Deneme APK'sı ve Play Store paketi (imzasız AAB) derle
         working-directory: android
-        run: gradle --no-daemon assembleDebug
-      - name: APK'yı apk dalına koy
+        run: gradle --no-daemon assembleDebug bundleRelease
+      - name: Çıktıları apk dalına koy
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk /tmp/TopPotada.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab /tmp/TopPotada-imzasiz.aab
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan apk
           git rm -rf --quiet .
-          cp /tmp/TopPotada.apk TopPotada.apk
+          cp /tmp/TopPotada.apk /tmp/TopPotada-imzasiz.aab .
           echo "Derleme: ${GITHUB_SHA}" > SURUM.txt
-          git add TopPotada.apk SURUM.txt
-          git commit -m "APK ${GITHUB_SHA::7}"
+          git add TopPotada.apk TopPotada-imzasiz.aab SURUM.txt
+          git commit -m "Derleme ${GITHUB_SHA::7}"
           git push -f origin apk
