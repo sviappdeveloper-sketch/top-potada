@@ -30,7 +30,22 @@ import androidx.webkit.WebViewAssetLoader;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
+import com.google.android.gms.ads.AdError;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.ump.ConsentInformation;
+import com.google.android.ump.ConsentRequestParameters;
+import com.google.android.ump.UserMessagingPlatform;
+
 import org.json.JSONObject;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import java.util.concurrent.Executor;
 
@@ -43,6 +58,13 @@ public class MainActivity extends Activity {
   private CredentialManager creds;
   private final Handler main = new Handler(Looper.getMainLooper());
   private final Executor onMain = main::post;
+
+  // ---- reklamlar ----
+  private ConsentInformation consent;
+  private final AtomicBoolean adsStarted = new AtomicBoolean(false);
+  private InterstitialAd inter;
+  private RewardedAd rewarded;
+  private boolean interLoading, rewardLoading;
 
   @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
   @Override protected void onCreate(Bundle saved) {
@@ -75,6 +97,70 @@ public class MainActivity extends Activity {
     setContentView(web);
     if (saved != null) web.restoreState(saved);
     else web.loadUrl("https://" + HOST + "/assets/www/index.html?kaynak=android");
+    setupAds();
+  }
+
+  // AEA/BK kullanıcıları için izin formu (UMP), ardından AdMob başlatılır
+  private void setupAds() {
+    consent = UserMessagingPlatform.getConsentInformation(this);
+    consent.requestConsentInfoUpdate(this, new ConsentRequestParameters.Builder().build(),
+        () -> UserMessagingPlatform.loadAndShowConsentFormIfRequired(this, err -> { if (consent.canRequestAds()) startAds(); }),
+        err -> { if (consent.canRequestAds()) startAds(); });
+    if (consent.canRequestAds()) startAds();
+  }
+
+  private void startAds() {
+    if (!adsStarted.compareAndSet(false, true)) return;
+    new Thread(() -> {
+      MobileAds.initialize(this, st -> {});
+      main.post(() -> { loadInter(); loadRewarded(); });
+    }).start();
+  }
+
+  private void loadInter() {
+    if (!adsStarted.get() || inter != null || interLoading) return;
+    interLoading = true;
+    InterstitialAd.load(this, getString(R.string.ad_interstitial), new AdRequest.Builder().build(), new InterstitialAdLoadCallback() {
+      @Override public void onAdLoaded(InterstitialAd ad) { interLoading = false; inter = ad; }
+      @Override public void onAdFailedToLoad(LoadAdError e) { interLoading = false; inter = null; }
+    });
+  }
+
+  private void loadRewarded() {
+    if (!adsStarted.get() || rewarded != null || rewardLoading) return;
+    rewardLoading = true;
+    RewardedAd.load(this, getString(R.string.ad_rewarded), new AdRequest.Builder().build(), new RewardedAdLoadCallback() {
+      @Override public void onAdLoaded(RewardedAd ad) { rewardLoading = false; rewarded = ad; }
+      @Override public void onAdFailedToLoad(LoadAdError e) { rewardLoading = false; rewarded = null; }
+    });
+  }
+
+  private void adDone(String kind, boolean ok) {
+    final String js = "window.__tpAd&&window.__tpAd(" + JSONObject.quote(kind) + "," + ok + ")";
+    main.post(() -> web.evaluateJavascript(js, null));
+  }
+
+  private void showInterstitial() {
+    final InterstitialAd ad = inter;
+    if (ad == null) { adDone("inter", false); loadInter(); return; }
+    inter = null;
+    ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+      @Override public void onAdDismissedFullScreenContent() { adDone("inter", true); loadInter(); }
+      @Override public void onAdFailedToShowFullScreenContent(AdError e) { adDone("inter", false); loadInter(); }
+    });
+    ad.show(this);
+  }
+
+  private void showRewarded() {
+    final RewardedAd ad = rewarded;
+    if (ad == null) { adDone("reward", false); loadRewarded(); return; }
+    rewarded = null;
+    final boolean[] earned = { false };
+    ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+      @Override public void onAdDismissedFullScreenContent() { adDone("reward", earned[0]); loadRewarded(); }
+      @Override public void onAdFailedToShowFullScreenContent(AdError e) { adDone("reward", false); loadRewarded(); }
+    });
+    ad.show(this, item -> earned[0] = true);
   }
 
   private void toJs(boolean ok, String val) {
@@ -111,6 +197,8 @@ public class MainActivity extends Activity {
   private class Bridge {
     @JavascriptInterface public void googleSignIn() { main.post(MainActivity.this::googleSignIn); }
     @JavascriptInterface public void googleSignOut() { main.post(MainActivity.this::googleSignOut); }
+    @JavascriptInterface public void showInterstitial() { main.post(MainActivity.this::showInterstitial); }
+    @JavascriptInterface public void showRewarded() { main.post(MainActivity.this::showRewarded); }
   }
 
   @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }

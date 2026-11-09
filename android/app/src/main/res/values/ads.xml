@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- AdMob kimlikleri. ŞU AN GOOGLE'IN TEST KİMLİKLERİ: gerçek reklam çıkmaz, para kazandırmaz.
+       AdMob'da uygulama ve reklam birimleri oluşturulunca gerçek kimliklerle değiştirilecek. -->
+  <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+  <string name="ad_interstitial" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+  <string name="ad_rewarded" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
+</resources>

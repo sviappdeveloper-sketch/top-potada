@@ -215,6 +215,7 @@
   .st-lv{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 4px}
   .st-lv div{border-top:4px solid var(--bc);background:rgba(255,255,255,.45);border-radius:10px;padding:6px 4px;text-align:center}
   .st-lv b{display:block;font-size:12px}.st-lv span{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.adoffer{display:block;margin:10px auto 0;background:transparent;color:#e8590c;border:1.5px solid #e8590c;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:700}
 </style>
 </head>
 <body>
@@ -555,6 +556,7 @@ const C = { bg:'#f8ecdc', ink:'#26221e', muted:'#8f8178', ballLine:'#5b2c12', ho
 // oyuncu forma renkleri
 const PLAYER_BALL = ['#2a9d8f', '#e9b949', '#7b5ea7', '#d1495b'];
 let ROUNDS = 3, SHOTS = 5; let BALL_TIME = 10;   // her top için atış saati (saniye)
+const ADS = { games:0, last:Date.now(), cb:null }; let LV_BONUS = 0;   // reklam sayacı · ödüllü ekstra top
 let PREVIEW_OVR = null, DEF_N = 0;   // maç modunda: yardım çizgisi ve savunmacı sayısı
 const BASE_PTS = 10, PTS_PER_SEC = 10;
 const PREVIEW = [0.8, 0.4, 0.12];
@@ -985,7 +987,7 @@ function startTournament(){
   const isMatch = MODE==='match' && curMatch, isLevel = MODE==='level' && curLevel;
   if(!isLevel) clearLevelEnv();
   ROUNDS = isMatch || isLevel ? 1 : 3;
-  SHOTS = isMatch && curMatch.ot ? 1 : 5;
+  SHOTS = isMatch && curMatch.ot ? 1 : 5 + (isLevel ? LV_BONUS : 0); LV_BONUS = 0;
   PREVIEW_OVR = isMatch ? 0.5 : null;
   DEF_N = isMatch ? curMatch.def : 0;
   matchWritten = false;
@@ -1061,6 +1063,7 @@ function showRoundResults(){
   const dot=p=>`<span class="dot" style="background:${p.color}"></span>`;
   const pick=a=>a[Math.floor(Math.random()*a.length)];
   game='between';
+  if(last) ADS.games++;
   if(MODE==='level' && curLevel){ levelResults(); el('ovRound').classList.remove('hidden'); return; }
   if(MODE==='match' && curMatch && curMatch.cpu){ cpuMatchDone(); return; }
   if(MODE==='online'){ renderOnlineResults(); el('ovRound').classList.remove('hidden'); return; }
@@ -1118,13 +1121,33 @@ function nextHint(){
 }
 document.getElementById('btnNext').onclick = () => {
   audio(); document.getElementById('ovRound').classList.add('hidden');
+  if(round>=ROUNDS) adGate(nextAfterResults); else nextAfterResults();
+};
+function nextAfterResults(){
   if(MODE==='level' && curLevel){ startLevel(+document.getElementById('btnNext').dataset.lvnext||0); return; }
   if(MODE==='match' && curMatch && curMatch.cpu){ const back=cpuBack||showCpuHub; MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; back(); return; }
   if(MODE==='online' && round>=ROUNDS){ leaveOnline(); showMulti(); return; }
   if(MODE==='match' && curMatch && curMatch.league){ MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; showLeague(); return; }
   if(MODE==='match'){ const tid=curMatch && curMatch.tid; MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; openTid=tid; renderTour(); showOnly('ovTour'); return; }
   if(round>=ROUNDS) startTournament(); else { turnIdx=0; prepareTurn(); }
-};
+}
+// =====================================================================
+// REKLAMLAR — yalnızca Android uygulamasında (Google AdMob, yerel köprü).
+// Maç aralarında tam ekran: en az 3 bitmiş oyunda bir ve 2 dakika arayla.
+// Ödüllü: Macera'da yıldızsız biten levelı 6 topla tekrar deneme hakkı.
+// =====================================================================
+function adsOn(){ return !!(window.TPAndroid && typeof window.TPAndroid.showInterstitial==='function'); }
+window.__tpAd = (kind, ok)=>{ const f=ADS.cb; ADS.cb=null; if(f) setTimeout(()=>f(!!ok)); };
+function adGate(go){
+  if(!adsOn() || ADS.games<3 || Date.now()-ADS.last<120000){ go(); return; }
+  ADS.games=0; ADS.last=Date.now(); ADS.cb=()=>go();
+  try{ window.TPAndroid.showInterstitial(); }catch(e){ ADS.cb=null; go(); }
+}
+function showRewarded(onReward){
+  if(!adsOn()) return;
+  ADS.cb = ok=>{ if(ok){ ADS.last=Date.now(); onReward(); } else toastAll('Reklam şu an hazır değil, biraz sonra tekrar dene.'); };
+  try{ window.TPAndroid.showRewarded(); }catch(e){ ADS.cb=null; }
+}
 function showOnly(id){ ['ovSplash','ovMenu','ovRules','ovStart','ovTurn','ovRound','ovMulti','ovLobby','ovCount','ovTours','ovTour','ovStand','ovLevels','ovSolo','ovCpu','ovStats','ovLeague','ovAccount'].forEach(o=>document.getElementById(o).classList.toggle('hidden', o!==id)); }
 function goMenu(){
   if(MODE==='level') MODE='solo';
@@ -1316,7 +1339,8 @@ document.getElementById('btnGo').onclick=()=>{
   beginOnline();
 };
 document.getElementById('lbLeave').onclick=()=>{ leaveOnline(); showMulti(); };
-document.getElementById('rMenu').onclick=()=>{ if(MODE==='level'){ document.getElementById('ovRound').classList.add('hidden'); MODE='solo'; clearLevelEnv(); game='menu'; court.reset(PLAYER_BALL[0]); showLevels(); return; } const wasOnline=MODE==='online'; goMenu(); if(wasOnline) showMulti(); };
+document.getElementById('rMenu').onclick=()=>{ document.getElementById('ovRound').classList.add('hidden'); adGate(menuAfterResults); };
+function menuAfterResults(){ if(MODE==='level'){ document.getElementById('ovRound').classList.add('hidden'); MODE='solo'; clearLevelEnv(); game='menu'; court.reset(PLAYER_BALL[0]); showLevels(); return; } const wasOnline=MODE==='online'; goMenu(); if(wasOnline) showMulti(); }
 setInterval(()=>{ if(MODE==='online' && !onlineStarted && !document.getElementById('ovLobby').classList.contains('hidden')) renderLobby(); }, 1000);
 
 // =====================================================================
@@ -2133,6 +2157,10 @@ function levelResults(){
     `<div><span>Hedefler</span><b>★${lv.stars[0]} · ★★${lv.stars[1]} · ★★★${lv.stars[2]}</b></div>`+
     `<div><span>Toplam puan (15 level)</span><b>${fmt(tot.pts)}<small>${tot.st}/45 ★</small></b></div>`;
   el('rHint').textContent='';
+  if(k===0 && adsOn()){
+    el('rHint').innerHTML = '<button id="btnAdBall" class="adoffer">▶ Reklam izle, 6 topla tekrar dene</button>';
+    el('btnAdBall').onclick = ()=> showRewarded(()=>{ LV_BONUS=1; el('ovRound').classList.add('hidden'); startLevel(idx); });
+  }
   el('rMenu').style.display='block'; el('rMenu').textContent='Level haritası';
   const next = k>=1 && idx<14;
   el('btnNext').style.display=''; el('btnNext').textContent = next ? `Level ${lv.n+1}’e geç` : 'Tekrar dene';
