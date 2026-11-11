@@ -11,7 +11,7 @@ workflows:
       groups:
         - asc
       vars:
-        ASC_KEY_ID: 683B6FR7DT
+        ASC_KEY_ID: 9PJ9V3965R
         ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
         APPLE_TEAM_ID: GS55JS3WKJ
         P12_PASS: toppotada-ci-gecici
@@ -55,6 +55,6 @@ workflows:
     publishing:
       app_store_connect:
         api_key: $ASC_KEY_P8
-        key_id: 683B6FR7DT
+        key_id: 9PJ9V3965R
         issuer_id: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
         submit_to_testflight: false
