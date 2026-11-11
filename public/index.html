@@ -1906,7 +1906,7 @@ function renderAccount(){
   if(!u){ h+=`<p class="note">Bağlanılıyor…</p>`; }
   else if(!u.member){
     h+=`<p>Misafir olarak tek oyuncu, aynı telefonda ve online odada oynayabilirsin.</p>
-      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; Google hesabınla tek dokunuşla olur.</li></ul>
+      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; ${hasApple() ? 'Google ya da Apple' : 'Google'} hesabınla tek dokunuşla olur.</li></ul>
       ${signInBtn('Google ile giriş yap')}`;
   } else {
     const st = cloudState==='ready' ? standings().find(r=>r.uid===UID) : null;
