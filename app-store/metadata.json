@@ -1,0 +1,34 @@
+{
+  "_aciklama": "tool/asc_islem.py bu dosyayı okuyup App Store Connect'e yazar. Metni burada değiştir, 'asc' dalına gönder.",
+  "locale": "tr",
+  "name": "Top Potada: Basket Ligi",
+  "subtitle": "Sokak basketbolu atış oyunu",
+  "promotionalText": "Nişan al, bırak, top potada! 25 levellik macera, turnuvalar, aylık ligler ve arkadaşlarınla online odalar. Ücretsiz oyna, basketpuan topla.",
+  "keywords": "basketbol,basket,atış,pota,spor,turnuva,lig,online,arkadaş,macera,level,çok oyunculu,şut,top",
+  "description": "Parmağını geriye çek, nişan al, bırak… ve top potada!\n\nTop Potada, gün batımında bir sokak sahasında geçen, öğrenmesi kolay ama ustalaşması zor bir basketbol atış oyunu. Her turda 5 topun var ve her top için 10 saniyen. Ne kadar çabuk atarsan sayı o kadar çok puan getirir.\n\nMACERA: 25 LEVEL\nMahalle sahasından şehrin potalarına uzanan 25 level, her biri ayrı bir macera: sabah rüzgârı, gece maçı, kayan pota, dar çember, yağmur, fırtına, zıplayan ve kayan savunmacılar… ve her bölümün sonunda bir efsane! Her levelde en çok puanı topla, 3 yıldızın peşine düş.\n\nRAKİPLE OYNA\nBilgisayara karşı oyna: kolaydan efsaneye dört seviye, her maçta adı değişen rakipler, 3 kademeli bilgisayar ligi (Bronz, Gümüş, Altın) ve eleme ya da grup usulü turnuvalar.\n\nTURNUVALAR\n8 veya 16 kişilik eleme ya da grup usulü turnuvalar kur, arkadaşlarını davet et. Maçını istediğin zaman oyna. Üst turlarda potanın önüne zıplayan savunmacılar çıkar: çeyrek finalde 1, yarı finalde 2, finalde 3!\n\nSEVİYE LİGLERİ\nBronz'dan başla; Gümüş, Altın ve Elmas'a yüksel. Her ay yeni sezon, her gün 3 lig maçı. Sezon sonunda ilk sıralar üst lige çıkar ve basketpuan kazanır.\n\nONLINE ODA\n4 harfli bir oda kodu oluştur; 4 kişiye kadar arkadaşınla aynı anda oyna, skorları canlı izle.\n\nAYNI TELEFONDA\n2–4 kişi telefonu elden ele vererek oyna.\n\nBASKETPUAN VE PUAN DURUMU\nTurnuva, lig ve online odalarda ilk üçe girerek basketpuan topla; tüm oyuncular arasındaki puan durumunda zirveye çık. Üyelik ücretsiz: Apple ya da Google hesabınla tek dokunuşla giriş yap.\n\nAtmadığın şutların hepsi zaten kaçmış sayılır. Hadi, top potada!",
+  "supportUrl": "https://sviappdeveloper-sketch.github.io/top-potada/destek.html",
+  "marketingUrl": "https://sviappdeveloper-sketch.github.io/top-potada/",
+  "privacyPolicyUrl": "https://sviappdeveloper-sketch.github.io/top-potada/gizlilik.html",
+  "copyright": "2026 Seyfullah Sivi",
+  "primaryCategory": "GAMES",
+  "primarySubcategoryOne": "GAMES_SPORTS",
+  "primarySubcategoryTwo": "GAMES_CASUAL",
+  "contentRights": "DOES_NOT_USE_THIRD_PARTY_CONTENT",
+  "review": {
+    "contactFirstName": "Seyfullah",
+    "contactLastName": "Sivi",
+    "contactEmail": "sviapp.developer@gmail.com",
+    "contactPhone": "",
+    "demoAccountRequired": false,
+    "notes": "Top Potada is a basketball shooting game. No login is needed to play: the app starts with an anonymous guest session (single player, same-phone multiplayer, online room). Tournaments, monthly leagues and the leaderboard require a free account: tap 'Giriş yap' on the main menu and use Sign in with Apple. Account deletion: tap your name on the main menu > 'Hesabım' > 'Hesabımı sil' (tap twice to confirm); this deletes the account and its game data and revokes the Sign in with Apple token. The app contains no in-app purchases. How to play: drag back from the player, aim with the dotted line and release."
+  },
+  "screenshots": {
+    "APP_IPHONE_67": [
+      "app-store/ekran-goruntuleri/1.png",
+      "app-store/ekran-goruntuleri/2.png",
+      "app-store/ekran-goruntuleri/3.png",
+      "app-store/ekran-goruntuleri/4.png",
+      "app-store/ekran-goruntuleri/5.png"
+    ]
+  }
+}

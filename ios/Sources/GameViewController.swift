@@ -62,7 +62,7 @@ final class GameViewController: UIViewController {
   private var askedConsent = false
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    if !askedConsent { askedConsent = true; setupAds() }
+    if !askedConsent && Self.adsReady { askedConsent = true; setupAds() }
   }
 
   // Web tarafına köprü: Android'deki TPAndroid ile aynı adlar (oyun kodu değişmeden çalışır)
@@ -71,7 +71,15 @@ final class GameViewController: UIViewController {
     let id = (Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String) ?? ""
     return !id.isEmpty && !id.hasPrefix("BURAYA")
   }
-  private static var bridgeJS: String { "window.TPiOSGoogle = \(googleReady);\n" + bridgeCore }
+  // Reklamlar: Config.xcconfig'te gerçek iOS AdMob kimlikleri girilmiş mi
+  // (Google'ın test kimlikleriyle mağazaya "Test Ad" yazılı reklam çıkmasın: o durumda reklam kapalı)
+  static var adsReady: Bool {
+    let id = (Bundle.main.object(forInfoDictionaryKey: "GADApplicationIdentifier") as? String) ?? ""
+    return id.hasPrefix("ca-app-pub-") && !id.contains("3940256099942544")
+  }
+  private static var bridgeJS: String {
+    "window.TPiOSGoogle = \(googleReady);\nwindow.TPiOSAds = \(adsReady);\n" + bridgeCore
+  }
   private static let bridgeCore = """
   (function(){
     var post=function(cmd,extra){ var m={cmd:cmd}; if(extra){ for(var k in extra) m[k]=extra[k]; } window.webkit.messageHandlers.tp.postMessage(m); };
@@ -83,6 +91,8 @@ final class GameViewController: UIViewController {
       showInterstitial: function(){ post('showInterstitial'); },
       showRewarded: function(){ post('showRewarded'); }
     };
+    // reklam kimlikleri yoksa reklam düğmeleri hiç görünmesin
+    if(!window.TPiOSAds){ delete window.TPAndroid.showInterstitial; delete window.TPAndroid.showRewarded; }
     // iOS WebView'da navigator.vibrate yok: dokunsal geri bildirime çevir
     navigator.vibrate = function(p){ var ms = Array.isArray(p) ? p.reduce(function(a,b){return a+(+b||0);},0) : (+p||0); if(ms>0) post('haptic',{ms:ms}); return true; };
   })();
@@ -233,7 +243,9 @@ extension GameViewController: ASAuthorizationControllerDelegate, ASAuthorization
           let tokenData = cred.identityToken, let token = String(data: tokenData, encoding: .utf8),
           let nonce = appleNonce else { appleDone(false, "Apple yanıtı okunamadı"); return }
     let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-    let payload: [String: Any] = ["idToken": token, "nonce": nonce, "name": name]
+    // authorizationCode: hesap silinirken Apple izninin geri alınması (revoke) için gerekir
+    let code = cred.authorizationCode.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+    let payload: [String: Any] = ["idToken": token, "nonce": nonce, "name": name, "code": code]
     guard let d = try? JSONSerialization.data(withJSONObject: payload), let s = String(data: d, encoding: .utf8) else {
       appleDone(false, "Apple yanıtı okunamadı"); return
     }

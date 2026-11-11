@@ -116,6 +116,16 @@ async function initFirebase(){
   TP.signOut = async ()=>{ if(NATIVE){ try{ window.TPAndroid.googleSignOut(); }catch(e){} } await A.signOut(auth); };
   TP.deleteAuthUser = async ()=>{
     const u=auth.currentUser; if(!u) return;
+    // Apple ile girilmiş hesap (iPhone): App Store kuralı gereği silerken Apple oturum izni de geri alınır.
+    // Bunun için Apple'dan taze bir onay kodu istenir; aynı onayla yeniden kimlik doğrulanıp hesap silinir.
+    const APPLE_NATIVE = window.TPAndroid && typeof window.TPAndroid.appleSignIn === 'function';
+    if(APPLE_NATIVE && u.providerData.some(p=>p.providerId==='apple.com')){
+      const r = await nativeApple(); if(!r || !r.idToken) return;
+      await A.reauthenticateWithCredential(u, new A.OAuthProvider('apple.com').credential({ idToken:r.idToken, rawNonce:r.nonce }));
+      if(r.code && typeof A.revokeAccessToken === 'function'){ try{ await A.revokeAccessToken(auth, r.code); }catch(e){} }
+      await A.deleteUser(u);
+      return;
+    }
     try{ await A.deleteUser(u); }
     catch(e){
       if(e && e.code==='auth/requires-recent-login'){

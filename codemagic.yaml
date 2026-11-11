@@ -58,3 +58,46 @@ workflows:
         key_id: 9PJ9V3965R
         issuer_id: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
         submit_to_testflight: false
+
+  # App Store Connect: mağaza sayfasını doldurur ve son derlemeyi sürüme bağlar (tarayıcı gerekmez).
+  # Metinler app-store/metadata.json, ekran görüntüleri app-store/ekran-goruntuleri/.
+  # Codemagic'te "Start new build" > bu işlem; ya da "asc" dalına gönderim.
+  asc-hazirla:
+    name: "App Store: sayfayı hazırla"
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      groups:
+        - asc
+      vars:
+        ASC_KEY_ID: 9PJ9V3965R
+        ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: asc
+          include: true
+    scripts:
+      - name: Mağaza sayfası, ekran görüntüleri, derleme
+        script: |
+          pip3 install --quiet pyjwt cryptography || pip3 install --quiet --break-system-packages pyjwt cryptography
+          python3 tool/asc_islem.py
+
+  # Aynısı + sürümü Apple incelemesine gönderir. Yalnızca elle başlatılır.
+  asc-gonder:
+    name: "App Store: incelemeye gönder"
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      groups:
+        - asc
+      vars:
+        ASC_KEY_ID: 9PJ9V3965R
+        ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
+        GONDER: evet
+    scripts:
+      - name: Hazırla ve incelemeye gönder
+        script: |
+          pip3 install --quiet pyjwt cryptography || pip3 install --quiet --break-system-packages pyjwt cryptography
+          python3 tool/asc_islem.py
