@@ -13,7 +13,7 @@ const TP = window.TP = {
   user: null,               // { uid, anon, member, name, email, photo }
   error: '',
   onAuth(fn){ listeners.add(fn); if(TP.user) setTimeout(()=>fn(TP.user)); return ()=>listeners.delete(fn); },
-  signInGoogle: async()=>{}, signOut: async()=>{}, deleteAuthUser: async()=>{},
+  signInGoogle: async()=>{}, signInApple: async()=>{}, signOut: async()=>{}, deleteAuthUser: async()=>{},
 };
 let readyResolve; const ready = new Promise(r=>readyResolve=r);
 TP.ready = ready;
@@ -32,13 +32,16 @@ async function initFirebase(){
     import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')
   ]);
   const app = initializeApp(firebaseConfig);
-  const auth = A.getAuth(app);
+  // iOS uygulaması (WKWebView, özel adres şeması): getAuth açılır pencere/yönlendirme altyapısını yüklemeye
+  // çalışıp takılabiliyor; orada yalnızca kalıcı oturum ile başlatılır (giriş zaten yerel köprüyle yapılır).
+  const IOS = !!window.TPiOS;
+  const auth = IOS ? A.initializeAuth(app, { persistence: [A.indexedDBLocalPersistence, A.browserLocalPersistence] }) : A.getAuth(app);
   const fs = F.getFirestore(app);
   TP.mode = 'firebase';
 
-  const info = u => u ? ({ uid:u.uid, anon:u.isAnonymous, member: u.providerData.some(p=>p.providerId==='google.com'),
+  const info = u => u ? ({ uid:u.uid, anon:u.isAnonymous, member: u.providerData.some(p=>p.providerId==='google.com' || p.providerId==='apple.com'),
     name:u.displayName||'', email:u.email||'', photo:u.photoURL||'' }) : null;
-  try{ await A.getRedirectResult(auth); }catch(e){ handleCredErr(e); }
+  if(!IOS){ try{ await A.getRedirectResult(auth); }catch(e){ handleCredErr(e); } }
   A.onAuthStateChanged(auth, async u=>{
     if(!u){ try{ await A.signInAnonymously(auth); }catch(e){ TP.error='Oturum açılamadı. İnternet bağlantını kontrol et.'; setUser(null); } return; }
     setUser(info(u));
@@ -70,6 +73,29 @@ async function initFirebase(){
     await auth.currentUser.reload();
     setUser(info(auth.currentUser));
   }
+  // iOS: Apple ile giriş (App Store, Google girişi sunan uygulamalarda bunu zorunlu tutar)
+  const nativeApple = () => new Promise((res, rej)=>{
+    window.__tpApple = (ok, val)=>{ window.__tpApple = null; if(!ok) return val==='cancel' ? res(null) : rej(new Error(val||'apple'));
+      try{ res(JSON.parse(val)); }catch(e){ rej(e); } };
+    try{ window.TPAndroid.appleSignIn(); }catch(e){ rej(e); }
+  });
+  TP.signInApple = async ()=>{
+    if(!(window.TPAndroid && typeof window.TPAndroid.appleSignIn==='function')) return;
+    const r = await nativeApple(); if(!r || !r.idToken) return;
+    const prov = new A.OAuthProvider('apple.com');
+    const cred = prov.credential({ idToken:r.idToken, rawNonce:r.nonce }), cur = auth.currentUser;
+    try{
+      if(cur && cur.isAnonymous) await A.linkWithCredential(cur, cred);   // misafir ilerlemesi korunur
+      else await A.signInWithCredential(auth, cred);
+    }catch(e){
+      if(e && (e.code==='auth/credential-already-in-use' || e.code==='auth/email-already-in-use')) await A.signInWithCredential(auth, A.OAuthProvider.credentialFromError(e) || cred);
+      else throw e;
+    }
+    // Apple adı yalnızca ilk girişte verir; varsa profile yaz
+    if(r.name && !auth.currentUser.displayName){ try{ await A.updateProfile(auth.currentUser, { displayName:r.name }); }catch(e){} }
+    await auth.currentUser.reload();
+    setUser(info(auth.currentUser));
+  };
   TP.signInGoogle = async ()=>{
     if(NATIVE) return signInNative();
     const cur = auth.currentUser, prov = provider();

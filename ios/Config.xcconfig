@@ -1,0 +1,20 @@
+// =====================================================================
+// Top Potada iOS ayarları
+// Not: xcconfig'te "//" yorum başlatır; değerlere adres (https://...) yazma.
+// =====================================================================
+
+MARKETING_VERSION = 1.0.2
+CURRENT_PROJECT_VERSION = 4
+PRODUCT_BUNDLE_IDENTIFIER = com.toppotada.oyun
+
+// Firebase konsolu → Proje ayarları → iOS uygulaması (com.toppotada.oyun) →
+// GoogleService-Info.plist içindeki CLIENT_ID ve REVERSED_CLIENT_ID değerleri.
+// Doldurulmadıkça "Google ile giriş" iOS'ta çalışmaz (uygulama çökmez, uyarı verir).
+TP_GOOGLE_CLIENT_ID = BURAYA.apps.googleusercontent.com
+TP_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.BURAYA
+
+// AdMob → Uygulamalar → iOS uygulaması (Top Potada). Şimdilik Google'ın TEST kimlikleri:
+// test reklamı görünür, gelir getirmez. Yayından önce gerçek iOS kimlikleriyle değiştir.
+TP_ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
+TP_AD_INTERSTITIAL = ca-app-pub-3940256099942544/4411468910
+TP_AD_REWARDED = ca-app-pub-3940256099942544/1712485313

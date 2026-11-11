@@ -1,0 +1,41 @@
+# Codemagic: Top Potada iOS → TestFlight / App Store Connect
+# Gerekenler (Codemagic arayüzünde, bir kez):
+#  1. Teams → Integrations → Developer Portal: App Store Connect API anahtarını ekle, adını "TopPotada ASC" koy
+#  2. App Store Connect'te com.toppotada.oyun paket kimliğiyle uygulama kaydı oluştur
+workflows:
+  ios-appstore:
+    name: Top Potada iOS (App Store)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: TopPotada ASC
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.toppotada.oyun
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+    scripts:
+      - name: Xcode projesini üret
+        script: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+      - name: İmza ayarlarını uygula
+        script: xcode-project use-profiles --project ios/TopPotada.xcodeproj
+      - name: Derleme numarasını artır
+        script: |
+          cd ios
+          N=$((BUILD_NUMBER + 4))   # Codemagic derleme sayacı; her yüklemede artar
+          sed -i '' "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $N/" Config.xcconfig
+      - name: IPA derle
+        script: |
+          xcode-project build-ipa --project ios/TopPotada.xcodeproj --scheme TopPotada --config Release
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
