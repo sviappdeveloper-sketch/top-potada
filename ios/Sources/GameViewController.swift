@@ -66,7 +66,13 @@ final class GameViewController: UIViewController {
   }
 
   // Web tarafına köprü: Android'deki TPAndroid ile aynı adlar (oyun kodu değişmeden çalışır)
-  private static let bridgeJS = """
+  // Google girişi için iOS istemci kimliği (Config.xcconfig) girilmiş mi
+  private static var googleReady: Bool {
+    let id = (Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String) ?? ""
+    return !id.isEmpty && !id.hasPrefix("BURAYA")
+  }
+  private static var bridgeJS: String { "window.TPiOSGoogle = \(googleReady);\n" + bridgeCore }
+  private static let bridgeCore = """
   (function(){
     var post=function(cmd,extra){ var m={cmd:cmd}; if(extra){ for(var k in extra) m[k]=extra[k]; } window.webkit.messageHandlers.tp.postMessage(m); };
     window.TPiOS = true;

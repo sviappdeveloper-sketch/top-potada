@@ -1,41 +1,60 @@
-# Codemagic: Top Potada iOS → TestFlight / App Store Connect
-# Gerekenler (Codemagic arayüzünde, bir kez):
-#  1. Teams → Integrations → Developer Portal: App Store Connect API anahtarını ekle, adını "TopPotada ASC" koy
-#  2. App Store Connect'te com.toppotada.oyun paket kimliğiyle uygulama kaydı oluştur
+# Codemagic: Top Potada iPhone sürümünü derler, imzalar ve App Store Connect'e (TestFlight) yükler.
+# Hatim Kardeşim ile aynı düzen: gizli değer yalnızca bir tane, "asc" grubundaki ASC_KEY_P8
+# (App Store Connect .p8 anahtarı). Sertifika, profil, paket kimliği ve "Apple ile Giriş"
+# yetkisi tool/ios_signing.py ile API üzerinden otomatik hazırlanır.
 workflows:
-  ios-appstore:
-    name: Top Potada iOS (App Store)
-    max_build_duration: 60
+  ios-testflight:
+    name: iOS TestFlight
     instance_type: mac_mini_m2
-    integrations:
-      app_store_connect: TopPotada ASC
+    max_build_duration: 60
     environment:
+      groups:
+        - asc
+      vars:
+        ASC_KEY_ID: 683B6FR7DT
+        ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
+        APPLE_TEAM_ID: GS55JS3WKJ
+        P12_PASS: toppotada-ci-gecici
       xcode: latest
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.toppotada.oyun
     triggering:
-      events: [push]
+      events:
+        - push
       branch_patterns:
         - pattern: main
+          include: true
+      cancel_previous_builds: true
     scripts:
       - name: Xcode projesini üret
         script: |
           brew install xcodegen
           cd ios && xcodegen generate
-      - name: İmza ayarlarını uygula
-        script: xcode-project use-profiles --project ios/TopPotada.xcodeproj
-      - name: Derleme numarasını artır
+      - name: Sertifika, profil, paket kimliği, Apple ile Giriş
         script: |
-          cd ios
-          N=$((BUILD_NUMBER + 4))   # Codemagic derleme sayacı; her yüklemede artar
-          sed -i '' "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $N/" Config.xcconfig
-      - name: IPA derle
+          set -e
+          export RUNNER_TEMP=$HOME/imza GITHUB_ENV=$HOME/imza/env
+          mkdir -p $RUNNER_TEMP
+          pip3 install --quiet pyjwt cryptography || pip3 install --quiet --break-system-packages pyjwt cryptography
+          python3 tool/ios_signing.py
+          keychain initialize
+          keychain add-certificates --certificate $RUNNER_TEMP/dagitim.p12 --certificate-password "$P12_PASS"
+          UUID=$(grep '^PROFILE_UUID=' $GITHUB_ENV | cut -d= -f2-)
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp $RUNNER_TEMP/profil.mobileprovision "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+          xcode-project use-profiles --project ios/TopPotada.xcodeproj
+      - name: Derleme numarası
         script: |
-          xcode-project build-ipa --project ios/TopPotada.xcodeproj --scheme TopPotada --config Release
+          N=$((10 + ${BUILD_NUMBER:-0}))
+          echo "Derleme numarası: $N"
+          sed -i '' "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $N/" ios/Config.xcconfig
+      - name: iPhone paketi (IPA)
+        script: |
+          xcode-project build-ipa --project ios/TopPotada.xcodeproj --scheme TopPotada --config Release \
+            --export-options-plist=$HOME/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
       app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+        api_key: $ASC_KEY_P8
+        key_id: 683B6FR7DT
+        issuer_id: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
+        submit_to_testflight: false

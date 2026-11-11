@@ -1853,11 +1853,12 @@ setInterval(()=>{ if(visible('ovTour')) renderTour(); }, 20000);
 // =====================================================================
 const isMember = () => !!(window.TP && TP.user && TP.user.member);
 const hasApple = () => !!(window.TPAndroid && typeof window.TPAndroid.appleSignIn==='function');   // yalnızca iOS uygulaması
-const signInBtn = (label='Google ile giriş yap') => `<button class="gbtn js-signin"><span class="g">G</span>${label}</button>`
-  + (hasApple() ? `<div style="height:10px"></div><button class="gbtn abtn js-apple"><span class="a"></span>Apple ile giriş yap</button>` : '');
+const hasGoogle = () => !(window.TPiOS && window.TPiOSGoogle === false);   // iOS'ta Google ayarı girilmediyse gizli
+const signInBtn = (label='Google ile giriş yap') => (hasGoogle() ? `<button class="gbtn js-signin"><span class="g">G</span>${label}</button>` : '')
+  + (hasApple() ? `${hasGoogle() ? '<div style="height:10px"></div>' : ''}<button class="gbtn abtn js-apple"><span class="a"></span>Apple ile giriş yap</button>` : '');
 function memberGate(what){
   return `<div class="gate"><div class="gate-t">${what} yalnızca üyelere açık</div>
-    <p class="note">Ücretsiz üye olmak için ${hasApple() ? 'Google ya da Apple' : 'Google'} hesabınla giriş yap. Misafir olarak oynadığın her şey hesabına taşınır.</p>${signInBtn()}</div>`;
+    <p class="note">Ücretsiz üye olmak için ${hasApple() ? (hasGoogle() ? 'Google ya da Apple' : 'Apple') : 'Google'} hesabınla giriş yap. Misafir olarak oynadığın her şey hesabına taşınır.</p>${signInBtn()}</div>`;
 }
 let signingIn=false;
 async function doSignIn(apple){
@@ -1906,7 +1907,7 @@ function renderAccount(){
   if(!u){ h+=`<p class="note">Bağlanılıyor…</p>`; }
   else if(!u.member){
     h+=`<p>Misafir olarak tek oyuncu, aynı telefonda ve online odada oynayabilirsin.</p>
-      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; ${hasApple() ? 'Google ya da Apple' : 'Google'} hesabınla tek dokunuşla olur.</li></ul>
+      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; ${hasApple() ? (hasGoogle() ? 'Google ya da Apple' : 'Apple') : 'Google'} hesabınla tek dokunuşla olur.</li></ul>
       ${signInBtn('Google ile giriş yap')}`;
   } else {
     const st = cloudState==='ready' ? standings().find(r=>r.uid===UID) : null;
