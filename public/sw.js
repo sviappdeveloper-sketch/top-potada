@@ -1,5 +1,5 @@
 // Top Potada — çevrimdışı önbellek. Yeni sürüm yayımlarken SURUM'ü artır.
-const SURUM = 'tp-v1';
+const SURUM = 'tp-v2';
 const KABUK = ['./', 'index.html', 'backend.js', 'firebase-config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(SURUM).then(c => c.addAll(KABUK)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== SURUM).map(x => caches.delete(x)))).then(() => self.clients.claim())); });

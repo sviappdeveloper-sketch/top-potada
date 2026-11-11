@@ -175,6 +175,7 @@
   .lv .n{font-size:24px;font-weight:900;line-height:1.1}.lv .nm{font-size:11px;font-weight:600;min-height:28px;line-height:1.25;margin:2px 0}
   .lv .st{color:#e8590c;letter-spacing:1px;font-size:14px}.lv .bs{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
   .lv.lock{opacity:.38;cursor:default}.lv.cur{border:2.5px solid #e8590c;box-shadow:0 0 0 3px rgba(232,89,12,.15)}
+  .lv-ch{grid-column:1/-1;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 0 -2px;text-align:left}
   .lv.boss{background:linear-gradient(180deg,rgba(176,58,46,.12),rgba(255,255,255,.45))}
   .lv-stars{font-size:34px;color:#e8590c;letter-spacing:4px;margin-top:2px}
   .modes{display:flex;flex-direction:column;gap:12px;max-width:320px;margin:18px auto 6px}
@@ -196,6 +197,18 @@
     padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:none}
   .fastbtn.show{display:inline-flex}
+  #gameMenuBtn{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:6px;
+    background:rgba(255,255,255,.7);color:#26221e;border:1px solid rgba(38,34,30,.22);border-radius:999px;padding:7px 16px;
+    font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:none;box-shadow:0 2px 8px rgba(38,34,30,.12)}
+  #gameMenuBtn.show{display:inline-flex}
+  #gameMenuBtn:active{transform:translateX(-50%) scale(.95)}
+  #ovPause{z-index:8}
+  #ovPause .menu-btns{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .pz-confirm{margin-top:16px;padding:14px 12px;border:1.5px solid #c0392b;border-radius:14px;background:rgba(192,57,43,.07);text-align:left}
+  .pz-confirm p{margin:0 0 12px;font-size:14px;line-height:1.45}
+  .pz-confirm .row{display:flex;gap:8px}.pz-confirm .row button{flex:1;padding-left:6px;padding-right:6px}
+  .pz-danger{background:#c0392b!important;color:#fff!important;border-color:#c0392b!important}
+  .pz-quit{color:#c0392b!important;border-color:#c0392b!important}
   .fastbtn .sp{font-variant-numeric:tabular-nums;font-weight:800}
   .fastbtn.on{color:#e8590c;border-color:rgba(232,89,12,.35)}
   .fastbtn:active{transform:scale(.96)}
@@ -221,6 +234,20 @@
 <body>
 <canvas id="c"></canvas>
 <button id="botFast" class="fastbtn" aria-label="İzleme hızı"></button>
+<button id="gameMenuBtn" aria-label="Oyun menüsü">☰ Menü</button>
+<div class="ov hidden" id="ovPause"><div class="card">
+  <h2 id="pzSub">Oyun durdu</h2><h1>Menü</h1>
+  <div class="menu-btns">
+    <button id="pzResume">Devam et</button>
+    <button class="btn-ghost" id="pzSound">Ses: Açık</button>
+    <button class="btn-ghost" id="pzVib">Titreşim: Açık</button>
+    <button class="btn-ghost pz-quit" id="pzQuit">Oyunu bitir</button>
+  </div>
+  <div class="pz-confirm" id="pzConfirm" style="display:none">
+    <p id="pzWarn"></p>
+    <div class="row"><button class="btn-ghost" id="pzNo">Vazgeç</button><button class="pz-danger" id="pzYes">Oyunu bitir</button></div>
+  </div>
+</div></div>
 
 <div class="ov" id="ovSplash">
   <div class="card">
@@ -290,7 +317,7 @@
     <ul>
       <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve başlarken seviye seçersin (Kolay, Orta, Zor, Efsane; sezon sonunda değiştirilebilir): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
-      <li><b>Tek oyuncu → Macera:</b> 15 level, en çok puan usulü. Her levelde 5 top var ve her levelin kendi macerası var: rüzgâr, gece, yağmur, fırtına, kayan pota, dar çember, zıplayan ve kayan savunmacılar, sonunda da mahallenin efsanesi olan patron. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır. Haritadan klasik 3 turluk <b>serbest antrenman</b> da açılabilir.</li>
+      <li><b>Tek oyuncu → Macera:</b> 2 bölüm, 25 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3 ya da 7) ve her levelin kendi macerası var: rüzgâr, gece, yağmur, fırtına, kayan pota, dar çember, zıplayan ve kayan savunmacılar, sonunda da mahallenin efsanesi olan patron. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır. Haritadan klasik 3 turluk <b>serbest antrenman</b> da açılabilir.</li>
       <li><b>Online oda:</b> Biri <b>Oda kur</b>’a basar ve 4 harfli bir kod alır. Diğerleri kendi telefonlarında <b>Çoklu oyuncu → Katıl</b>’a bu kodu yazar. En fazla 4 kişi. Kurucu <b>Başlat</b>’a basınca 3’ten geri sayılır ve <b>herkes aynı anda</b> kendi sahasında oynar. Üstteki tablo herkesin puanını ve hangi turda olduğunu canlı gösterir. Herkes bitirince kazanan ilan edilir.</li>
       <li><b>Aynı telefonda:</b> 2–4 kişi telefonu elden ele verir; her oyuncu 5 atışını bitirince sıra sonrakine geçer.</li>
       <li><b>Rakibi izle:</b> Rakipli bütün maçlarda rakibin atışlarını sahada izlersin. Online turnuva, lig ve hızlı maçta rakibin senden önce oynadıysa maçından önce onun oyunu yeniden oynatılır; online odada sonuç ekranındaki <b>İzle</b> ile rakiplerin son turunu izleyebilirsin. Rakibin <b>nişan çizgisi gizlidir</b>; yalnızca topun gidişini görürsün. Aynı maçta iki rakip aynı savunma hareketlerine karşı oynar.</li>
@@ -343,7 +370,7 @@
       <tr><td>Yarı final, 3.lük maçı</td><td>2</td></tr>
       <tr><td>Final</td><td>3</td></tr>
     </table>
-    <p class="note">Turnuva maçlarında yardım çizgisi orta uzunluktadır ve pota normal mesafededir.</p>
+    <p class="note">Lig ve turnuva maçlarında yardım çizgisi <b>Orta</b> seviyeden başlar, üst turlarda ve üst liglerde kısalır: grup, son 16 ve çeyrek finalde Orta, yarı finalde kısalır, finalde <b>Zor</b> (çok kısa). Ligde Bronz Orta, en üst lig Zor. Pota normal mesafededir.</p>
 
     <h3>Ödüller: basketpuan (BP)</h3>
     <table class="ptable">
@@ -524,7 +551,7 @@
 <div class="ov hidden" id="ovSolo"><div class="card">
   <h2>Tek oyuncu</h2><h1>Mod seç</h1>
   <div class="modes">
-    <button class="mode hl" id="soloMacera"><b>Macera</b><small>15 level · en çok puan · yıldızlar</small></button>
+    <button class="mode hl" id="soloMacera"><b>Macera</b><small>25 level · uzak potalar · yıldızlar</small></button>
     <button class="mode" id="soloCpu"><b>Rakiple oyna</b><small>Bilgisayara karşı: hızlı maç, 3 kademeli lig, turnuva</small></button>
     <button class="mode" id="soloOnline"><b>Online oyna</b><small>Gerçek rakipler: hızlı maç, online oda, turnuvalar</small></button>
   </div>
@@ -560,6 +587,17 @@ const ADS = { games:0, last:Date.now(), cb:null }; let LV_BONUS = 0;   // reklam
 let PREVIEW_OVR = null, DEF_N = 0;   // maç modunda: yardım çizgisi ve savunmacı sayısı
 const BASE_PTS = 10, PTS_PER_SEC = 10;
 const PREVIEW = [0.8, 0.4, 0.12];
+const MATCH_PREVIEW = 0.5;   // hızlı maç
+// Lig ve turnuva: kılavuz Orta'dan (0.4) başlar, üst kademelerde Zor'a (0.12) iner. Kolay (0.8) hiç kullanılmaz.
+// turnuva (tur zorluğu 0-3): grup/son 16 ve çeyrek Orta, yarı final ve 3.lük kısalır, final Zor
+// online lig (Bronz-Gümüş-Altın-Elmas) ve bilgisayar ligi (Bronz-Gümüş-Altın): Bronz Orta, en üst lig Zor
+const TOUR_PREVIEW = [0.4, 0.4, 0.26, 0.12], LEAGUE_PREVIEW4 = [0.4, 0.3, 0.2, 0.12], LEAGUE_PREVIEW3 = [0.4, 0.26, 0.12];
+function cupPreview(m){
+  const d = Math.max(0, Math.floor(num(m.def)));
+  if(m.cpu && m.kind==='league') return LEAGUE_PREVIEW3[Math.min(d, 2)];
+  if(m.league) return LEAGUE_PREVIEW4[Math.min(d, 3)];
+  return TOUR_PREVIEW[Math.min(d, 3)];
+}
 const DIST = [[0,0],[0,0],[80,-24]];
 const G = 1400, BR = 9;
 // macera modu ayarları (oyun alanı oluşturulmadan önce tanımlı olmalı)
@@ -840,10 +878,12 @@ class Court {
     RNG = seeded(String(seed||'')); this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); RNG = Math.random;
     this.simTick=0; this.acc=0; SHOTLOG=[]; SEED=String(seed||'');
   }
-  canShoot(){ return game==='play' && !this.timeUp && this.state==='ready' && this.holding; }
+  canShoot(){ return game==='play' && !this.timeUp && this.state==='ready' && this.holding && !lvSeqWait; }
   launch(vx, vy, ptsOverride){
     const r=releasePoint(); const b=new Ball(r.x, r.y); b.vx=vx; b.vy=vy; b.color=this.color;
     b.pts = BASE_PTS + Math.floor(Math.max(0,timeLeft))*PTS_PER_SEC*PTS_MUL;   // değer, atış anındaki kalan süreye göre
+    if(ptsOverride==null && game==='play' && MODE==='level' && curLevel && curLevel.gold && this.left===1){ b.pts*=3; b.gold=true; b.color='#e9b949';
+      this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Altın top ×3' }); }
     if(ptsOverride!=null) b.pts=ptsOverride;
     if(game==='play') SHOTLOG.push([this.simTick||0, vx, vy, b.pts]);
     this.balls.push(b); this.holding=false; sfx.throw(); this.lastLaunch=performance.now();
@@ -853,7 +893,7 @@ class Court {
   burnBall(){
     this.holding=false; this.aim=null; activePointer=null; this.pending=null;
     this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Süre! Top yandı' });
-    sfx.buzzer(); this.fig.facing=1; this.lastLaunch=performance.now();
+    sfx.buzzer(); if(game==='play' && !botTurn()) buzz(120); this.fig.facing=1; this.lastLaunch=performance.now();
     if(this.rack>0){ this.fig.go('empty',.2); this.state='follow'; this.timer=.15; }
     else { this.fig.go('doubt',.6); this.state='done'; }
     timeLeft=BALL_TIME; lastTick=99;
@@ -899,6 +939,7 @@ class Court {
     if(game==='replay'){ this.net=1; sfx.swish(); b.vx*=.3; if(REPLAY){ REPLAY.score+=b.pts; REPLAY.bk++; } this.floaters.push({x:(RIM.x1+RIM.x2)/2, y:RIM.y-30, t:0, txt:`+${b.pts}`}); return; }
     this.net=1; sfx.swish(); b.vx*=.3;
     const p=players[turnIdx]; if(p){ p.score+=b.pts; p.roundPts+=b.pts; p.baskets++; }
+    if(game==='play' && !botTurn()) buzz(b.gold ? [40,60,40] : 35);
     pushPresence();
     this.floaters.push({x:(RIM.x1+RIM.x2)/2, y:RIM.y-30, t:0, txt:`+${b.pts}`});
   }
@@ -987,8 +1028,8 @@ function startTournament(){
   const isMatch = MODE==='match' && curMatch, isLevel = MODE==='level' && curLevel;
   if(!isLevel) clearLevelEnv();
   ROUNDS = isMatch || isLevel ? 1 : 3;
-  SHOTS = isMatch && curMatch.ot ? 1 : 5 + (isLevel ? LV_BONUS : 0); LV_BONUS = 0;
-  PREVIEW_OVR = isMatch ? 0.5 : null;
+  SHOTS = isMatch && curMatch.ot ? 1 : isLevel ? lvShots(curLevel) + LV_BONUS : 5; LV_BONUS = 0;
+  PREVIEW_OVR = isMatch ? ((curMatch.league || curMatch.tid || curMatch.kind==='league' || curMatch.kind==='tour') ? cupPreview(curMatch) : MATCH_PREVIEW) : null;
   DEF_N = isMatch ? curMatch.def : 0;
   matchWritten = false;
   if(isLevel) applyLevelEnv(curLevel);
@@ -1042,6 +1083,7 @@ document.getElementById('ovTurn').addEventListener('pointerup', e => {
 });
 
 function endTurn(){
+  if(game==='menu' || !players[turnIdx]) return;   // maçtan geri tuşuyla çıkıldıysa
   const p=players[turnIdx]; p.rounds[round]=p.roundPts;
   if(MODE==='match' && curMatch && curMatch.botPlays){
     if(turnIdx===1){ curMatch.os=p.score; curMatch.ob=p.baskets; turnIdx=0; prepareTurn(); return; }
@@ -1136,7 +1178,23 @@ function nextAfterResults(){
 // Maç aralarında tam ekran: en az 3 bitmiş oyunda bir ve 2 dakika arayla.
 // Ödüllü: Macera'da yıldızsız biten levelı 6 topla tekrar deneme hakkı.
 // =====================================================================
-function adsOn(){ return !!(window.TPAndroid && typeof window.TPAndroid.showInterstitial==='function'); }
+// Yönetici hesabı: Google ile giriş yapıldığında hiç reklam gösterilmez.
+// Depo herkese açık olduğu için e-posta açık yazılmaz; küçük harfli e-postanın SHA-256 özeti tutulur.
+const ADMIN_HASHES = ['92dc64fb971be70598510cd14ecd10f8a55e4b1cb4d7730d633f6320f538e79a'];
+let IS_ADMIN = false;
+async function checkAdmin(u){
+  let on=false;
+  try{
+    const e = u && u.member && u.email ? String(u.email).trim().toLowerCase() : '';
+    if(e && window.crypto && crypto.subtle){
+      const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(e));
+      on = ADMIN_HASHES.includes([...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''));
+    }
+  }catch(err){}
+  IS_ADMIN = on;
+}
+(function waitAdmin(){ if(window.TP && TP.onAuth) TP.onAuth(checkAdmin); else setTimeout(waitAdmin, 50); })();
+function adsOn(){ return !IS_ADMIN && !!(window.TPAndroid && typeof window.TPAndroid.showInterstitial==='function'); }
 window.__tpAd = (kind, ok)=>{ const f=ADS.cb; ADS.cb=null; if(f) setTimeout(()=>f(!!ok)); };
 function adGate(go){
   if(!adsOn() || ADS.games<3 || Date.now()-ADS.last<120000){ go(); return; }
@@ -2010,7 +2068,7 @@ function renderLeagueResult(){
 }
 
 // =====================================================================
-// TEK OYUNCU · MACERA: 15 level, en çok puan usulü
+// TEK OYUNCU · MACERA: 2 bölüm, 25 level, en çok puan usulü
 // Her levelde 5 top; puana göre 1-3 yıldız. 1 yıldız sonraki leveli açar.
 // Toplam puan = her levelin en iyi skorlarının toplamı.
 // =====================================================================
@@ -2037,7 +2095,25 @@ const LEVELS = [
   { name:'Mahallenin Efsanesi', story:'Mahallenin efsanesi {a} potayı koruyor; iki yardımcısı da yanında. Üstelik pota da kayıyor!', rule:'Patron çok yükseğe zıplar. 3 savunmacı, uzak ve kayan pota.', preview:.2, dist:[80,-24], hoopMove:{ amp:28, sp:.7 },
     defs:[{x:322,move:40,sp:1.3},{x:420,boss:true},{x:500,move:22,sp:1.8}], stars:[50,100,150],
     sky:{ skyTop:'#f6d6c2', skyMid:'#efb48f', skyLow:'#d9805f' } },
+  // ---------- 2. BÖLÜM · ŞEHİR POTALARI: uzak potalar, farklı atış serileri ----------
+  { ch:2, name:'Liman Sahası', story:'Mahalleyi geride bıraktın. Liman sahasında pota bildiğinden çok daha uzakta.', rule:'Çok uzak pota.', preview:.5, dist:[100,-30], stars:[90,170,250],
+    sky:{ skyTop:'#e3eef4', skyMid:'#eef0ea', skyLow:'#cfe0e6' } },
+  { ch:2, name:'Merdiven Serisi', story:'{a} her sayından sonra potayı bir adım geri çekiyor. Bakalım nereye kadar?', rule:'Her topta pota biraz daha uzaklaşır.', preview:.5, seq:[0,30,60,90,115], dist:[0,-20], stars:[90,170,250] },
+  { ch:2, name:'Altın Top', story:'Şehir kupası elemesi. Son top altın: girerse puanı üç katı!', rule:'Uzak pota. 5. top altın: puanı ×3.', preview:.45, dist:[90,-24], gold:true, stars:[110,220,330] },
+  { ch:2, name:'Yedi Top', story:'Antrenör {a} acele ediyor: 7 top var ama her biri için sadece 6 saniye.', rule:'7 top, her top 6 saniye.', preview:.45, dist:[60,-20], shots:7, ballTime:6, stars:[110,200,290] },
+  { ch:2, name:'Zikzak Seri', story:'Pota bir yakına bir uzağa gidiyor. Her atışta ayarını baştan yap.', rule:'Pota her topta yakın–uzak yer değiştirir.', preview:.4, seq:[110,10,100,25,115], dist:[0,-20], stars:[80,160,240] },
+  { ch:2, name:'Köprü Altı', story:'Köprünün altında rüzgâr tünel gibi esiyor, pota da en uzakta.', rule:'En uzak pota + değişken rüzgâr.', preview:.4, dist:[110,-30], wind:60, gust:true, stars:[70,140,210],
+    sky:{ skyTop:'#dfe6ea', skyMid:'#ccd6dc', skyLow:'#a9b8c1' } },
+  { ch:2, name:'Üç Top Üç Kat', story:'Sadece 3 top var ama her saniye üç kat puan. Hızlı ve isabetli ol.', rule:'3 top; saniye puanı ×3. Uzak pota.', preview:.35, dist:[100,-28], shots:3, mul:3, stars:[150,300,450] },
+  { ch:2, name:'Uzak Savunma', story:'{a} ve {b} uzak potanın önünde kayarak bekliyor.', rule:'En uzak pota + 2 kayan savunmacı.', preview:.35, dist:[115,-30], defs:[{x:360,move:40,sp:1.2},{x:460,move:30,sp:1.6}], stars:[60,120,190] },
+  { ch:2, name:'Gece Serisi', story:'Şehrin ışıkları yandı. Pota her topta yer değiştiriyor ve son top altın!', rule:'Karanlık + değişen pota + altın son top.', preview:.3, night:true, seq:[40,115,70,100,115], dist:[0,-24], gold:true, stars:[90,180,280],
+    sky:{ skyTop:'#c9c3dc', skyMid:'#9f96bd', skyLow:'#5f5a86', floor:'#6f4536' } },
+  { ch:2, name:'Şehrin Efsanesi', story:'Şehrin efsanesi {a} seni bekliyor. 7 top, kayan uzak pota, rüzgâr ve altın son top.', rule:'Patron + 2 savunmacı, kayan uzak pota, rüzgâr, 7 top, altın son top.', preview:.25, dist:[95,-30], hoopMove:{ amp:22, sp:.8 }, wind:-50, gust:true, shots:7, gold:true,
+    defs:[{x:340,move:35,sp:1.4},{x:445,boss:true},{x:525,move:20,sp:1.9}], stars:[90,180,280],
+    sky:{ skyTop:'#f3d2c8', skyMid:'#e2a58e', skyLow:'#b8705a' } },
 ].map((l,i)=>({ ...l, n:i+1, id:'L'+(i+1) }));
+const LV_N = LEVELS.length, LV_BOSS = LEVELS.filter((l,i)=>i===LV_N-1 || (LEVELS[i+1] && LEVELS[i+1].ch && !l.ch)).map(l=>l.n);
+const lvShots = lv => (lv && lv.shots) || 5;
 
 const SKY_DEF = { skyTop:C.skyTop, skyMid:'#f9e2c6', skyLow:C.skyLow, floor:C.floor };
 let SKY = { ...SKY_DEF };
@@ -2054,14 +2130,26 @@ function makeDefendersCfg(list){
       jumpDur: c.boss ? .62 : .55, jumpH: c.boss ? 74 : 44, jy:0, segs:[] }; });
 }
 function applyLevelEnv(lv){
+  lvSeqIdx = lv.seq ? 0 : -1; lvSeqWait=false;
   GRAV = G*(lv.grav||1); PTS_MUL = lv.mul||1; BALL_TIME = lv.ballTime||10;
   WIND = lv.storm ? 0 : (lv.wind||0); DEF_CFG = lv.defs||null; DEF_N = DEF_CFG ? DEF_CFG.length : 0; PREVIEW_OVR = lv.preview;
   SKY = { ...SKY_DEF, ...(lv.sky||{}) };
-  setCourtXY(lv.dist ? lv.dist[0] : 0, lv.dist ? lv.dist[1] : 0, lv.rimW||36);
+  setCourtXY(lv.seq ? lv.seq[0] : lv.dist ? lv.dist[0] : 0, lv.dist ? lv.dist[1] : 0, lv.rimW||36);
 }
-function clearLevelEnv(){ GRAV=G; PTS_MUL=1; BALL_TIME=10; WIND=0; DEF_CFG=null; SKY={ ...SKY_DEF }; curLevel=null; }
+function clearLevelEnv(){ lvSeqIdx=-1; lvSeqWait=false; GRAV=G; PTS_MUL=1; BALL_TIME=10; WIND=0; DEF_CFG=null; SKY={ ...SKY_DEF }; curLevel=null; }
+let lvSeqIdx=-1, lvSeqWait=false;
+function lvSeqH(lv, i){ return lv.seq[Math.min(i, lv.seq.length-1)]; }
 function levelTick(dt){
   const lv=curLevel; LV_T+=dt;
+  if(lv.seq && court.holding){
+    const want=Math.max(0, SHOTS-court.left);
+    if(want!==lvSeqIdx){
+      const air=court.balls.some(b=>!b.fade && b.y < -BR-1.5);
+      lvSeqWait = air;
+      if(!air){ lvSeqIdx=want; setCourtXY(lvSeqH(lv,want), lv.dist?lv.dist[1]:0, lv.rimW||36);
+        if(want>0) court.floaters.push({ x:(RIM.x1+RIM.x2)/2, y:RIM.y-60, t:0, txt:'Pota yer değiştirdi' }); }
+    } else lvSeqWait=false;
+  }
   if(lv.hoopMove) setCourtXY((lv.dist?lv.dist[0]:0) + Math.sin(LV_T*lv.hoopMove.sp)*lv.hoopMove.amp, lv.dist?lv.dist[1]:0, lv.rimW||36);
   if(lv.storm) WIND = lv.storm*Math.sin(LV_T*.55) + 25*Math.sin(LV_T*2.3);
   else if(lv.gust) WIND = lv.wind*(.75 + .35*Math.sin(LV_T*1.4));
@@ -2112,11 +2200,12 @@ function renderLevels(){
   const b=lvBest(), tot=lvTotals();
   let firstOpen = LEVELS.findIndex((l,i)=>lvUnlocked(i) && !num(b[l.id]));
   let h = `<h2>Tek oyuncu · En çok puan</h2><h1>Macera</h1>
-    <div class="lv-tot"><div><b>${fmt(tot.pts)}</b><small>toplam puan</small></div><div><b>${tot.st}/45</b><small>yıldız</small></div></div>
-    <p class="note" style="text-align:center">Her levelde 5 top var, her top için ${10} saniye. Topladığın puana göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puan, her levelin en iyi skorlarının toplamıdır.</p>
-    <div class="lvgrid">` + LEVELS.map((l,i)=>{
+    <div class="lv-tot"><div><b>${fmt(tot.pts)}</b><small>toplam puan</small></div><div><b>${tot.st}/${LV_N*3}</b><small>yıldız</small></div></div>
+    <p class="note" style="text-align:center">Levellerde genelde 5 top var, her top için 10 saniye (bazı levellerde farklı). Topladığın puana göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puan, her levelin en iyi skorlarının toplamıdır.</p>
+    <div class="lvgrid"><div class="lv-ch">1. Bölüm · Mahalle</div>` + LEVELS.map((l,i)=>{
       const open=lvUnlocked(i), s=num(b[l.id]), k=starsFor(l,s);
-      return `<div class="lv${open?'':' lock'}${i===firstOpen?' cur':''}${l.n===15?' boss':''}" data-lv="${i}">
+      const ch = (l.ch && !(LEVELS[i-1]||{}).ch) ? `<div class="lv-ch">${l.ch}. Bölüm · Şehir Potaları</div>` : '';
+      return ch + `<div class="lv${open?'':' lock'}${i===firstOpen?' cur':''}${LV_BOSS.includes(l.n)?' boss':''}" data-lv="${i}">
         <div class="n">${open?l.n:'🔒'}</div><div class="nm">${esc(l.name)}</div><div class="st">${starStr(k)}</div><div class="bs">${s?fmt(s):'&nbsp;'}</div></div>`;
     }).join('') + `</div>
     <div class="menu-btns"><button class="btn-ghost" id="lvFree">Serbest antrenman (3 tur)</button></div>
@@ -2135,34 +2224,34 @@ const fillNames = t => t.replace(/\{a\}/g, lvNames[0]||'').replace(/\{b\}/g, lvN
 function startLevel(i){ lvNames=pickNames(2); curLevel=LEVELS[i]; LV_T=0; MODE='level'; showOnly(null); startTournament(); }
 function levelIntro(p){
   const lv=curLevel;
-  document.getElementById('tRound').textContent = `Level ${lv.n} / 15`;
+  document.getElementById('tRound').textContent = `Level ${lv.n} / ${LV_N}`;
   document.getElementById('tBall').style.background = p.color;
   document.getElementById('tSub').textContent = fillNames(lv.story);
   document.getElementById('tName').textContent = lv.name;
-  document.getElementById('tInfo').textContent = `${lv.rule} · 5 top, her top ${BALL_TIME} sn · Hedef ★${lv.stars[0]} ★★${lv.stars[1]} ★★★${lv.stars[2]}`;
+  document.getElementById('tInfo').textContent = `${lv.rule} · ${SHOTS} top, her top ${BALL_TIME} sn · Hedef ★${lv.stars[0]} ★★${lv.stars[1]} ★★★${lv.stars[2]}`;
   document.getElementById('ovTurn').classList.remove('hidden'); sfx.turn();
 }
 function levelResults(){
   const el=id=>document.getElementById(id), lv=curLevel, me=players[0], sc=me.score;
   statGame('macera', sc);
   const before=num(lvBest()[lv.id]), rec=lvSave(lv.id, sc), k=starsFor(lv, sc), idx=lv.n-1;
-  const nextOpenNow = idx<14 && lvUnlocked(idx+1), wasOpen = idx<14 && starsFor(lv,before)>=1;
+  const nextOpenNow = idx<LV_N-1 && lvUnlocked(idx+1), wasOpen = idx<LV_N-1 && starsFor(lv,before)>=1;
   el('rTitle').textContent = `Level ${lv.n} · ${lv.name}`;
   el('rScore').innerHTML = `${fmt(sc)}<div class="lv-stars">${starStr(k)}</div>`;
   el('rMsg').textContent = k===0 ? `İlk yıldız için ${fmt(lv.stars[0])} puan gerekiyor. Bir daha dene!`
-    : (rec && before ? 'Yeni rekor! ' : '') + (k===3 ? 'Kusursuz, üç yıldız!' : `Güzel! Bir sonraki yıldız için ${fmt(lv.stars[k])} puan.`) + (nextOpenNow && !wasOpen ? ` Level ${lv.n+1} açıldı!` : lv.n===15 && k ? ' Mahallenin yeni efsanesi sensin!' : '');
+    : (rec && before ? 'Yeni rekor! ' : '') + (k===3 ? 'Kusursuz, üç yıldız!' : `Güzel! Bir sonraki yıldız için ${fmt(lv.stars[k])} puan.`) + (nextOpenNow && !wasOpen ? ` Level ${lv.n+1} açıldı!` : lv.n===15 && k ? ' Mahallenin yeni efsanesi sensin! Şehir Potaları bölümü seni bekliyor.' : lv.n===LV_N && k ? ' Şehrin yeni efsanesi sensin!' : '');
   const tot=lvTotals();
   el('rRows').innerHTML = `<div class="win"><span>Bu skor</span><b>${fmt(sc)}<small>${me.baskets} sayı</small></b></div>`+
     `<div><span>En iyi</span><b>${fmt(Math.max(before,sc))}</b></div>`+
     `<div><span>Hedefler</span><b>★${lv.stars[0]} · ★★${lv.stars[1]} · ★★★${lv.stars[2]}</b></div>`+
-    `<div><span>Toplam puan (15 level)</span><b>${fmt(tot.pts)}<small>${tot.st}/45 ★</small></b></div>`;
+    `<div><span>Toplam puan (${LV_N} level)</span><b>${fmt(tot.pts)}<small>${tot.st}/${LV_N*3} ★</small></b></div>`;
   el('rHint').textContent='';
   if(k===0 && adsOn()){
-    el('rHint').innerHTML = '<button id="btnAdBall" class="adoffer">▶ Reklam izle, 6 topla tekrar dene</button>';
+    el('rHint').innerHTML = `<button id="btnAdBall" class="adoffer">▶ Reklam izle, ${lvShots(lv)+1} topla tekrar dene</button>`;
     el('btnAdBall').onclick = ()=> showRewarded(()=>{ LV_BONUS=1; el('ovRound').classList.add('hidden'); startLevel(idx); });
   }
   el('rMenu').style.display='block'; el('rMenu').textContent='Level haritası';
-  const next = k>=1 && idx<14;
+  const next = k>=1 && idx<LV_N-1;
   el('btnNext').style.display=''; el('btnNext').textContent = next ? `Level ${lv.n+1}’e geç` : 'Tekrar dene';
   el('btnNext').dataset.lvnext = next ? String(idx+1) : String(idx);
 }
@@ -2562,7 +2651,7 @@ function replayCheckEnd(){
   const allOut = R.i>=R.shots.length, still = court.balls.every(b=>b.fade || b.y>=-BR-1.5);
   if(allOut && still && court.simTick > R.lastK + 220){
     R.ended=true;
-    setTimeout(()=>{ const f=R.onEnd; REPLAY=null; if(f) f(); }, 700);
+    setTimeout(()=>{ if(REPLAY!==R) return; const f=R.onEnd; REPLAY=null; if(f) f(); }, 700);
   }
 }
 const randSeed = () => Math.random().toString(36).slice(2,10);
@@ -2682,9 +2771,9 @@ function renderStats(){
     ${statRow('Online oda', roomO, `${num(room.games)} oda · 1.: ${num(room.p1)} · 2.: ${num(room.p2)} · 3.: ${num(room.p3)}`)}
 
     <div class="opt-label st-sec">Tek başına</div>
-    <div class="st-row"><div class="st-h"><b>Macera</b><span>${lvDone}/15 level</span></div>
-      <div class="wbar"><span class="w" style="width:${lvT.st/45*100}%;background:#e8590c"></span></div>
-      <div class="st-sub">${lvT.st}/45 yıldız · toplam puan ${fmt(lvT.pts)} · ${num((STATS.macera||{}).games)} oyun</div></div>
+    <div class="st-row"><div class="st-h"><b>Macera</b><span>${lvDone}/${LV_N} level</span></div>
+      <div class="wbar"><span class="w" style="width:${lvT.st/(LV_N*3)*100}%;background:#e8590c"></span></div>
+      <div class="st-sub">${lvT.st}/${LV_N*3} yıldız · toplam puan ${fmt(lvT.pts)} · ${num((STATS.macera||{}).games)} oyun</div></div>
     <div class="st-row"><div class="st-h"><b>Serbest antrenman</b><span>${num((STATS.free||{}).games)} oyun</span></div>
       <div class="st-sub">En iyi skor: ${fmt(num((STATS.free||{}).best))}</div></div>
     <p class="note">G: galibiyet · B: beraberlik · M: mağlubiyet. Online oda: birincilik galibiyet, ortak birincilik beraberlik, diğer sıralar mağlubiyet sayılır. Turnuvada uzatmalar maçın parçasıdır; bay geçmeler sayılmaz. Aynı telefonda oynanan oyunlar kişiye ait olmadığı için sayılmaz.</p>
@@ -2843,7 +2932,8 @@ function frame(now){
   const watching = (botTurn() && game==='play') || game==='replay';
   const reps = watching ? botSpeed : 1;
   document.getElementById('botFast').classList.toggle('show', watching);
-  for(let rep=0; rep<reps; rep++){
+  gameMenuSync();
+  for(let rep=0; rep<(PAUSED?0:reps); rep++){
   if(MODE==='level' && curLevel && (game==='play' || game==='turnwait')) levelTick(dt);
   court.update(dt);
   if(botTurn() && game==='play') botTick(dt);
@@ -2859,7 +2949,7 @@ function frame(now){
     if(!turnEnding && court.turnOver()){
       const sinceLaunch = performance.now()-court.lastLaunch;
       const noneInAir = court.balls.every(b=>b.fade || b.y >= -BR-1.5);
-      if((noneInAir && (sinceLaunch>900 || court.lastLaunch===0)) || sinceLaunch>5000){ turnEnding=true; setTimeout(endTurn, court.timeUp?1100:700); }
+      if((noneInAir && (sinceLaunch>900 || court.lastLaunch===0)) || sinceLaunch>5000){ turnEnding=true; setTimeout(function endT(){ if(PAUSED) return setTimeout(endT,250); endTurn(); }, court.timeUp?1100:700); }
     }
   }
   }
@@ -2875,8 +2965,110 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 
+// ---------- oyun içi menü: ses, titreşim, oyunu bitir ----------
+let PAUSED=false, VIB = store('vib')!=='0';
+function buzz(p){ if(!VIB) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+const pzEl = id => document.getElementById(id);
+function inGame(){ return game!=='menu' && !visible('ovRound') && !visible('ovCount'); }
+function gameMenuSync(){ pzEl('gameMenuBtn').classList.toggle('show', inGame() && !visible('ovPause')); }
+function pzLabels(){
+  pzEl('pzSound').textContent = muted ? 'Ses: Kapalı' : 'Ses: Açık';
+  pzEl('pzVib').textContent = VIB ? 'Titreşim: Açık' : 'Titreşim: Kapalı';
+}
+function pzConfirmOpen(){ return pzEl('pzConfirm').style.display!=='none'; }
+function pzConfirm(on){
+  pzEl('pzConfirm').style.display = on ? '' : 'none';
+  pzEl('pzQuit').style.display = on ? 'none' : '';
+  if(on){
+    const cup = MODE==='match' && curMatch && (curMatch.league || curMatch.tid || curMatch.kind==='league' || curMatch.kind==='tour');
+    pzEl('pzWarn').innerHTML = '<b>Emin misin?</b> Oyunu şimdi bitirirsen bu oyundan <b>hiçbir puan almazsın</b> ve bu oyunda kazandıklarını <b>kaybedersin</b>.'
+      + (MODE==='level' ? ' Yıldız ve rekor kaydedilmez.' : '')
+      + (cup ? ' Lig ve turnuvada maçı kaybetmiş sayılabilirsin.' : '')
+      + (MODE==='online' ? ' Odadan da çıkarsın.' : '');
+  }
+}
+function openPause(){
+  if(!inGame() && !visible('ovTurn')) return;
+  PAUSED = MODE!=='online';            // online odada diğer oyuncular beklemez
+  pzEl('pzSub').textContent = PAUSED ? 'Oyun durdu' : 'Online oyunda süre işlemeye devam eder';
+  court.aim=null; activePointer=null;
+  pzLabels(); pzConfirm(false);
+  pzEl('ovPause').classList.remove('hidden');
+}
+function closePause(silent){
+  PAUSED=false; pzConfirm(false);
+  pzEl('ovPause').classList.add('hidden');
+}
+pzEl('gameMenuBtn').addEventListener('click', e=>{ e.stopPropagation(); audio(); openPause(); });
+pzEl('gameMenuBtn').addEventListener('pointerdown', e=>e.stopPropagation());
+pzEl('pzResume').onclick=()=>closePause();
+pzEl('pzSound').onclick=()=>{ muted=!muted; store('muted', muted?'1':'0'); soundLabel(); pzLabels(); if(!muted){ audio(); sfx.turn(); } };
+pzEl('pzVib').onclick=()=>{ VIB=!VIB; store('vib', VIB?'1':'0'); pzLabels(); buzz(60); };
+pzEl('pzQuit').onclick=()=>pzConfirm(true);
+pzEl('pzNo').onclick=()=>pzConfirm(false);
+pzEl('pzYes').onclick=()=>{ quitGame(); toastAll('Oyun bitirildi, puan verilmedi.'); };
+
+// ---------- Android geri tuşu / hareketi ----------
+// Uygulama tek sayfa; geri tuşu WebView geçmişine bakar. Her zaman bir "nöbetçi" geçmiş kaydı tutulur,
+// geri basılınca o ekranın kendi geri butonu çalıştırılır.
+const BACK_SEL = {
+  ovRules:'#rulesBack', ovMulti:'#multiBack', ovLobby:'#lbLeave', ovTours:'#tsBack', ovStand:'#sdBack',
+  ovStart:'#setupBack', ovSolo:'#soloBack', ovStats:'#stBack', ovAccount:'#accBack', ovLevels:'#lvBack',
+  ovTour:'[data-act="back"]', ovLeague:'[data-lg="back"]', ovCpu:'[data-go="back"],[data-go="hub"],[data-go="solo"]'
+};
+const OV_ORDER = ['ovPause','ovCount','ovRound','ovTurn','ovSplash','ovMenu','ovRules','ovStart','ovMulti','ovLobby','ovTours','ovTour',
+  'ovStand','ovLevels','ovSolo','ovCpu','ovStats','ovLeague','ovAccount'];
+// Geri adımları yalnızca kullanıcı dokunuşu sırasında eklenir: WebView, dokunuşsuz eklenen geçmiş kayıtlarını geri tuşunda atlayabilir.
+let navSkipPop=false;
+const navDepth = () => (history.state && history.state.tpG) || 0;
+function navPush(){ const d=navDepth(); if(d>=30) return; try{ history.pushState({tpG:d+1}, ''); }catch(e){} }
+function openOv(){ return OV_ORDER.find(id=>{ const el=document.getElementById(id); return el && !el.classList.contains('hidden'); }) || null; }
+function quitGame(){
+  closePause(true);
+  const m=MODE, cm=curMatch, back=cpuBack;
+  REPLAY=null; turnEnding=true;
+  goMenu();
+  if(m==='level') showLevels();
+  else if(m==='online') showMulti();
+  else if(m==='match' && cm){
+    if(cm.cpu) (back||showCpuHub)();
+    else if(cm.league) showLeague();
+    else if(cm.tid){ openTid=cm.tid; renderTour(); showOnly('ovTour'); }
+  }
+}
+function handleBack(){            // true: uygulamada kal, false: çıkışa izin ver
+  const ov=openOv();
+  if(ov==='ovPause'){ if(pzConfirmOpen()) pzConfirm(false); else closePause(); return true; }
+  if(ov==='ovMenu' || ov==='ovSplash'){
+    toastAll('Çıkmak için tekrar geri bas');
+    return false;
+  }
+  if(ov==='ovCount') return true;   // geri sayım: yok say
+  if(ov==='ovRound'){
+    const rm=document.getElementById('rMenu');
+    if(rm && rm.style.display!=='none'){ rm.click(); return true; }
+  }
+  const sel=BACK_SEL[ov];
+  if(sel){
+    const list=document.getElementById(ov).querySelectorAll(sel);
+    if(list.length){ list[list.length-1].click(); return true; }
+    goMenu(); return true;
+  }
+  // maç / oyun sırasında: geri tuşu oyun menüsünü açar
+  if(game!=='menu' || ov==='ovTurn' || ov==='ovRound'){ openPause(); return true; }
+  goMenu(); return true;
+}
+window.addEventListener('popstate', ()=>{
+  if(navSkipPop){ navSkipPop=false; return; }
+  let stay=true;
+  try{ stay=handleBack(); }catch(e){ try{ goMenu(); }catch(_){} }
+  if(!stay){ const d=navDepth(); if(d>0){ navSkipPop=true; history.go(-d); } }   // ana menü: sonraki geri uygulamadan çıkar
+});
+document.addEventListener('pointerup', navPush, true);
+document.addEventListener('keydown', navPush, true);
+
 // test kancası
-if(/[?&]test\b/.test(location.search)) window.__game = { get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
+if(/[?&]test\b/.test(location.search)) window.__game = { get preview(){ return PREVIEW_OVR; }, get match(){ return curMatch && { def:curMatch.def, kind:curMatch.kind, stage:curMatch.stage }; }, get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
   get timeLeft(){return timeLeft;}, set timeLeft(v){timeLeft=v;}, releasePoint,
   shoot(vx,vy){ const p=court; if(!p.canShoot()) return false; p.pending={vx,vy}; p.fig.go('release',.09); p.state='releasing'; p.timer=0; return true; } };
 })();
