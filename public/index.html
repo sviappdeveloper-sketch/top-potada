@@ -835,33 +835,68 @@ sfx.tick = () => tone(1250, .05, 'square', .035);
 sfx.buzzer = () => { tone(150, .7, 'sawtooth', .12); tone(153, .7, 'square', .05); };
 
 // ---------- savunmacılar ----------
-const DEF_X = { 1:[345], 2:[312,404], 3:[292,368,442] };
+// ilk savunmacı atıcının hemen önünde (alçak/orta yayları keser), diğerleri potaya doğru (düz atışları keser)
+const DEF_X = { 1:[270], 2:[268,425], 3:[264,350,436] };
 const DEF_JERSEY = '#4a4e57';
 function makeDefenders(n){
   return (DEF_X[n]||[]).map((x,i)=>{ const f=new Figure(x); f.facing=-1; f.jersey=DEF_JERSEY; f.pose={...POSES.guard}; f.from=f.pose; f.to=f.pose; f.t=1;
-    return { fig:f, x, t:RNG()*1.2, period:1.25+RNG()*.9+i*.15, jumpDur:.55, jy:0, segs:[] }; });
+    return { fig:f, x, i, t:RNG()*1.2, period:1.25+RNG()*.9+i*.15, jumpDur:.5, jumpH:DEF_JUMP, react:DEF_REACT, jy:0, jt:-1, wait:-1, seen:{}, segs:[] }; });
 }
 function capsuleHit(b, ax, ay, cx, cy, r, e){
   const dx=cx-ax, dy=cy-ay, L2=dx*dx+dy*dy; let t = L2 ? ((b.x-ax)*dx+(b.y-ay)*dy)/L2 : 0; t=Math.max(0,Math.min(1,t));
   pointHit(b, ax+dx*t, ay+dy*t, r, e, v=>{ if(v>140) tone(210,.06,'sine',Math.min(.12,v/6000)); });
 }
-function updateDefenders(defs, dt){
+// Savunmacılar atılan topu izler: topun kendi hizalarından geçeceği anı ve yüksekliği hesaplayıp
+// zıplamanın tepe noktasını o ana denk getirir. Tepki/hata payı topun sıra numarasından türetilen
+// belirlenimci "rastgele" sayıyla seçilir; online tekrar oynatmada iki tarafta da birebir aynı işler.
+const DEF_JUMP = 92, DEF_JUMP_BOSS = 116, DEF_REACT = .82, DEF_REACT_BOSS = .94, DEF_REACH = 142, DEF_EXT = 22;
+function hrand(a, b){ let h = (Math.imul(a|0, 374761393) + Math.imul(b|0, 668265263)) | 0;
+  h = Math.imul(h ^ (h>>>13), 1274126177); h ^= h>>>16; return (h>>>0) / 4294967296; }
+function defenderWatch(d, balls){
+  if(d.jt>=0 || d.wait>=0) return;
+  for(const b of balls){
+    if(b.fade || !b.sid || d.seen[b.sid] || b.vx<=40 || b.x >= d.x-6) continue;
+    d.seen[b.sid]=true;
+    const t=(d.x-b.x)/b.vx; if(t>2.2) continue;
+    const yc = b.y + b.vy*t + .5*GRAV*t*t;                    // topun savunmacı hizasındaki yüksekliği
+    const top = -(DEF_REACH + d.jumpH + DEF_EXT + BR);         // zıplayınca uzanabileceği en yüksek nokta
+    if(yc < top - 45 || yc > -20) continue;                    // çok yüksekten geçiyor ya da yere düşüyor: boşuna zıplama
+    const r1=hrand(b.sid*7 + 3, d.i+11), r2=hrand(b.sid*13 + 5, d.i+29);
+    if(r1 > d.react) continue;                                  // bu topa tepki veremedi
+    d.wait = Math.max(0, t - d.jumpDur*.5 + (r2-.5)*.16);       // tepe noktası topla buluşsun (± küçük hata)
+    return;
+  }
+}
+function updateDefenders(defs, dt, balls){
   for(const d of defs){
-    d.t += dt; const u = (d.t % d.period);
+    d.t += dt;
     if(d.move){ d.x = d.baseX + Math.sin(d.t*d.sp)*d.move; d.fig.x = d.x; }
-    d.jy = u < d.jumpDur ? Math.sin(Math.PI*u/d.jumpDur)*(d.jumpH||44) : 0;
+    if(balls) defenderWatch(d, balls);
+    if(d.wait>=0){ d.wait-=dt; if(d.wait<0){ d.wait=-1; d.jt=0; } }
+    let air=false;
+    if(d.jt>=0){ d.jt+=dt; if(d.jt>=d.jumpDur){ d.jt=-1; d.jy=0; } else { air=true; d.jy=Math.sin(Math.PI*d.jt/d.jumpDur)*d.jumpH; } }
+    else { const u=d.t % d.period; d.jy = u<.3 ? Math.sin(Math.PI*u/.3)*9 : 0; }   // beklerken küçük sekmeler
     d.fig.breath += dt;
-    d.fig.pose = { ...POSES.guard, lift:d.jy, up:POSES.guard.up + Math.sin(d.t*3)*.08, thigh: u<d.jumpDur ? .08 : POSES.guard.thigh, shin: u<d.jumpDur ? -.06 : POSES.guard.shin };
+    d.fig.pose = { ...POSES.guard, lift:d.jy, up:POSES.guard.up + (air ? .12 : Math.sin(d.t*3)*.08), thigh: air ? .08 : POSES.guard.thigh, shin: air ? -.06 : POSES.guard.shin };
     const j=d.fig.joints(), back=solve({...d.fig.pose, up:d.fig.pose.up-.12, fore:d.fig.pose.fore-.1}, d.x+3, -1);
     d.segs=[ [j.foot,j.knee,6],[j.knee,j.hip,7],[j.hip,j.neck,9],[j.sh,j.elbow,4.5],[j.elbow,j.hand,4.5],[back.sh,back.elbow,4.5],[back.elbow,back.hand,4.5] ];
+    if(air){   // havadayken eller yukarı uzanır: topa vurabildiği alan büyür (görünmez "parmak ucu" kapsülü)
+      for(const [e,h] of [[j.elbow,j.hand],[back.elbow,back.hand]]){
+        const dx=h.x-e.x, dy=h.y-e.y, L=Math.hypot(dx,dy)||1;
+        d.segs.push([h, { x:h.x+dx/L*DEF_EXT, y:h.y+dy/L*DEF_EXT }, 6]);
+      }
+    }
+    d.ext = air ? d.segs.slice(7) : null;
     d.head=j.head;
   }
 }
 function defendersHit(defs, b){
+  const vx0=b.vx, vy0=b.vy;
   for(const d of defs){
     for(const [a,c,r] of d.segs) capsuleHit(b, a.x,a.y,c.x,c.y, r, .45);
     if(d.head) pointHit(b, d.head.x, d.head.y, 10, .45, ()=>{});
   }
+  return (b.vx!==vx0 || b.vy!==vy0) && !b.scored;
 }
 
 // ---------- tek saha ----------
@@ -871,17 +906,17 @@ class Court {
     this.color=color; this.balls=this.balls ? this.balls.map(b=>(b.fade=true,b)) : [];
     this.rack=SHOTS-1; this.holding=true; this.fig=new Figure(PX); this.fig.jersey=color; this.state='ready'; this.timer=0;
     this.net=0; this.floaters=[]; this.idle=0; this.aim=null; this.lastLaunch=0; this.timeUp=false; this.pending=null;
-    this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N);
+    this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); this.shotN=0;
   }
   get left(){ return this.rack + (this.holding?1:0); }
   // oyun başında: savunmacılar tohumla yeniden kurulur, adım sayacı sıfırlanır
   syncStart(seed){
-    RNG = seeded(String(seed||'')); this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); RNG = Math.random;
+    RNG = seeded(String(seed||'')); this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); RNG = Math.random; this.shotN=0;
     this.simTick=0; this.acc=0; SHOTLOG=[]; SEED=String(seed||'');
   }
   canShoot(){ return game==='play' && !this.timeUp && this.state==='ready' && this.holding && !lvSeqWait; }
   launch(vx, vy, ptsOverride){
-    const r=releasePoint(); const b=new Ball(r.x, r.y); b.vx=vx; b.vy=vy; b.color=this.color;
+    const r=releasePoint(); const b=new Ball(r.x, r.y); b.vx=vx; b.vy=vy; b.color=this.color; b.sid=(this.shotN=(this.shotN||0)+1);
     b.pts = BASE_PTS + Math.floor(Math.max(0,timeLeft))*PTS_PER_SEC*PTS_MUL;   // değer, atış anındaki kalan süreye göre
     if(ptsOverride==null && game==='play' && MODE==='level' && curLevel && curLevel.gold && this.left===1){ b.pts*=3; b.gold=true; b.color='#e9b949';
       this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Altın top ×3' }); }
@@ -904,13 +939,13 @@ class Court {
     for(let s=0;s<steps;s++){
       for(const b of this.balls){
         if(b.fade) continue;
-        const py=b.y;
+        const py=b.y, vx0b=b.vx;
         b.vy += GRAV*h; if(WIND && b.y < -BR-2) b.vx += WIND*h; b.x += b.vx*h; b.y += b.vy*h; b.a += b.vx*h/BR;
         if(!b.scored && py < RIM.y && b.y >= RIM.y && b.x > RIM.x1+3 && b.x < RIM.x2-3 && b.vy>0){ b.scored=true; this.onScore(b); }
         for(const rx of [RIM.x1, RIM.x2]) pointHit(b, rx, RIM.y, 2.5, .62, v=>sfx.clang(v));
         segHit(b, BOARD.x, BOARD.y1, BOARD.y2, 4, .55, v=>sfx.board(v));
         segHit(b, POLE.x, POLE.y1, POLE.y2, 3.5, .45, v=>sfx.board(v));
-        if(this.defs.length) defendersHit(this.defs, b);
+        if(this.defs.length && defendersHit(this.defs, b) && !b.blocked && b.vx<vx0b*.6){ b.blocked=true; this.floaters.push({ x:b.x, y:b.y-30, t:0, txt:'Blok!' }); }
         if(b.y > -BR){
           b.y=-BR;
           if(b.vy>0){ const v=b.vy; b.vy=-b.vy*.52; if(Math.abs(b.vy)<55) b.vy=0; if(v>120) sfx.bounce(v); }
@@ -951,7 +986,7 @@ class Court {
     p.acc=(p.acc||0)+dt; let n=0;
     while(p.acc>=STEP && n<60){ p.acc-=STEP; n++;
       if(game==='replay' && REPLAY) replayTick();
-      if(p.defs.length) updateDefenders(p.defs, STEP);
+      if(p.defs.length) updateDefenders(p.defs, STEP, p.balls);
       p.physics(STEP, 1); p.simTick=(p.simTick||0)+1; }
     if(game!=='play' && game!=='replay') return;
     switch(p.state){
@@ -983,7 +1018,9 @@ class Court {
     drawScene(g);
     drawHoop(g, this.net);
     drawCart(g, this.rack, this.color);
-    for(const d of this.defs){ d.fig.draw(g); d.fig.drawFrontArm(); }
+    for(const d of this.defs){ d.fig.draw(g); d.fig.drawFrontArm();
+      if(d.ext){ g.strokeStyle=C.body; g.lineCap='round'; g.lineWidth=6; g.beginPath();   // uzanan kollar/eller
+        for(const [a,c] of d.ext){ g.moveTo(a.x,a.y); g.lineTo(c.x,c.y); } g.stroke(); } }
     this.fig.draw(g);
     if(this.holding){ const h=this.fig.hand(); drawBall(g,h.x,h.y,.4,this.color); }
     this.fig.drawFrontArm();
@@ -2097,24 +2134,24 @@ const LEVELS = [
   { name:'İlk Antrenman', story:'Mahalle sahasında ilk günün. {a} kenardan izliyor, ilk atışını bekliyor.', rule:'Isınma turu: savunmacı yok, yardım çizgisi uzun.', preview:.8, stars:[100,200,300] },
   { name:'Sabah Rüzgârı', story:'Erken kalkan pota kapar! Sabah serinliğinde potaya doğru hafif bir rüzgâr esiyor.', rule:'Rüzgâr topu sürükler. Üstteki oka bak.', preview:.6, wind:70, gust:true, stars:[100,180,280],
     sky:{ skyTop:'#e9f2f5', skyMid:'#f6efe0', skyLow:'#f7dcb8' } },
-  { name:'Uzun Savunmacı', story:'Mahallenin en uzun oyuncusu {a} önüne dikildi. “Geçemezsin!” diyor.', rule:'1 savunmacı zıplayarak atışını engellemeye çalışır.', preview:.55, defs:[{x:345}], stars:[90,170,260] },
+  { name:'Uzun Savunmacı', story:'Mahallenin en uzun oyuncusu {a} önüne dikildi. “Geçemezsin!” diyor.', rule:'1 savunmacı zıplayarak atışını engellemeye çalışır.', preview:.55, defs:[{x:275}], stars:[90,170,260] },
   { name:'Uzak Pota', story:'Belediye potayı geri çekmiş. Bacakların değil, bileğin çalışacak.', rule:'Pota çok daha uzakta.', preview:.5, dist:[80,-24], stars:[90,170,250] },
   { name:'Gece Maçı', story:'Sokak lambası yandı, gerisi karanlık. Potayı ışığın altında ara.', rule:'Karanlık saha, kısa yardım çizgisi.', preview:.3, night:true, stars:[80,160,240],
     sky:{ skyTop:'#cfc6dc', skyMid:'#a99bbf', skyLow:'#6f6690', floor:'#7a4a3a' } },
   { name:'Kayan Pota', story:'Potanın ayağı tekerlekli! {a} onu bir ileri bir geri itiyor.', rule:'Pota sürekli yer değiştirir.', preview:.45, hoopMove:{ amp:45, sp:.9 }, stars:[80,150,230] },
-  { name:'İkili Savunma', story:'{a} yanına {b} ile geldi. Artık iki kişiler.', rule:'2 savunmacı.', preview:.45, defs:[{x:312},{x:404}], stars:[70,140,220] },
+  { name:'İkili Savunma', story:'{a} yanına {b} ile geldi. Artık iki kişiler.', rule:'2 savunmacı.', preview:.45, defs:[{x:270},{x:420}], stars:[70,140,220] },
   { name:'Dar Çember', story:'Eski okul sahası: çember paslanmış, iyice daralmış. Kusursuz atış şart.', rule:'Çember daha dar.', preview:.35, rimW:29, stars:[70,140,210] },
   { name:'Yağmurlu Gün', story:'Yağmur başladı. Islak top ağırlaştı, daha güçlü atman lazım.', rule:'Top daha hızlı düşer.', preview:.4, rain:true, grav:1.13, stars:[70,130,200],
     sky:{ skyTop:'#dfe3e6', skyMid:'#c9cfd4', skyLow:'#aeb6bd', floor:'#9c5b45' } },
   { name:'Fırtına', story:'Fırtına çıktı! Rüzgâr bir sağa bir sola, hiç durmuyor.', rule:'Yön değiştiren güçlü rüzgâr.', preview:.35, storm:120, stars:[60,120,190],
     sky:{ skyTop:'#d4d7de', skyMid:'#b7bcc7', skyLow:'#8f97a6' } },
-  { name:'Üçlü Duvar', story:'Mahalle kupası öncesi son prova. Karşında üç kişilik bir duvar var.', rule:'3 savunmacı.', preview:.35, defs:[{x:292},{x:368},{x:442}], stars:[60,120,180] },
-  { name:'Kayan Savunma', story:'Savunmacılar yerinde durmayı bıraktı; sağa sola kayarak boşluk kapatıyorlar.', rule:'2 savunmacı hem zıplar hem kayar.', preview:.3, defs:[{x:318,move:45,sp:1.1},{x:410,move:35,sp:1.6}], stars:[50,110,170] },
+  { name:'Üçlü Duvar', story:'Mahalle kupası öncesi son prova. Karşında üç kişilik bir duvar var.', rule:'3 savunmacı.', preview:.35, defs:[{x:266},{x:350},{x:438}], stars:[60,120,180] },
+  { name:'Kayan Savunma', story:'Savunmacılar yerinde durmayı bıraktı; sağa sola kayarak boşluk kapatıyorlar.', rule:'2 savunmacı hem zıplar hem kayar.', preview:.3, defs:[{x:282,move:22,sp:1.1},{x:410,move:35,sp:1.6}], stars:[50,110,170] },
   { name:'Hızlı Saat', story:'Hakemin acelesi var: her top için yalnızca 5 saniye. Ama her saniye iki kat puan!', rule:'Top başına 5 saniye; saniye puanı ×2.', preview:.4, ballTime:5, mul:2, stars:[60,120,200] },
-  { name:'Karanlık Rüzgâr', story:'Gece yarısı, rüzgâr ve tek başına bir savunmacı. Gözünü potadan ayırma.', rule:'Karanlık + rüzgâr + 1 kayan savunmacı.', preview:.25, night:true, wind:-70, gust:true, defs:[{x:360,move:30,sp:1.2}], stars:[50,100,160],
+  { name:'Karanlık Rüzgâr', story:'Gece yarısı, rüzgâr ve tek başına bir savunmacı. Gözünü potadan ayırma.', rule:'Karanlık + rüzgâr + 1 kayan savunmacı.', preview:.25, night:true, wind:-70, gust:true, defs:[{x:285,move:25,sp:1.2}], stars:[50,100,160],
     sky:{ skyTop:'#cfc6dc', skyMid:'#a99bbf', skyLow:'#6f6690', floor:'#7a4a3a' } },
   { name:'Mahallenin Efsanesi', story:'Mahallenin efsanesi {a} potayı koruyor; iki yardımcısı da yanında. Üstelik pota da kayıyor!', rule:'Patron çok yükseğe zıplar. 3 savunmacı, uzak ve kayan pota.', preview:.2, dist:[80,-24], hoopMove:{ amp:28, sp:.7 },
-    defs:[{x:322,move:40,sp:1.3},{x:420,boss:true},{x:500,move:22,sp:1.8}], stars:[50,100,150],
+    defs:[{x:280,move:20,sp:1.3},{x:420,boss:true},{x:500,move:22,sp:1.8}], stars:[50,100,150],
     sky:{ skyTop:'#f6d6c2', skyMid:'#efb48f', skyLow:'#d9805f' } },
   // ---------- 2. BÖLÜM · ŞEHİR POTALARI: uzak potalar, farklı atış serileri ----------
   { ch:2, name:'Liman Sahası', story:'Mahalleyi geride bıraktın. Liman sahasında pota bildiğinden çok daha uzakta.', rule:'Çok uzak pota.', preview:.5, dist:[100,-30], stars:[90,170,250],
@@ -2126,11 +2163,11 @@ const LEVELS = [
   { ch:2, name:'Köprü Altı', story:'Köprünün altında rüzgâr tünel gibi esiyor, pota da en uzakta.', rule:'En uzak pota + değişken rüzgâr.', preview:.4, dist:[110,-30], wind:60, gust:true, stars:[70,140,210],
     sky:{ skyTop:'#dfe6ea', skyMid:'#ccd6dc', skyLow:'#a9b8c1' } },
   { ch:2, name:'Üç Top Üç Kat', story:'Sadece 3 top var ama her saniye üç kat puan. Hızlı ve isabetli ol.', rule:'3 top; saniye puanı ×3. Uzak pota.', preview:.35, dist:[100,-28], shots:3, mul:3, stars:[150,300,450] },
-  { ch:2, name:'Uzak Savunma', story:'{a} ve {b} uzak potanın önünde kayarak bekliyor.', rule:'En uzak pota + 2 kayan savunmacı.', preview:.35, dist:[115,-30], defs:[{x:360,move:40,sp:1.2},{x:460,move:30,sp:1.6}], stars:[60,120,190] },
+  { ch:2, name:'Uzak Savunma', story:'{a} ve {b} uzak potanın önünde kayarak bekliyor.', rule:'En uzak pota + 2 kayan savunmacı.', preview:.35, dist:[115,-30], defs:[{x:272,move:20,sp:1.2},{x:470,move:30,sp:1.6}], stars:[60,120,190] },
   { ch:2, name:'Gece Serisi', story:'Şehrin ışıkları yandı. Pota her topta yer değiştiriyor ve son top altın!', rule:'Karanlık + değişen pota + altın son top.', preview:.3, night:true, seq:[40,115,70,100,115], dist:[0,-24], gold:true, stars:[90,180,280],
     sky:{ skyTop:'#c9c3dc', skyMid:'#9f96bd', skyLow:'#5f5a86', floor:'#6f4536' } },
   { ch:2, name:'Şehrin Efsanesi', story:'Şehrin efsanesi {a} seni bekliyor. 7 top, kayan uzak pota, rüzgâr ve altın son top.', rule:'Patron + 2 savunmacı, kayan uzak pota, rüzgâr, 7 top, altın son top.', preview:.25, dist:[95,-30], hoopMove:{ amp:22, sp:.8 }, wind:-50, gust:true, shots:7, gold:true,
-    defs:[{x:340,move:35,sp:1.4},{x:445,boss:true},{x:525,move:20,sp:1.9}], stars:[90,180,280],
+    defs:[{x:276,move:20,sp:1.4},{x:445,boss:true},{x:525,move:20,sp:1.9}], stars:[90,180,280],
     sky:{ skyTop:'#f3d2c8', skyMid:'#e2a58e', skyLow:'#b8705a' } },
 ].map((l,i)=>({ ...l, n:i+1, id:'L'+(i+1) }));
 const LV_N = LEVELS.length, LV_BOSS = LEVELS.filter((l,i)=>i===LV_N-1 || (LEVELS[i+1] && LEVELS[i+1].ch && !l.ch)).map(l=>l.n);
@@ -2148,7 +2185,7 @@ const starStr = k => '★'.repeat(k) + '☆'.repeat(3-k);
 function makeDefendersCfg(list){
   return list.map((c,i)=>{ const f=new Figure(c.x); f.facing=-1; f.jersey=c.boss?'#b03a2e':DEF_JERSEY; f.pose={...POSES.guard}; f.from=f.pose; f.to=f.pose; f.t=1;
     return { fig:f, x:c.x, baseX:c.x, move:c.move||0, sp:c.sp||1, boss:!!c.boss, t:RNG()*1.2, period: c.boss ? 1.05 : 1.25+RNG()*.9+i*.15,
-      jumpDur: c.boss ? .62 : .55, jumpH: c.boss ? 74 : 44, jy:0, segs:[] }; });
+      i, jumpDur: c.boss ? .56 : .5, jumpH: c.boss ? DEF_JUMP_BOSS : DEF_JUMP, react: c.boss ? DEF_REACT_BOSS : DEF_REACT, jy:0, jt:-1, wait:-1, seen:{}, segs:[] }; });
 }
 function applyLevelEnv(lv){
   lvSeqIdx = lv.seq ? 0 : -1; lvSeqWait=false;
