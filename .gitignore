@@ -6,3 +6,4 @@ node_modules/
 *.keystore
 *.jks
 android.keystore
+__pycache__/
