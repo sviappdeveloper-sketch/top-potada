@@ -64,7 +64,7 @@ def call(method, path, body=None, quiet=False):
 
 
 # 1) Paket kimliği (yoksa oluştur)
-bundles = [b for b in call("GET", f"/bundleIds?filter[identifier]={BUNDLE}&limit=20")["data"]
+bundles = [b for b in call("GET", f"/bundleIds?filter[identifier]={BUNDLE}")["data"]
            if b["attributes"]["identifier"] == BUNDLE]
 if bundles:
     bundle = bundles[0]
@@ -75,23 +75,36 @@ else:
     print("Paket kimliği oluşturuldu:", BUNDLE)
 
 # 2) Apple ile Giriş yetkisi
-caps = call("GET", f"/bundleIds/{bundle['id']}/bundleIdCapabilities?limit=50")["data"]
-if any(c["attributes"].get("capabilityType") == "APPLE_ID_AUTH" for c in caps):
+# (Bu adım derlemeyi durdurmaz; sorun olursa uyarı yazar ve elle açma yolunu söyler.)
+try:
+    caps = call("GET", f"/bundleIds/{bundle['id']}/bundleIdCapabilities")["data"]
+    have = any(c["attributes"].get("capabilityType") == "APPLE_ID_AUTH" for c in caps)
+except urllib.error.HTTPError:
+    have = False
+if have:
     print("Apple ile Giriş yetkisi açık.")
 else:
     base = {"type": "bundleIdCapabilities", "attributes": {"capabilityType": "APPLE_ID_AUTH"},
             "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bundle["id"]}}}}
-    try:
-        with_settings = json.loads(json.dumps(base))
-        with_settings["attributes"]["settings"] = [{"key": "APPLE_ID_AUTH_APP_CONSENT",
-                                                    "options": [{"key": "PRIMARY_APP_CONSENT"}]}]
-        call("POST", "/bundleIdCapabilities", {"data": with_settings}, quiet=True)
-    except urllib.error.HTTPError:
-        call("POST", "/bundleIdCapabilities", {"data": base})
-    print("Apple ile Giriş yetkisi açıldı.")
+    with_settings = json.loads(json.dumps(base))
+    with_settings["attributes"]["settings"] = [{"key": "APPLE_ID_AUTH_APP_CONSENT",
+                                                "options": [{"key": "PRIMARY_APP_CONSENT"}]}]
+    done = False
+    for body in (with_settings, base):
+        try:
+            call("POST", "/bundleIdCapabilities", {"data": body})
+            done = True
+            break
+        except urllib.error.HTTPError as e:
+            if e.code == 409:          # zaten açık
+                done = True
+                break
+    print("Apple ile Giriş yetkisi açıldı." if done else
+          "UYARI: Apple ile Giriş yetkisi API ile açılamadı. developer.apple.com → Identifiers → "
+          "com.toppotada.oyun → 'Sign In with Apple' kutusunu işaretleyip kaydet, sonra derlemeyi yeniden başlat.")
 
 # 3) App Store Connect uygulama kaydı (API ile açılamaz; yoksa yükleme başarısız olur)
-apps = call("GET", f"/apps?filter[bundleId]={BUNDLE}&limit=5")["data"]
+apps = call("GET", f"/apps?filter[bundleId]={BUNDLE}")["data"]
 if apps:
     print("App Store Connect kaydı var:", apps[0]["attributes"]["name"], apps[0]["id"])
     app_id = apps[0]["id"]
