@@ -13,8 +13,7 @@ PRODUCT_BUNDLE_IDENTIFIER = com.toppotada.oyun
 TP_GOOGLE_CLIENT_ID = BURAYA.apps.googleusercontent.com
 TP_GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.BURAYA
 
-// AdMob → Uygulamalar → iOS uygulaması (Top Potada). Şimdilik Google'ın TEST kimlikleri:
-// test reklamı görünür, gelir getirmez. Yayından önce gerçek iOS kimlikleriyle değiştir.
-TP_ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
-TP_AD_INTERSTITIAL = ca-app-pub-3940256099942544/4411468910
-TP_AD_REWARDED = ca-app-pub-3940256099942544/1712485313
+// AdMob → Uygulamalar → Top Potada iOS. (Google'ın test kimlikleri 3940256099942544 yazılırsa reklam kapanır.)
+TP_ADMOB_APP_ID = ca-app-pub-5425620592844224~9499014165
+TP_AD_INTERSTITIAL = ca-app-pub-5425620592844224/3715224501
+TP_AD_REWARDED = ca-app-pub-5425620592844224/7179826790

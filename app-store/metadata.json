@@ -20,7 +20,7 @@
     "contactEmail": "sviapp.developer@gmail.com",
     "contactPhone": "",
     "demoAccountRequired": false,
-    "notes": "Top Potada is a basketball shooting game. No login is needed to play: the app starts with an anonymous guest session (single player, same-phone multiplayer, online room). Tournaments, monthly leagues and the leaderboard require a free account: tap 'Giriş yap' on the main menu and use Sign in with Apple. Account deletion: tap your name on the main menu > 'Hesabım' > 'Hesabımı sil' (tap twice to confirm); this deletes the account and its game data and revokes the Sign in with Apple token. The app contains no in-app purchases. How to play: drag back from the player, aim with the dotted line and release."
+    "notes": "Top Potada is a basketball shooting game. No login is needed to play: the app starts with an anonymous guest session (single player, same-phone multiplayer, online room). Tournaments, monthly leagues and the leaderboard require a free account: tap 'Giriş yap' on the main menu and use Sign in with Apple. Account deletion: tap your name on the main menu > 'Hesabım' > 'Hesabımı sil' (tap twice to confirm); this deletes the account and its game data and revokes the Sign in with Apple token. The app contains no in-app purchases. How to play: drag back from the player, aim with the dotted line and release. The app is free and shows AdMob ads (an interstitial between games and an optional rewarded ad for an extra ball), with the UMP consent form where required and the App Tracking Transparency prompt."
   },
   "screenshots": {
     "APP_IPHONE_67": [
