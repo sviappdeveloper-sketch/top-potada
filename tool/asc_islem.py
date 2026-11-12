@@ -199,6 +199,10 @@ if VLOC:
 
 
 # ---------------------------------------------------------------- 6) yaş derecelendirmesi
+YENI_SORULAR = {"advertising": True, "userGeneratedContent": False, "messagingAndChat": False, "parentalControls": False,
+                "ageAssurance": False, "healthOrWellnessTopics": False, "lootBox": False, "gunsOrOtherWeapons": "NONE"}
+
+
 def yas():
     d = call("GET", f"/appInfos/{INFO_ID}/ageRatingDeclaration")["data"]
     temel = {k: "NONE" for k in (
@@ -207,17 +211,30 @@ def yas():
         "sexualContentGraphicAndNudity", "sexualContentOrNudity", "violenceCartoonOrFantasy",
         "violenceRealistic", "violenceRealisticProlongedGraphicOrSadistic")}
     temel.update({"gambling": False, "unrestrictedWebAccess": False})
-    call("PATCH", f"/ageRatingDeclarations/{d['id']}", {"data": {"type": "ageRatingDeclarations", "id": d["id"], "attributes": temel}})
-    print("   temel sorular: hepsi 'yok'")
-    # 2025'te eklenen sorular (API sürümüne göre bazıları olmayabilir: tek tek denenir)
-    yeni = {"advertising": True, "userGeneratedContent": False, "messagingAndChat": False, "parentalControls": False,
-            "ageAssurance": False, "healthOrWellnessTopics": False, "lootBox": False, "gunsOrOtherWeapons": "NONE"}
-    for k, v in yeni.items():
+    # 2025'te eklenen sorular Apple'da zorunlu: hepsi tek istekte gönderilir.
+    # API'nin tanımadığı bir alan olursa o alan çıkarılıp yeniden denenir.
+    tum = dict(temel)
+    tum.update(YENI_SORULAR)
+    for _ in range(len(YENI_SORULAR) + 1):
         try:
-            call("PATCH", f"/ageRatingDeclarations/{d['id']}", {"data": {"type": "ageRatingDeclarations", "id": d["id"], "attributes": {k: v}}}, quiet=True)
-        except urllib.error.HTTPError:
-            print(f"   (soru '{k}' API'de yok, atlandı)")
-    print("   yeni sorular: reklam var; sohbet, kullanıcı içeriği, ganimet kutusu yok")
+            call("PATCH", f"/ageRatingDeclarations/{d['id']}", {"data": {"type": "ageRatingDeclarations", "id": d["id"], "attributes": tum}}, quiet=True)
+            break
+        except urllib.error.HTTPError as e:
+            body = getattr(e, "body", "")
+            adlar = re.findall(r"'([A-Za-z]+)'", body)
+            if "REQUIRED" in body and adlar:
+                for k in adlar:
+                    tum[k] = "NONE" if k.endswith(("References", "Themes", "Weapons", "Humor", "Nudity", "Realistic",
+                                                   "Fantasy", "Information", "Simulated", "Contests", "Sadistic")) else False
+                continue
+            fazla = [k for k in adlar if k in tum and k in YENI_SORULAR]
+            if fazla:
+                for k in fazla:
+                    tum.pop(k)
+                continue
+            print(f"HATA yaş derecelendirmesi -> {e.code} {body[:600]}")
+            raise
+    print("   yaş derecelendirmesi kaydedildi:", ", ".join(f"{k}={v}" for k, v in tum.items() if k in YENI_SORULAR))
 
 
 if INFO_ID:
