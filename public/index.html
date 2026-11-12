@@ -192,7 +192,21 @@
   .bt-av{width:30px;height:30px;border-radius:50%;background:var(--bc);color:#fff;display:grid;place-items:center;font-weight:900;flex:none}
   .lvtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--bc);border-radius:999px;padding:1px 7px;vertical-align:1px;margin-left:4px}
   .bot.sel{box-shadow:0 0 0 3px var(--bc)}
-  .bt-bio{font-size:12px;color:#5d564d;margin:6px 0 4px;line-height:1.35}.bt-rec{font-size:11px;font-weight:700;letter-spacing:.04em}
+  .bt-bio{font-size:12px;color:#5d564d;margin:6px 0 6px;line-height:1.35}.bt-rec{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+  .bt-rec.zero{color:var(--muted);font-weight:600}
+  .bt-def{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:1px 7px;margin-top:2px;background:rgba(38,34,30,.08);color:#5d564d}
+  .hub-sec{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:22px 0 6px}
+  .hub-sec .opt-label{margin:0}.hub-sec small{font-size:12px;color:var(--muted)}
+  .hc{border:1.5px solid rgba(38,34,30,.3);border-left:6px solid var(--hc,#26221e);border-radius:14px;padding:12px 14px;margin:0;text-align:left;cursor:pointer;background:rgba(255,255,255,.45)}
+  .hc:active{transform:scale(.99)}
+  .hc-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hc-title{font-size:18px;font-weight:800;line-height:1.15}
+  .hc-meta{font-size:12.5px;color:#5d564d;margin-top:3px}
+  .hc-go{flex:none;font-size:13px;font-weight:800;color:#fff;background:var(--hc,#26221e);border-radius:999px;padding:6px 12px;white-space:nowrap}
+  .hc-rules{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.4}
+  .wk-l{font-size:11.5px;font-weight:700;color:#5d564d;margin-top:5px}
+  .wk{display:flex;gap:3px;margin-top:9px}.wk i{flex:1;height:5px;border-radius:3px;background:rgba(38,34,30,.13)}.wk i.on{background:var(--hc)}
+  .trophy{display:inline-flex;gap:10px;margin-top:8px;font-size:13px;font-weight:700}
   .fastbtn{position:fixed;right:14px;bottom:16px;z-index:4;display:none;align-items:center;gap:6px;
     background:rgba(255,255,255,.55);color:#6d665c;border:1px solid rgba(38,34,30,.18);border-radius:999px;
     padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;
@@ -922,6 +936,7 @@ class Court {
       this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Altın top ×3' }); }
     if(ptsOverride!=null) b.pts=ptsOverride;
     if(game==='play') SHOTLOG.push([this.simTick||0, vx, vy, b.pts]);
+    if(game==='play' && MODE==='online' && rm){ myShotN++; rm.presence({ ls:{ n:myShotN, vx:Math.round(vx), vy:Math.round(vy), rd:round, pts:b.pts } }).catch(()=>{}); }
     this.balls.push(b); this.holding=false; sfx.throw(); this.lastLaunch=performance.now();
     timeLeft=BALL_TIME; lastTick=99;
   }
@@ -980,6 +995,30 @@ class Court {
     this.floaters.push({x:(RIM.x1+RIM.x2)/2, y:RIM.y-30, t:0, txt:`+${b.pts}`});
   }
   settled(){ return this.balls.every(b=>b.fade || b.rest>.35); }
+  addGhost(vx, vy, pts, nm, color){
+    if(!this.ghosts) this.ghosts=[];
+    if(this.ghosts.length>6) this.ghosts.shift();
+    const r=releasePoint(), b=new Ball(r.x, r.y); b.vx=vx; b.vy=vy; b.color=hexA(color,.5); b.ink=color; b.nm=nm; b.pts=pts; b.life=0;
+    this.ghosts.push(b);
+    this.floaters.push({ x:r.x+30, y:r.y-46, t:0, txt:`${nm} attı`, color });
+  }
+  ghostPhysics(dt){
+    if(!this.ghosts || !this.ghosts.length) return;
+    const steps=4, h=dt/steps;
+    for(let s=0;s<steps;s++) for(const b of this.ghosts){
+      const py=b.y;
+      b.vy += GRAV*h; if(WIND && b.y < -BR-2) b.vx += WIND*h; b.x += b.vx*h; b.y += b.vy*h; b.a += b.vx*h/BR;
+      if(!b.scored && py < RIM.y && b.y >= RIM.y && b.x > RIM.x1+3 && b.x < RIM.x2-3 && b.vy>0){
+        b.scored=true; b.vx*=.3; this.floaters.push({ x:(RIM.x1+RIM.x2)/2, y:RIM.y-52, t:0, txt:`${b.nm} +${b.pts}`, color:b.ink }); }
+      for(const rx of [RIM.x1, RIM.x2]) pointHit(b, rx, RIM.y, 2.5, .62, ()=>{});
+      segHit(b, BOARD.x, BOARD.y1, BOARD.y2, 4, .55, ()=>{});
+      segHit(b, POLE.x, POLE.y1, POLE.y2, 3.5, .45, ()=>{});
+      if(b.y > -BR){ b.y=-BR; if(b.vy>0){ b.vy=-b.vy*.52; if(Math.abs(b.vy)<55) b.vy=0; } b.vx *= Math.pow(.18, h); }
+      if(b.x < BR){ b.x=BR; b.vx=Math.abs(b.vx)*.5; } if(b.x > W-BR){ b.x=W-BR; b.vx=-Math.abs(b.vx)*.5; }
+    }
+    for(const b of this.ghosts){ b.life+=dt; if(b.life>2.6) b.alpha-=dt*2; }
+    this.ghosts=this.ghosts.filter(b=>b.alpha>0);
+  }
   update(dt){
     const p=this; p.timer+=dt; p.fig.update(dt);
     // sabit adımlı fizik: aynı atışlar her cihazda aynı sonucu verir (rakibi izleme için)
@@ -988,6 +1027,7 @@ class Court {
       if(game==='replay' && REPLAY) replayTick();
       if(p.defs.length) updateDefenders(p.defs, STEP, p.balls);
       p.physics(STEP, 1); p.simTick=(p.simTick||0)+1; }
+    if(MODE==='online') p.ghostPhysics(dt); else if(p.ghosts && p.ghosts.length) p.ghosts=[];
     if(game!=='play' && game!=='replay') return;
     switch(p.state){
       case 'ready':
@@ -1024,11 +1064,12 @@ class Court {
     this.fig.draw(g);
     if(this.holding){ const h=this.fig.hand(); drawBall(g,h.x,h.y,.4,this.color); }
     this.fig.drawFrontArm();
+    if(this.ghosts) for(const b of this.ghosts) drawBall(g,b.x,b.y,b.a,b.color,b.alpha*.9);
     for(const b of this.balls) drawBall(g,b.x,b.y,b.a,b.color||this.color,b.alpha);
     drawNetFront(g, this.net);
     if(MODE==='level' && curLevel) drawLevelFx(g);
     for(const f of this.floaters){
-      g.globalAlpha=Math.max(0,1-f.t/1.3); g.fillStyle=C.ink; g.font='800 32px ui-sans-serif,system-ui,sans-serif'; g.textAlign='center';
+      g.globalAlpha=Math.max(0,1-f.t/1.3); g.fillStyle=f.color||C.ink; g.font=f.color?'800 24px ui-sans-serif,system-ui,sans-serif':'800 32px ui-sans-serif,system-ui,sans-serif'; g.textAlign='center';
       g.fillText(f.txt,f.x,f.y-f.t*45); g.textAlign='left'; g.globalAlpha=1;
     }
     g.textAlign='center';
@@ -1381,8 +1422,26 @@ function renderLobby(){
   wait.textContent = amHost ? (ps.length<2 ? 'Arkadaşların kodla katılsın. İstersen tek başına da başlatabilirsin.' : ps.length>4 ? 'En fazla 4 oyuncu olabilir.' : 'Herkes geldiyse başlat.')
                             : (host ? 'Kurucunun başlatması bekleniyor…' : (Date.now()-joinedAt>2500 ? 'Kurucu odadan ayrıldı.' : 'Bağlanılıyor…'));
 }
+// ---------- canlı oda: rakiplerin atışları "hayalet top" olarak sahada görünür ----------
+// Nişan çizgisi yayınlanmaz; yalnızca topun uçuşu. Rakip başka turdaysa (pota yeri farklı) gösterilmez.
+let myShotN=0; const ghostSeen={};
+const hexA = (hex, a) => { const m=/^#?([0-9a-f]{6})$/i.exec(String(hex||'')); if(!m) return `rgba(80,80,80,${a})`;
+  const v=parseInt(m[1],16); return `rgba(${v>>16&255},${v>>8&255},${v&255},${a})`; };
+function spawnGhosts(){
+  if(MODE!=='online' || !rm) return;
+  for(const p of onlinePeers()){
+    if(p.sameTab) continue;
+    const ls=p.presence.ls; if(!ls || typeof ls.n!=='number') continue;
+    if(ghostSeen[p.peer]===ls.n) continue;
+    const first = ghostSeen[p.peer]===undefined; ghostSeen[p.peer]=ls.n;
+    if(first && onlineStarted && Date.now()-myT0 < 1500) continue;            // odaya girerken eski atışı oynatma
+    if(game!=='play' || num(ls.rd)!==round) continue;
+    court.addGhost(num(ls.vx), num(ls.vy), num(ls.pts), String(p.presence.nm||'').slice(0,14), PLAYER_BALL[Math.max(0,Math.min(3,num(p.presence.ci)))]);
+  }
+}
 function onPeersChange(){
   if(MODE!=='online') return;
+  spawnGhosts();
   const host=hostPeer();
   if(!onlineStarted){
     if(host && host.presence.ph==='go' && !host.sameTab) beginOnline();
@@ -1392,7 +1451,7 @@ function onPeersChange(){
   }
 }
 function beginOnline(){
-  if(onlineStarted) return; onlineStarted=true;
+  if(onlineStarted) return; onlineStarted=true; myShotN=0; for(const k in ghostSeen) delete ghostSeen[k];
   const ps=orderedPeers();
   myColorIdx=Math.max(0, Math.min(3, ps.findIndex(p=>p.sameTab)));
   rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1 }).catch(()=>{});
@@ -2363,19 +2422,32 @@ let cpuBack = null;      // maçtan sonra dönülecek ekran
 function showSolo(){ showOnly('ovSolo'); }
 
 // ---------------- RAKİPLE OYNA: merkez ----------------
+const recText = s => { const w=num(s.w), d=num(s.d), l=num(s.l), n=w+d+l;
+  if(!n) return '<div class="bt-rec zero">Henüz maç yok</div>';
+  return `<div class="bt-rec">${n} maç · ${w} galibiyet${d?` · ${d} beraberlik`:''}</div>`; };
 function renderCpuHub(){
   const q=CPU.quick||{}, lg=CPU.league, tr=CPU.tour, tro=CPU.trophies||{};
+  const T = lg ? CPU_TIERS[lg.tier] : CPU_TIERS[0], wk = lg ? Math.min(lg.week,7) : 0, trOn = tr && !tr.done;
+  const cups = num(tro.g)+num(tro.s)+num(tro.b);
   let h=`<h2>Tek oyuncu · Bilgisayara karşı</h2><h1>Rakiple oyna</h1>
-    <div class="opt-label" style="margin-top:8px">Hızlı maç · seviye seç</div><p class="note" style="text-align:center;margin-top:-4px">Rakibin adı her maçta değişir.</p><div class="bots">` +
+    <div class="hub-sec"><div class="opt-label">Hızlı maç</div><small>Rakibin adı her maçta değişir</small></div><div class="bots">` +
     CPU_CHARS.map(c=>{ const s=q[c.id]||{}; return `<div class="bot" data-q="${c.id}" style="--bc:${c.c}">
-      <div class="bt-top"><span class="bt-av">${esc(c.lvl[0])}</span><div><b>${c.lvl}</b><small>${c.def?c.def+' savunmacı':'savunmacısız'}</small></div></div>
-      <div class="bt-bio">${esc(c.bio)}</div><div class="bt-rec">${num(s.w)} G · ${num(s.d)} B · ${num(s.l)} M</div></div>`; }).join('') + `</div>
-    <div class="opt-label" style="margin-top:20px">Bilgisayar ligi · 3 kademe</div>
-    <div class="tcard" data-go="lg"><div class="tc-top"><b>${lg ? `${CPU_TIERS[lg.tier].n} ligi · ${CPU_DIFF[lgDiff(lg)].n} · ${lg.season}. sezon` : 'Seviye seç ve Bronz’dan başla'}</b>${lg?`<span class="pill">${Math.min(lg.week,7)}/7. hafta</span>`:''}</div>
-      <div class="tc-sub">8 kişilik lig, herkes herkesle 1 maç. İlk 2 yükselir, son 2 düşer. Altın ligin birincisi şampiyon olur.${num(CPU.lgTitles)?` · Şampiyonluk: ${num(CPU.lgTitles)}`:''}</div></div>
-    <div class="opt-label" style="margin-top:20px">Turnuva · eleme ya da grup</div>
-    <div class="tcard" data-go="tr"><div class="tc-top"><b>${tr && !tr.done ? 'Süren turnuvaya devam et' : 'Yeni turnuva başlat'}</b>${tr && !tr.done ? `<span class="pill hot">${tr.type==='grp'?'Grup':'Eleme'} · ${tr.size}</span>`:''}</div>
-      <div class="tc-sub">Diğer turnuvalarla aynı kurallar: tek maç usulü, eşitlikte uzatma; çeyrek finalde 1, yarı finalde 2, finalde 3 savunmacı.${(num(tro.g)+num(tro.s)+num(tro.b))?` · Kupalar: 🥇${num(tro.g)} 🥈${num(tro.s)} 🥉${num(tro.b)}`:''}</div></div>
+      <div class="bt-top"><span class="bt-av">${esc(c.lvl[0])}</span><div><b>${c.lvl}</b><span class="bt-def">${c.def?`🛡 ${c.def} savunmacı`:'Savunmacı yok'}</span></div></div>
+      <div class="bt-bio">${esc(c.bio)}</div>${recText(s)}</div>`; }).join('') + `</div>
+    <div class="hub-sec"><div class="opt-label">Lig</div><small>Bronz → Gümüş → Altın</small></div>
+    <div class="hc" data-go="lg" style="--hc:${T.c}">
+      <div class="hc-row"><div><div class="hc-title">${lg ? `${T.n} ligi` : 'Bilgisayar ligi'}</div>
+        <div class="hc-meta">${lg ? `${CPU_DIFF[lgDiff(lg)].n} seviye · ${lg.season}. sezon` : 'Seviyeni seç, Bronz ligden başla'}</div></div>
+        <span class="hc-go">${lg ? 'Devam et' : 'Başla'} →</span></div>
+      ${lg ? `<div class="wk">${Array.from({length:7},(_,i)=>`<i class="${i<wk?'on':''}"></i>`).join('')}</div><div class="wk-l">${wk>=7 ? 'Sezon tamamlandı' : `${wk+1}. hafta sırada · ${wk}/7 oynandı`}</div>` : ''}
+      <div class="hc-rules">8 kişi, herkes herkesle 1 maç. İlk 2 üst lige çıkar, son 2 düşer.${num(CPU.lgTitles)?` · 🏆 ${num(CPU.lgTitles)} şampiyonluk`:''}</div></div>
+    <div class="hub-sec"><div class="opt-label">Turnuva</div><small>Eleme ya da grup</small></div>
+    <div class="hc" data-go="tr" style="--hc:#e8590c">
+      <div class="hc-row"><div><div class="hc-title">${trOn ? 'Süren turnuva' : 'Yeni turnuva'}</div>
+        <div class="hc-meta">${trOn ? `${tr.type==='grp'?'Grup usulü':'Eleme usulü'} · ${tr.size} oyuncu` : 'Eleme ya da grup usulü seç'}</div></div>
+        <span class="hc-go">${trOn ? 'Devam et' : 'Başlat'} →</span></div>
+      <div class="hc-rules">Tek maç, eşitlikte uzatma. Savunmacı: çeyrek finalde 1, yarı finalde 2, finalde 3.</div>
+      ${cups ? `<div class="trophy"><span>🥇 ${num(tro.g)}</span><span>🥈 ${num(tro.s)}</span><span>🥉 ${num(tro.b)}</span></div>` : ''}</div>
     <div class="back" data-go="back">← Tek oyuncu</div>`;
   cpuEl().innerHTML=h;
 }
