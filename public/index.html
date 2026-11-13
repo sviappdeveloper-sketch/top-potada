@@ -634,8 +634,8 @@ const PREVIEW = [0.8, 0.4, 0.12];
 const MATCH_PREVIEW = 0.5;   // hızlı maç
 // Lig ve turnuva: kılavuz Orta'dan (0.4) başlar, üst kademelerde Zor'a (0.12) iner. Kolay (0.8) hiç kullanılmaz.
 // turnuva (tur zorluğu 0-3): grup/son 16 ve çeyrek Orta, yarı final ve 3.lük kısalır, final Zor
-// online lig (Bronz-Gümüş-Altın-Elmas) ve bilgisayar ligi (Bronz-Gümüş-Altın): Bronz Orta, en üst lig Zor
-const TOUR_PREVIEW = [0.4, 0.4, 0.26, 0.12], LEAGUE_PREVIEW4 = [0.4, 0.3, 0.2, 0.12], LEAGUE_PREVIEW3 = [0.4, 0.26, 0.12];
+// online lig (Bronz-Gümüş-Altın-Elmas): Bronz Orta, en üst lig Zor. Bilgisayar ligi: Gümüş ve Altın birbirine yakın
+const TOUR_PREVIEW = [0.4, 0.4, 0.26, 0.12], LEAGUE_PREVIEW4 = [0.4, 0.3, 0.2, 0.12], LEAGUE_PREVIEW3 = [0.4, 0.22, 0.18];   // bilgisayar ligi: Gümüş biraz zorlaştı, Altın biraz kolaylaştı (arası açıktı)
 function cupPreview(m){
   const d = Math.max(0, Math.floor(num(m.def)));
   if(m.cpu && m.kind==='league') return LEAGUE_PREVIEW3[Math.min(d, 2)];
@@ -2599,6 +2599,14 @@ function botScore(r, def, shots){
 }
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
+// bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
+const CPU_TIER_R = [0, .4, .3];
+// süren sezondaki rakipleri de yeni ayara çek (bir kez)
+if(CPU.league && CPU.league.adj!==2 && Array.isArray(CPU.league.teams)){
+  const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
+  CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
+  CPU.league.adj=2; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
 function cpuSave(){ store('cpu', JSON.stringify(CPU)); }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 function pickNames(n){ return shuffle(CPU_NAMES).slice(0,n); }
@@ -2685,7 +2693,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season, diff){
   const D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + tier*.25).toFixed(2) }))),
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:2,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
