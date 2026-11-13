@@ -52,6 +52,8 @@
   #namesBox input{flex:1;border:0;background:transparent;font:inherit;font-size:16px;font-weight:600;color:var(--ink);outline:none;padding:3px 0;min-width:0;touch-action:manipulation;-webkit-user-select:text;user-select:text}
   #namesBox input::placeholder{color:var(--muted);font-weight:500}
   #ovTurn{cursor:pointer}
+  .tier-b{font-size:.9em;white-space:nowrap}
+  .tier-b.gold{color:#d4a017;text-shadow:0 0 1px #8a6a00}
   #ovTurn .who{font-size:44px;font-weight:800;letter-spacing:-.01em;margin:6px 0 4px;word-break:break-word}
   #ovTurn .ball{width:34px;height:34px;border-radius:50%;border:2px solid #5a5046;margin:0 auto 10px}
   #ovTurn .tap{display:inline-block;margin-top:18px;font-size:13px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;background:var(--ink);color:var(--bg);border-radius:999px;padding:14px 28px}
@@ -356,6 +358,8 @@
       <li><b>Tek oyuncu → Serbest antrenman:</b> klasik 3 tur, her tur 5 top. Zorluğu (Kolay, Orta, Zor, Efsane: yardım çizgisinin uzunluğu) ve savunmacı olup olmayacağını sen seçersin. Can gitmez, basketpuan vermez.</li>
       <li><b>Online oda:</b> Biri <b>Oda kur</b>’a basar ve 4 harfli bir kod alır. Diğerleri kendi telefonlarında <b>Çoklu oyuncu → Katıl</b>’a bu kodu yazar. En fazla 4 kişi. Kurucu <b>Başlat</b>’a basınca 3’ten geri sayılır ve <b>herkes aynı anda</b> kendi sahasında oynar. Üstteki tablo herkesin puanını ve hangi turda olduğunu canlı gösterir. Herkes bitirince kazanan ilan edilir.</li>
       <li><b>Aynı telefonda:</b> 2–4 kişi telefonu elden ele verir; her oyuncu 5 atışını bitirince sıra sonrakine geçer.</li>
+      <li><b>Hazırım ekranı:</b> online oyunlarda ve aynı telefonda sıra gelince çıkan “Hazırım, başlat” ekranına dokunulmasa da <b>10 saniye</b> sonra atışlar kendiliğinden başlar.</li>
+      <li><b>Lig işaretleri:</b> online ligde Altın lige çıkanların adının yanında altın <span class="tier-b gold">◆</span>, Elmas ligdekilerin yanında 💎 görünür.</li>
       <li><b>Rakibi izle:</b> Rakipli bütün maçlarda rakibin atışlarını sahada izlersin. Online turnuva, lig ve hızlı maçta rakibin senden önce oynadıysa maçından önce onun oyunu yeniden oynatılır; online odada sonuç ekranındaki <b>İzle</b> ile rakiplerin son turunu izleyebilirsin. Rakibin <b>nişan çizgisi gizlidir</b>; yalnızca topun gidişini görürsün. Aynı maçta iki rakip aynı savunma hareketlerine karşı oynar.</li>
       <li class="note">Online oda, turnuvalar, lig ve puan durumu için internet bağlantısı gerekir. Oyun ortasında odadan çıkan oyuncu tablodan düşer.</li>
     </ul>
@@ -1204,14 +1208,33 @@ function prepareTurn(){
   document.getElementById('ovTurn').classList.remove('hidden');
   sfx.turn();
 }
+// online ve aynı telefonda: "Hazırım" ekranına dokunulmasa da 10 saniyede kendiliğinden başlar
+const TURN_AUTO_S = 10;
+let turnAutoT=null, turnAutoEnd=0;
+const turnAutoOn = () => MODE==='local' || MODE==='online' || (MODE==='match' && curMatch && (!curMatch.cpu || curMatch.kind==='online'));
+function turnAutoStop(){ clearInterval(turnAutoT); turnAutoT=null; const t=document.querySelector('#ovTurn .tap'); if(t) t.textContent='Hazırım, başlat'; }
+function turnAutoTick(){
+  const ov=document.getElementById('ovTurn');
+  if(ov.classList.contains('hidden') || game!=='turnwait'){ turnAutoStop(); return; }
+  const left=Math.ceil((turnAutoEnd-Date.now())/1000);
+  if(left<=0){ turnAutoStop(); turnGo(); return; }
+  ov.querySelector('.tap').textContent=`Hazırım, başlat · ${left}`;
+}
+new MutationObserver(()=>{
+  const vis=!document.getElementById('ovTurn').classList.contains('hidden');
+  if(vis && !turnAutoT && turnAutoOn()){ turnAutoEnd=Date.now()+TURN_AUTO_S*1000; turnAutoT=setInterval(turnAutoTick, 250); turnAutoTick(); }
+  else if(!vis && turnAutoT) turnAutoStop();
+}).observe(document.getElementById('ovTurn'), { attributes:true, attributeFilter:['class'] });
 document.getElementById('ovTurn').addEventListener('pointerup', e => {
-  e.preventDefault(); audio();
+  e.preventDefault(); audio(); turnGo();
+});
+function turnGo(){
   if(game!=='turnwait') return;
   document.getElementById('ovTurn').classList.add('hidden');
   if(MODE==='match' && curMatch && curMatch.replay && !curMatch.replayDone){ runMatchReplay(); return; }
   game='play'; court.idle=0; court.syncStart(playSeed());
   if(MODE==='match') matchStarted();
-});
+}
 
 function endTurn(){
   if(game==='menu' || !players[turnIdx]) return;   // maçtan geri tuşuyla çıkıldıysa
@@ -1803,7 +1826,13 @@ const $ = id => document.getElementById(id);
 const visible = id => !$(id).classList.contains('hidden');
 function toastTour(t){ tourToast=t; if(visible('ovTour')) renderTour(); if(visible('ovTours')) renderTours(); setTimeout(()=>{ if(tourToast===t){ tourToast=''; if(visible('ovTour')) renderTour(); } }, 3500); }
 const typeName = t => (t.type==='grp' ? 'Grup usulü' : 'Eleme') + ` · ${t.size} kişi`;
-const nk = u => u===UID ? (nickOf(u)==='Sen' ? '<b>Sen</b>' : `${esc(nickOf(u))} <small>(sen)</small>`) : esc(nickOf(u));
+// online ligde Altın'a çıkanların adının yanında altın, Elmas'takilerin yanında elmas işareti
+function tierBadge(u){
+  if(cloudState!=='ready' || typeof LG==='undefined' || !u) return '';
+  let t=0; try{ t=tierFor(u, seasonKey()); }catch(e){ return ''; }
+  return t>=3 ? ' <span class="tier-b" title="Elmas lig">💎</span>' : t===2 ? ' <span class="tier-b gold" title="Altın lig">◆</span>' : '';
+}
+const nk = u => (u===UID ? (nickOf(u)==='Sen' ? '<b>Sen</b>' : `${esc(nickOf(u))} <small>(sen)</small>`) : esc(nickOf(u))) + tierBadge(u);
 function needNick(){
   const el=$('tsNick'); const v=(el ? el.value : onNick).trim().slice(0,14);
   if(!v){ toastTour('Önce bir takma ad yaz.'); return null; }
