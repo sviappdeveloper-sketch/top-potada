@@ -594,8 +594,8 @@
 </div>
 
 <div class="ov hidden" id="ovSolo"><div class="card">
-  <h2>Tek oyuncu</h2><h1>Mod seç</h1>
-  <div class="modes">
+  <h2>Tek oyuncu</h2><h1 id="soloTitle">Mod seç</h1>
+  <div class="modes" id="soloModes">
     <button class="mode hl" id="soloMacera"><b>Macera</b><small>100 level · 7 bölüm · patronlar · yıldızlar</small></button>
     <button class="mode" id="soloCpu"><b>Rakiple oyna</b><small>Bilgisayara karşı: hızlı maç, 3 kademeli lig, turnuva</small></button>
     <button class="mode" id="soloOnline"><b>Online oyna</b><small>Gerçek rakipler: hızlı maç, online oda, turnuvalar</small></button>
@@ -2646,14 +2646,19 @@ const freePrev = r => FREE_DIFF[FREE.d].prev[Math.min(r,2)];
 const freeKey = () => `best-free-${FREE.d}-${FREE.def}`;
 function freeBoxShow(on){
   const box=document.getElementById('freeBox'); box.style.display = on ? '' : 'none';
+  // antrenman ayarları açıkken diğer modlar gizlenir; geri ile mod seçimine dönülür
+  document.getElementById('soloModes').style.display = on ? 'none' : '';
+  document.getElementById('soloTitle').textContent = on ? 'Serbest antrenman' : 'Mod seç';
+  document.getElementById('soloBack').textContent = on ? '← Mod seç' : '← Ana menü';
+  document.getElementById('freeBox').style.marginTop = '22px';
   document.querySelectorAll('#freeDiff button').forEach(b=>b.classList.toggle('on', +b.dataset.d===FREE.d));
   document.querySelectorAll('#freeDef button').forEach(b=>b.classList.toggle('on', +b.dataset.v===FREE.def));
   const D=FREE_DIFF[FREE.d], best=num(store(freeKey()));
   document.getElementById('freeNote').textContent = `3 tur, her tur 5 top. Yardım çizgisi ${D.n.toLowerCase()} seviyede başlar, turlarda kısalır; pota son turda uzaklaşır. `
     + (FREE.def ? `${D.def} savunmacı.` : 'Savunmacı yok.') + (best ? ` Bu ayarda en iyi puanın: ${fmt(best)}.` : '');
-  if(on) setTimeout(()=>{ try{ box.scrollIntoView({ block:'nearest' }); }catch(e){} }, 30);
+  if(on) document.getElementById('ovSolo').scrollTop=0;
 }
-document.getElementById('soloFree').onclick=()=>{ audio(); const box=document.getElementById('freeBox'); freeBoxShow(box.style.display==='none'); };
+document.getElementById('soloFree').onclick=()=>{ audio(); freeBoxShow(true); };
 document.getElementById('freeDiff').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; FREE.d=+b.dataset.d; store('free-cfg', JSON.stringify(FREE)); freeBoxShow(true); };
 document.getElementById('freeDef').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; FREE.def=+b.dataset.v; store('free-cfg', JSON.stringify(FREE)); freeBoxShow(true); };
 document.getElementById('freeStart').onclick=()=>{ audio(); clearLevelEnv(); MODE='solo'; FREE_GAME=true; showOnly(null); startTournament(); };
@@ -2961,7 +2966,7 @@ document.getElementById('cpuBody').addEventListener('click', e=>{
 document.getElementById('soloMacera').onclick=()=>{ audio(); showLevels(); };
 document.getElementById('soloCpu').onclick=()=>{ audio(); showCpuHub(); };
 document.getElementById('soloOnline').onclick=()=>{ audio(); showOnlineHub(); };
-document.getElementById('soloBack').onclick=()=>goMenu();
+document.getElementById('soloBack').onclick=()=>{ if(document.getElementById('freeBox').style.display!=='none'){ audio(); freeBoxShow(false); return; } goMenu(); };
 onCloud(()=>{ if(visible('ovCpu') && cpuBack===showOnlineHub) renderOnlineHub(); });
 
 // ---------- bilgisayar rakip sahada gerçekten oynar ----------
