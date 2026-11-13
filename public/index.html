@@ -3315,10 +3315,15 @@ function showLives(reason){
   const adBtn = full ? '' : adsOn() ? `<button class="btn-ghost" id="lvsAd">▶ Reklam izle · +${LIFE_AD} can</button>`
     : IS_ADMIN ? `<button class="btn-ghost" id="lvsAd">Yönetici · +${LIFE_AD} can</button>`
     : `<p class="note">Reklamla can kazanmak uygulamada açık.</p>`;
-  el.innerHTML = `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
-    <div class="lives-big">❤ ${lives}<small style="font-size:18px;color:#8f8178"> / ${LIFE_MAX}</small></div>
+  const bpView = reason==='bp';
+  const head = bpView ? `<h2>Puanların</h2><h1>Basketpuan</h1>
+    <div class="lives-big" style="color:#e8590c">🏀 ${fmt(w)}</div>
+    <p><b>BP = Basketpuan.</b> Maç ve level kazandıkça birikir. İstersen ${BP_PER_LIFE} basketpuan verip 1 can alırsın. Canın: <b>❤ ${lives} / ${LIFE_MAX}</b></p>`
+    : `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
+    <div class="lives-big">❤ ${lives}<small style="font-size:18px;color:#8f8178"> / ${LIFE_MAX}</small></div>`;
+  el.innerHTML = head + `
     <p class="note" style="text-align:center">${full ? 'Canın dolu.' : lives>=LIFE_REGEN_MAX ? `Süreyle can ${LIFE_REGEN_MAX}’e kadar dolar; daha fazlası için basketpuan, reklam ya da şampiyonluk.` : `Her 20 dakikada 1 can dolar (${LIFE_REGEN_MAX}’e kadar) · sonraki can <b id="lvsT">${mmss(regenLeft())}</b>`}</p>
-    <p>${reason==='empty' ? 'Macera, online maçlar ve bilgisayar ligi/turnuvası can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Puan kazanılan her yerde kaybetmek 1 can götürür: online maçlar, bilgisayar ligi ve turnuvası, Macera.'}</p>
+    <p>${bpView ? '' : reason==='empty' ? 'Macera, online maçlar ve bilgisayar ligi/turnuvası can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Puan kazanılan her yerde kaybetmek 1 can götürür: online maçlar, bilgisayar ligi ve turnuvası, Macera.'}</p>
     <div class="menu-btns" style="margin-top:4px">
       <button id="lvsBuy" ${canBuy?'':'disabled style="opacity:.4"'}>${BP_PER_LIFE} BP ver · +1 can</button>${adBtn}
     </div>
@@ -3334,7 +3339,7 @@ function showLives(reason){
       <div><span>Turnuva ya da ligde 1.</span><b>+${LIFE_CHAMP} can</b></div>
     </div>
     <div class="menu-btns" style="margin-top:6px"><button class="btn-ghost" id="lvsClose">Kapat</button></div>`;
-  document.getElementById('lvsBuy').onclick=()=>{ if(buyLife()) showLives(); };
+  document.getElementById('lvsBuy').onclick=()=>{ if(buyLife()) showLives(reason==='bp'?'bp':undefined); };
   const ad=document.getElementById('lvsAd');
   if(ad) ad.onclick=()=>{ const give=()=>{ earn(null, 0, LIFE_AD, 'reklam ödülü'); showLives(); };
     if(IS_ADMIN) give(); else showRewarded(give); };
@@ -3342,8 +3347,12 @@ function showLives(reason){
   document.getElementById('ovLives').classList.remove('hidden');
 }
 function closeLives(){ document.getElementById('ovLives').classList.add('hidden'); }
-document.getElementById('hudLives').addEventListener('click', e=>{ e.stopPropagation(); audio(); if(visible('ovLives')) closeLives(); else showLives(); });
-document.getElementById('hudBp').addEventListener('click', e=>{ e.stopPropagation(); audio(); if(inGame()) return; if(visible('ovLives')) closeLives(); else showLives(); });
+document.getElementById('hudLives').addEventListener('click', e=>{ e.stopPropagation(); audio();
+  if(inGame()){ toastAll(`❤ ${num(ECO.lives)} can`); return; }
+  if(visible('ovLives')) closeLives(); else showLives(); });
+document.getElementById('hudBp').addEventListener('click', e=>{ e.stopPropagation(); audio();
+  if(inGame()){ toastAll(`🏀 ${fmt(walletBp())} Basketpuan (BP)`); return; }   // oyun sürerken ekran açılmaz
+  if(visible('ovLives')) closeLives(); else showLives('bp'); });
 ['hudLives','hudBp'].forEach(id=>document.getElementById(id).addEventListener('pointerdown', e=>e.stopPropagation()));
 // ---------- online sonuçlardan BP, can kaybı ve şampiyonluk canı ----------
 // İlk taramada eski sonuçlar ödül/ceza vermeden işaretlenir (güncellemeyle geriye dönük işlem olmasın).
