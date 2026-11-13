@@ -60,8 +60,39 @@ final class GameViewController: UIViewController {
   }
 
   private var askedConsent = false
+  private var activeObs: NSObjectProtocol?
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
+    // App Tracking Transparency izni: uygulama gerçekten "aktif" olduğunda istenir.
+    // (Aktif olmadan istenirse iOS/iPadOS pencereyi hiç göstermez; App Review bunu bulamaz.)
+    if activeObs == nil {
+      activeObs = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+        self?.requestTrackingIfNeeded()
+      }
+    }
+    requestTrackingIfNeeded()
+  }
+
+  private var trackingAsking = false
+  private func requestTrackingIfNeeded() {
+    guard !trackingAsking else { return }
+    guard ATTrackingManager.trackingAuthorizationStatus == .notDetermined else { afterTracking(); return }
+    trackingAsking = true
+    // açılış ekranı ve web görünümü yerleşsin diye kısa bir bekleme
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+      guard let self = self else { return }
+      guard UIApplication.shared.applicationState == .active else { self.trackingAsking = false; return }   // sonraki aktiflikte tekrar
+      ATTrackingManager.requestTrackingAuthorization { [weak self] status in
+        DispatchQueue.main.async {
+          guard let self = self else { return }
+          self.trackingAsking = false
+          // pencere gösterilemediyse durum hâlâ belirsizdir: uygulama yeniden aktif olunca tekrar denenir
+          if status != .notDetermined { self.afterTracking() }
+        }
+      }
+    }
+  }
+  private func afterTracking() {
     if !askedConsent && Self.adsReady { askedConsent = true; setupAds() }
   }
 
@@ -178,10 +209,9 @@ final class GameViewController: UIViewController {
     if info.canRequestAds { askTrackingThenStart() }
   }
   private func askTrackingThenStart() {
+    // izin penceresi önceden (requestTrackingIfNeeded) gösterildi; burada yalnızca reklamlar başlar
     guard ConsentInformation.shared.canRequestAds else { return }
-    if ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
-      ATTrackingManager.requestTrackingAuthorization { [weak self] _ in DispatchQueue.main.async { self?.startAds() } }
-    } else { startAds() }
+    startAds()
   }
   private func startAds() {
     if adsStarted { return }
