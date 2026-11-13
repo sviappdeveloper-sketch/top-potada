@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
     interLoading = true;
     InterstitialAd.load(this, getString(R.string.ad_interstitial), new AdRequest.Builder().build(), new InterstitialAdLoadCallback() {
       @Override public void onAdLoaded(InterstitialAd ad) { interLoading = false; inter = ad; }
-      @Override public void onAdFailedToLoad(LoadAdError e) { interLoading = false; inter = null; }
+      @Override public void onAdFailedToLoad(LoadAdError e) { interLoading = false; inter = null; main.postDelayed(MainActivity.this::loadInter, 30000); }
     });
   }
 
@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
     rewardLoading = true;
     RewardedAd.load(this, getString(R.string.ad_rewarded), new AdRequest.Builder().build(), new RewardedAdLoadCallback() {
       @Override public void onAdLoaded(RewardedAd ad) { rewardLoading = false; rewarded = ad; }
-      @Override public void onAdFailedToLoad(LoadAdError e) { rewardLoading = false; rewarded = null; }
+      @Override public void onAdFailedToLoad(LoadAdError e) { rewardLoading = false; rewarded = null; main.postDelayed(MainActivity.this::loadRewarded, 30000); }
     });
   }
 

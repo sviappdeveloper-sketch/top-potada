@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Yalnızca deneme APK'sı (debug): Google'ın resmi TEST reklam kimlikleri.
+       Yeni ve henüz mağazada olmayan uygulamalarda gerçek reklamlar çoğu zaman hiç gelmez (no fill),
+       ayrıca kendi gerçek reklamına tıklamak AdMob hesabını riske atar. Deneme sürümü bu yüzden her zaman
+       "Test Ad" etiketli reklam gösterir. Play Store'a giden AAB (release) main/res/values/ads.xml'deki
+       gerçek kimlikleri kullanır. -->
+  <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string>
+  <string name="ad_interstitial" translatable="false">ca-app-pub-3940256099942544/1033173712</string>
+  <string name="ad_rewarded" translatable="false">ca-app-pub-3940256099942544/5224354917</string>
+</resources>

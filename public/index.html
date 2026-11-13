@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Top Potada</title>
 <meta name="theme-color" content="#f8ecdc">
 <meta name="description" content="Top Potada: sokak basketbolu atış oyunu. Turnuvalar, seviye ligleri ve basketpuan.">
@@ -18,7 +18,8 @@
   canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   .ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     background:rgba(248,236,220,.93);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
-    transition:opacity .35s;z-index:5;overflow-y:auto}
+    transition:opacity .35s;z-index:5;overflow-y:auto;
+    padding:calc(env(safe-area-inset-top) + 50px) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 10px) env(safe-area-inset-left)}
   .ov.hidden{opacity:0;pointer-events:none}
   .card{max-width:340px;width:86%;text-align:center;padding:16px 4px;margin:auto}
   .card h1{font-size:30px;letter-spacing:.06em;margin:0 0 6px;font-weight:800;text-transform:uppercase}
@@ -163,7 +164,7 @@
   .acc-bp{display:flex;justify-content:space-between;align-items:center;max-width:280px;margin:18px auto 4px;padding:12px 16px;border-radius:14px;background:rgba(232,89,12,.1)}
   .acc-bp b{font-size:26px;color:#e8590c}
   .danger{color:#c0392b;border-color:#c0392b}
-  #toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);background:#26221e;color:#f8ecdc;padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:20;pointer-events:none;max-width:86%;text-align:center}
+  #toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:#26221e;color:#f8ecdc;padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;z-index:20;pointer-events:none;max-width:86%;text-align:center}
   #toast.on{opacity:1;transform:translate(-50%,0)}
   a{color:inherit}
   #ovLevels{align-items:flex-start}
@@ -212,11 +213,24 @@
     padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:none}
   .fastbtn.show{display:inline-flex}
-  #gameMenuBtn{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:7;display:none;align-items:center;gap:6px;
-    background:rgba(255,255,255,.7);color:#26221e;border:1px solid rgba(38,34,30,.22);border-radius:999px;padding:7px 16px;
-    font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:none;box-shadow:0 2px 8px rgba(38,34,30,.12)}
-  #gameMenuBtn.show{display:inline-flex}
-  #gameMenuBtn:active{transform:translateX(-50%) scale(.95)}
+  /* sağ üst gösterge: basketpuan · can · oyun menüsü (çentikli telefonlarda güvenli alanın altında) */
+  #hud{position:fixed;top:calc(8px + env(safe-area-inset-top));right:calc(10px + env(safe-area-inset-right));z-index:9;display:flex;gap:6px;align-items:center}
+  #hud.off{display:none}
+  #hud button{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.78);color:#26221e;border:1px solid rgba(38,34,30,.22);border-radius:999px;
+    padding:6px 11px;font-size:14px;font-weight:800;letter-spacing:0;text-transform:none;box-shadow:0 2px 8px rgba(38,34,30,.12);font-variant-numeric:tabular-nums;line-height:1.1}
+  #hud button small{font-size:10px;font-weight:700;color:#6d665c;letter-spacing:.06em}
+  #hudBp b{color:#e8590c}
+  #hudLives b{color:#c0392b}
+  #hud button:active{transform:scale(.95)}
+  #hud .pop{animation:hudpop .6s}
+  @keyframes hudpop{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
+  #gameMenuBtn{display:none!important;font-size:18px!important;padding:4px 12px!important}
+  #gameMenuBtn.show{display:inline-flex!important}
+  #ovLives{z-index:10}
+  .lives-big{font-size:44px;font-weight:800;color:#c0392b;margin:4px 0 2px}
+  .eco-rows{margin:14px 0;border-top:1.5px solid var(--ink);text-align:left}
+  .eco-rows div{display:flex;justify-content:space-between;gap:8px;padding:8px 2px;border-bottom:1px solid rgba(38,34,30,.15);font-size:14px}
+  .gtable.all td:nth-child(2){max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #ovPause{z-index:8}
   #ovPause .menu-btns{display:flex;flex-direction:column;gap:10px;margin-top:18px}
   .pz-confirm{margin-top:16px;padding:14px 12px;border:1.5px solid #c0392b;border-radius:14px;background:rgba(192,57,43,.07);text-align:left}
@@ -249,7 +263,11 @@
 <body>
 <canvas id="c"></canvas>
 <button id="botFast" class="fastbtn" aria-label="İzleme hızı"></button>
-<button id="gameMenuBtn" aria-label="Oyun menüsü">☰ Menü</button>
+<div id="hud" class="off">
+  <button id="hudBp" aria-label="Basketpuan">🏀 <b id="hudBpN">0</b><small>BP</small></button>
+  <button id="hudLives" aria-label="Can">❤ <b id="hudLivesN">3</b></button>
+  <button id="gameMenuBtn" aria-label="Oyun menüsü">☰</button>
+</div>
 <div class="ov hidden" id="ovPause"><div class="card">
   <h2 id="pzSub">Oyun durdu</h2><h1>Menü</h1>
   <div class="menu-btns">
@@ -263,6 +281,8 @@
     <div class="row"><button class="btn-ghost" id="pzNo">Vazgeç</button><button class="pz-danger" id="pzYes">Oyunu bitir</button></div>
   </div>
 </div></div>
+
+<div class="ov hidden" id="ovLives"><div class="card" id="lvsBody"></div></div>
 
 <div class="ov" id="ovSplash">
   <div class="card">
@@ -332,7 +352,7 @@
     <ul>
       <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve başlarken seviye seçersin (Kolay, Orta, Zor, Efsane; sezon sonunda değiştirilebilir): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
-      <li><b>Tek oyuncu → Macera:</b> 2 bölüm, 25 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3 ya da 7) ve her levelin kendi macerası var: rüzgâr, gece, yağmur, fırtına, kayan pota, dar çember, zıplayan ve kayan savunmacılar, sonunda da mahallenin efsanesi olan patron. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır. Haritadan klasik 3 turluk <b>serbest antrenman</b> da açılabilir.</li>
+      <li><b>Tek oyuncu → Macera:</b> 7 bölüm (Mahalle, Şehir Potaları, Sahil Kupası, Dağ Köyü, Gece Ligi, Kış Turnuvası, Efsaneler Ligi), 100 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3, 7 ya da 9) ve her levelin kendi macerası var: rüzgâr, fırtına, gece, sis, kar, yağmur, ağır ya da hafif top, uzak, kayan, her topta yer değiştiren potalar, dar ya da daralıp genişleyen çember, altın son top, zıplayan ve kayan savunmacılar; her bölümün sonunda da bir patron. Zorluk level level artar. Yıldızsız biten ya da yarıda bırakılan level 1 can götürür; can yoksa Macera açılmaz. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır. Haritadan klasik 3 turluk <b>serbest antrenman</b> da açılabilir.</li>
       <li><b>Online oda:</b> Biri <b>Oda kur</b>’a basar ve 4 harfli bir kod alır. Diğerleri kendi telefonlarında <b>Çoklu oyuncu → Katıl</b>’a bu kodu yazar. En fazla 4 kişi. Kurucu <b>Başlat</b>’a basınca 3’ten geri sayılır ve <b>herkes aynı anda</b> kendi sahasında oynar. Üstteki tablo herkesin puanını ve hangi turda olduğunu canlı gösterir. Herkes bitirince kazanan ilan edilir.</li>
       <li><b>Aynı telefonda:</b> 2–4 kişi telefonu elden ele verir; her oyuncu 5 atışını bitirince sıra sonrakine geçer.</li>
       <li><b>Rakibi izle:</b> Rakipli bütün maçlarda rakibin atışlarını sahada izlersin. Online turnuva, lig ve hızlı maçta rakibin senden önce oynadıysa maçından önce onun oyunu yeniden oynatılır; online odada sonuç ekranındaki <b>İzle</b> ile rakiplerin son turunu izleyebilirsin. Rakibin <b>nişan çizgisi gizlidir</b>; yalnızca topun gidişini görürsün. Aynı maçta iki rakip aynı savunma hareketlerine karşı oynar.</li>
@@ -395,8 +415,16 @@
       <tr><td>3.</td><td>3 · 1</td></tr>
     </table>
     <ul>
-      <li>Basketpuanı yalnızca <b>üyeler</b> kazanır. Online odada basketpuan, en az 2 oyuncu oyunu bitirdiğinde dağıtılır. Tek oyunculu ve aynı telefonda oynanan oyunlar basketpuan vermez. Lig ödülleri yukarıdaki tabloda.</li>
+      <li><b>Her modda galibiyet +10 BP, beraberlik +3 BP.</b> Bilgisayara karşı, online, lig, turnuva ve odalarda geçerlidir; Macera’da en az 1 yıldızla biten level galibiyet sayılır. Bu basketpuanı misafirler de kazanır; üye olunca hesabına da yazılır. Aynı telefonda oynanan oyunlar ve serbest antrenman basketpuan vermez.</li>
+      <li>Yukarıdaki derece ödülleri yalnızca <b>üyelere</b> verilir. Online odada derece ödülü, en az 2 oyuncu oyunu bitirdiğinde dağıtılır. Lig ödülleri yukarıdaki tabloda.</li>
+      <li>Basketpuanın ve canın her ekranda sağ üstte görünür.</li>
       <li><b>Puan durumu</b> ekranı tüm oyuncuları toplam basketpuana göre sıralar; eşitlikte turnuva birincilikleri, sonra ikincilikler ve üçüncülükler belirler.</li>
+    </ul>
+
+    <h3>Can</h3>
+    <ul>
+      <li>Oyuna <b>3 canla</b> başlarsın. Macera’da yıldızsız biten ya da yarıda bırakılan level <b>1 can</b> götürür. Can yoksa Macera levelleri açılmaz.</li>
+      <li><b>Her 30 basketpuan 1 can</b> verir. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
 
     <h3>Atış nasıl yapılır</h3>
@@ -566,7 +594,7 @@
 <div class="ov hidden" id="ovSolo"><div class="card">
   <h2>Tek oyuncu</h2><h1>Mod seç</h1>
   <div class="modes">
-    <button class="mode hl" id="soloMacera"><b>Macera</b><small>25 level · uzak potalar · yıldızlar</small></button>
+    <button class="mode hl" id="soloMacera"><b>Macera</b><small>100 level · 7 bölüm · patronlar · yıldızlar</small></button>
     <button class="mode" id="soloCpu"><b>Rakiple oyna</b><small>Bilgisayara karşı: hızlı maç, 3 kademeli lig, turnuva</small></button>
     <button class="mode" id="soloOnline"><b>Online oyna</b><small>Gerçek rakipler: hızlı maç, online oda, turnuvalar</small></button>
   </div>
@@ -638,12 +666,19 @@ function setCourtXY(h, pl, rw){
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 let scale = 1, offX = 0, offY = 0, dpr = 1;
+// çentik / ada / ana ekran çubuğu: güvenli alan payları (iPhone'da viewport-fit=cover ile gelir)
+const safeProbe = document.createElement('div');
+safeProbe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+document.body.appendChild(safeProbe);
+function safeInsets(){ const cs=getComputedStyle(safeProbe); return { t:parseFloat(cs.paddingTop)||0, b:parseFloat(cs.paddingBottom)||0 }; }
 function resize(){
   dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = window.innerWidth, h = window.innerHeight;
   cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
-  scale = Math.min(w/W, h/H);
-  offX = (w - W*scale)/2; offY = (h - H*scale)/2;
+  // üstte sağdaki gösterge (BP · can · menü) için yer bırak; saha güvenli alanın içinde kalır
+  const si=safeInsets(), top=si.t+46, bot=si.b, ah=Math.max(200, h-top-bot);
+  scale = Math.min(w/W, ah/H);
+  offX = (w - W*scale)/2; offY = top + (ah - H*scale)/2;
 }
 window.addEventListener('resize', resize); resize();
 
@@ -1191,7 +1226,7 @@ function showRoundResults(){
   if(MODE==='match' && curMatch && curMatch.league){
     const me=players[0];
     renderLeagueResult(); el('ovRound').classList.remove('hidden');
-    finishLeagueMatch(me.score, me.baskets).then(()=>{ matchWritten=true; renderLeagueResult(); });
+    finishLeagueMatch(me.score, me.baskets).then(r=>{ matchWritten=true; renderLeagueResult(); if(r) earnResult(r); });
     return;
   }
   if(MODE==='match'){
@@ -1718,6 +1753,7 @@ function standings(){
   }
   const la = leagueAwards();
   for(const u in la){ if(isMem(u)){ const r=row(u); r.bp+=la[u].bp; r.lgChamps=la[u].champs; } }
+  for(const r of Object.values(S)){ r.award=r.bp; const g=PL[r.uid] && PL[r.uid].gen; r.bp += g && typeof g==='object' ? Math.max(0, Math.floor(num(g.bp))) : 0; }
   return Object.values(S).sort((a,b)=>b.bp-a.bp || b.gold-a.gold || b.silver-a.silver || b.bronze-a.bronze || a.nick.localeCompare(b.nick,'tr'));
 }
 
@@ -1899,7 +1935,7 @@ function renderStand(){
     if(!rows.length) h += `<p class="note" style="text-align:center">Henüz basketpuan kazanan yok. Bir online oda ya da turnuva bitince burada görünecek.</p>`;
     else h += `<table class="gtable stand"><tr><th></th><th>Oyuncu</th><th title="Turnuva birincilikleri">1.</th><th>2.</th><th>3.</th><th>BP</th></tr>` +
       rows.map((r,k)=>`<tr class="${r.uid===UID?'me':''}"><td>${k+1}</td><td>${nk(r.uid)}</td><td><span class="md g">${r.gold}</span></td><td><span class="md s">${r.silver}</span></td><td><span class="md b">${r.bronze}</span></td><td><b>${r.bp}</b></td></tr>`).join('') + `</table>`;
-    h += `<p class="note">Yalnızca üyeler sıralanır. Basketpuan (BP): turnuvalarda 1. ${BP_TOUR[0]}, 2. ${BP_TOUR[1]}, 3. ${BP_TOUR[2]}; online odalarda 1. ${BP_ROOM[0]}, 2. ${BP_ROOM[1]}, 3. ${BP_ROOM[2]}; lig sezon sonunda seviyeye göre. Madalya sütunları turnuva derecelerini gösterir.</p>`;
+    h += `<p class="note">Yalnızca üyeler sıralanır. Basketpuan (BP): her modda galibiyet ${BP_WIN}, beraberlik ${BP_DRAW}; ayrıca turnuvalarda 1. ${BP_TOUR[0]}, 2. ${BP_TOUR[1]}, 3. ${BP_TOUR[2]}; online odalarda 1. ${BP_ROOM[0]}, 2. ${BP_ROOM[1]}, 3. ${BP_ROOM[2]}; lig sezon sonunda seviyeye göre. Madalya sütunları turnuva derecelerini gösterir.</p>`;
     if(!isMember()) h += memberGate('Basketpuan kazanmak');
   }
   $('sdBody').innerHTML=h;
@@ -2185,10 +2221,42 @@ function renderLeagueResult(){
 }
 
 // =====================================================================
-// TEK OYUNCU · MACERA: 2 bölüm, 25 level, en çok puan usulü
-// Her levelde 5 top; puana göre 1-3 yıldız. 1 yıldız sonraki leveli açar.
-// Toplam puan = her levelin en iyi skorlarının toplamı.
+// TEK OYUNCU · MACERA: 7 bölüm, 100 level, en çok puan usulü
+// Her levelde genelde 5 top; puana göre 1-3 yıldız. 1 yıldız sonraki leveli açar.
+// Toplam puan = her levelin en iyi skorlarının toplamı. Her bölümün sonunda patron var.
+// Pota çeşitleri: uzaklık, kayan pota, her topta yer değiştiren pota (seri), dar çember,
+// daralıp genişleyen çember. Atış çeşitleri: rüzgâr, fırtına, ağır/hafif top, gece, sis, kar,
+// yağmur, top sayısı, top süresi, puan çarpanı, altın son top, savunmacılar ve patron.
 // =====================================================================
+const CHAPTERS = { 1:'Mahalle', 2:'Şehir Potaları', 3:'Sahil Kupası', 4:'Dağ Köyü', 5:'Gece Ligi', 6:'Kış Turnuvası', 7:'Efsaneler Ligi' };
+const NIGHT_SKY = { skyTop:'#cfc6dc', skyMid:'#a99bbf', skyLow:'#6f6690', floor:'#7a4a3a' };
+const CH_SKY = { 1:null, 2:null,
+  3:{ skyTop:'#dcf0f6', skyMid:'#f6ecd6', skyLow:'#f0d6a4', floor:'#c98f5e' },
+  4:{ skyTop:'#e6eef2', skyMid:'#eef0e8', skyLow:'#c9d8cf', floor:'#8f6a4f' },
+  5:{ skyTop:'#d6cfe2', skyMid:'#b3a8c8', skyLow:'#7d7299', floor:'#6f4536' },
+  6:{ skyTop:'#eef3f8', skyMid:'#e2e9f0', skyLow:'#c3d0dc', floor:'#8a7468' },
+  7:{ skyTop:'#f6e3c8', skyMid:'#efc795', skyLow:'#d99a63' } };
+// Yeni levellerin yıldız hedefleri zorluğa göre hesaplanır (ilk 25 level elle ayarlı)
+function lvHard(l){
+  let h=0;
+  const far = l.seq ? Math.max(...l.seq)*.5 + l.seq.reduce((a,b)=>a+b,0)/l.seq.length*.5 : (l.dist ? l.dist[0] : 0);
+  h += far/120*.22; if(l.seq) h += .06;
+  (l.defs||[]).forEach(d=>{ h += d.boss ? .16 : .08; if(d.move) h += .02 + .015*(d.sp||1); });
+  if(l.hoopMove) h += Math.min(.2, l.hoopMove.amp/45*.12*l.hoopMove.sp);
+  if(l.rimPulse) h += .06;
+  if(l.rimW) h += (36-l.rimW)/10*.18;
+  if(l.storm) h += l.storm/120*.2; else if(l.wind) h += Math.abs(l.wind)/100*.12;
+  if(l.night) h += .06; if(l.fog) h += .05; if(l.snow) h += .02;
+  if(l.grav) h += Math.abs(l.grav-1)*.6;
+  h += Math.max(0, .5-(l.preview ?? .5))*.3;
+  if(l.ballTime && l.ballTime<8) h += (8-l.ballTime)*.02;
+  return Math.min(1.2, h);
+}
+// n: level numarası. İleri levellerde hedefler kademeli yükselir (100. levelde yaklaşık %30 daha zor).
+function autoStars(l, n){
+  const h=lvHard(l), shots=(l.shots||5)+(l.gold?2:0), unit=(10+10*(l.mul||1)*(l.ballTime||10)*.5)*(1+Math.max(0,n-26)*.004);
+  return [Math.max(.12,.34-.17*h), Math.max(.24,.68-.34*h), Math.max(.4,1.03-.5*h)].map(f=>Math.max(10, Math.round(unit*f*shots/10)*10));
+}
 const LEVELS = [
   { name:'İlk Antrenman', story:'Mahalle sahasında ilk günün. {a} kenardan izliyor, ilk atışını bekliyor.', rule:'Isınma turu: savunmacı yok, yardım çizgisi uzun.', preview:.8, stars:[100,200,300] },
   { name:'Sabah Rüzgârı', story:'Erken kalkan pota kapar! Sabah serinliğinde potaya doğru hafif bir rüzgâr esiyor.', rule:'Rüzgâr topu sürükler. Üstteki oka bak.', preview:.6, wind:70, gust:true, stars:[100,180,280],
@@ -2228,8 +2296,94 @@ const LEVELS = [
   { ch:2, name:'Şehrin Efsanesi', story:'Şehrin efsanesi {a} seni bekliyor. 7 top, kayan uzak pota, rüzgâr ve altın son top.', rule:'Patron + 2 savunmacı, kayan uzak pota, rüzgâr, 7 top, altın son top.', preview:.25, dist:[95,-30], hoopMove:{ amp:22, sp:.8 }, wind:-50, gust:true, shots:7, gold:true,
     defs:[{x:276,move:20,sp:1.4},{x:445,boss:true},{x:525,move:20,sp:1.9}], stars:[90,180,280],
     sky:{ skyTop:'#f3d2c8', skyMid:'#e2a58e', skyLow:'#b8705a' } },
-].map((l,i)=>({ ...l, n:i+1, id:'L'+(i+1) }));
-const LV_N = LEVELS.length, LV_BOSS = LEVELS.filter((l,i)=>i===LV_N-1 || (LEVELS[i+1] && LEVELS[i+1].ch && !l.ch)).map(l=>l.n);
+  // ---------- 3. BÖLÜM · SAHİL KUPASI: deniz rüzgârı, dalga serileri ----------
+  { ch:3, name:'Kumsal Isınması', story:'Sahil kupası başlıyor. Denizden hafif bir meltem esiyor, kum sıcak.', rule:'Hafif rüzgâr, biraz uzak pota.', preview:.5, dist:[40,-10], wind:40, gust:true },
+  { ch:3, name:'Deniz Meltemi', story:'Meltem bu kez sana doğru esiyor. Topu biraz daha güçlü at.', rule:'Karşı rüzgâr.', preview:.45, dist:[60,-20], wind:-60, gust:true },
+  { ch:3, name:'Dalga Serisi', story:'{a} potayı dalgalar gibi bir uzağa bir yakına taşıyor.', rule:'Pota her topta yakın–uzak–yakın gider.', preview:.45, seq:[20,60,100,60,20], dist:[0,-20] },
+  { ch:3, name:'Cankurtaran', story:'Cankurtaran {a} kulesinden indi, potanın önüne geçti.', rule:'1 savunmacı + rüzgâr.', preview:.45, dist:[70,-20], wind:40, gust:true, defs:[{x:300}] },
+  { ch:3, name:'Gün Batımı', story:'Güneş denize iniyor, ışık azaldı. Pota da uzakta.', rule:'Uzak pota, kısa yardım çizgisi.', preview:.35, dist:[90,-24], wind:30, gust:true, sky:{ skyTop:'#f4c9b0', skyMid:'#efa47e', skyLow:'#c96e52' } },
+  { ch:3, name:'İskele Ucu', story:'Pota iskelenin ucunda, sallanan bir salın üstünde.', rule:'Pota sürekli kayar.', preview:.45, dist:[60,-20], hoopMove:{ amp:35, sp:1 } },
+  { ch:3, name:'Kum Fırtınası', story:'Kum fırtınası çıktı! Rüzgâr yön değiştirip duruyor.', rule:'Yön değiştiren rüzgâr.', preview:.4, dist:[50,-20], storm:100 },
+  { ch:3, name:'Voleybolcular', story:'Plaj voleybolcuları {a} ve {b} smaç yapar gibi zıplıyor.', rule:'2 kayan savunmacı.', preview:.4, dist:[30,-10], defs:[{x:280,move:25,sp:1.2},{x:400,move:25,sp:1.4}] },
+  { ch:3, name:'Martı Saati', story:'Martılar alçaldı, hakem acele ediyor. Her saniye iki kat puan.', rule:'Top başına 6 saniye, saniye puanı ×2, rüzgâr.', preview:.45, dist:[70,-20], wind:50, gust:true, ballTime:6, mul:2 },
+  { ch:3, name:'Yedi Dalga', story:'Yedi dalga, yedi top. Pota her dalgada yer değiştiriyor.', rule:'7 top; pota ileri geri gider.', preview:.45, shots:7, ballTime:7, seq:[0,30,60,90,60,30,0], dist:[0,-20] },
+  { ch:3, name:'Paslı Çember', story:'Tuzlu hava çemberi paslandırmış ve daraltmış.', rule:'Dar çember + karşı rüzgâr.', preview:.4, dist:[60,-20], rimW:30, wind:-50, gust:true },
+  { ch:3, name:'Fener Işığı', story:'Gece oldu; deniz fenerinin ışığı potayı arada bir aydınlatıyor.', rule:'Karanlık + kayan pota.', preview:.35, night:true, dist:[70,-22], hoopMove:{ amp:30, sp:.8 } },
+  { ch:3, name:'Altın Kum', story:'Kumda bir altın top buldun. Son top girerse puanı üç katı!', rule:'Çok uzak pota, rüzgâr, altın son top.', preview:.35, dist:[100,-26], wind:60, gust:true, gold:true },
+  { ch:3, name:'Sahil Duvarı', story:'Sahil takımı üç kişilik bir duvar ördü.', rule:'3 kayan savunmacı.', preview:.4, dist:[40,-20], defs:[{x:270,move:12,sp:1},{x:350,move:15,sp:1.3},{x:430,move:12,sp:1.1}] },
+  { ch:3, name:'Sahilin Efsanesi', story:'Sahilin efsanesi {a} kumda bile metrelerce zıplıyor. Üstüne bir de fırtına!', rule:'Patron + 2 savunmacı, fırtına, kayan uzak pota, 7 top.', preview:.25, dist:[90,-26], storm:90, hoopMove:{ amp:20, sp:.8 }, shots:7,
+    defs:[{x:280,move:18,sp:1.3},{x:430,boss:true},{x:505,move:15,sp:1.7}], sky:{ skyTop:'#f6d9b8', skyMid:'#efbb8a', skyLow:'#d98a5c' } },
+  // ---------- 4. BÖLÜM · DAĞ KÖYÜ: ince hava (top uzağa gider), sis, merdiven potalar ----------
+  { ch:4, name:'Yayla Yolu', story:'Dağ köyüne vardın. Hava ince, top beklediğinden uzağa gidiyor.', rule:'Hafif top (ince hava), uzak pota.', preview:.45, dist:[90,-24], grav:.92 },
+  { ch:4, name:'İnce Hava', story:'Köyün en uzak potası. İnce havada topu fazla sert atma.', rule:'Çok hafif top, en uzak pota.', preview:.45, dist:[120,-30], grav:.88 },
+  { ch:4, name:'Sis Perdesi', story:'Sabah sisi vadiyi kapladı. Potayı zar zor görüyorsun.', rule:'Sis potayı gizler.', preview:.35, dist:[70,-20], fog:true },
+  { ch:4, name:'Tırmanış', story:'{a} her topta potayı yokuş yukarı bir adım taşıyor.', rule:'Pota her topta uzaklaşır, hafif top.', preview:.45, seq:[0,30,60,90,120], dist:[0,-24], grav:.9 },
+  { ch:4, name:'İniş', story:'Şimdi tersine: pota en uzaktan başlıyor, her topta yaklaşıyor.', rule:'Pota her topta yaklaşır, hafif top.', preview:.45, seq:[120,90,60,30,0], dist:[0,-24], grav:.9 },
+  { ch:4, name:'Çobanlar', story:'Çoban kardeşler {a} ve {b} sürüyü bırakıp potanın önüne geçti.', rule:'2 savunmacı, hafif top.', preview:.4, dist:[80,-24], grav:.92, defs:[{x:290},{x:420}] },
+  { ch:4, name:'Kayalık Pota', story:'Pota bir kayanın üstünde, rüzgârda sağa sola sallanıyor.', rule:'Hızlı kayan pota.', preview:.4, dist:[70,-22], grav:.93, hoopMove:{ amp:40, sp:1.1 } },
+  { ch:4, name:'Dağ Rüzgârı', story:'Zirveden sert bir rüzgâr iniyor, hem de sana doğru.', rule:'Güçlü karşı rüzgâr, hafif top.', preview:.4, dist:[90,-24], grav:.9, wind:-90, gust:true },
+  { ch:4, name:'Sisli Seri', story:'Sis içinde pota bir uzakta bir yakında beliriyor.', rule:'Sis + zikzak pota.', preview:.4, fog:true, seq:[100,20,110,30,90], dist:[0,-22], grav:.93 },
+  { ch:4, name:'Dağ Başında Üç Top', story:'Üç top, üç kat puan. En uzak potada hafif top.', rule:'3 top; saniye puanı ×3. En uzak pota.', preview:.3, dist:[120,-30], grav:.88, shots:3, mul:3 },
+  { ch:4, name:'Keçi Yolu', story:'Dar bir çember, sallanan bir pota. Keçiler bile zor tırmanır.', rule:'Dar çember + kayan pota.', preview:.4, dist:[60,-20], grav:.92, rimW:30, hoopMove:{ amp:30, sp:.9 } },
+  { ch:4, name:'Köy Meydanı', story:'Bayram günü meydanda maç var. {a} ile {b} kayarak savunuyor.', rule:'2 kayan savunmacı + rüzgâr.', preview:.35, dist:[70,-22], grav:.92, wind:50, gust:true, defs:[{x:285,move:22,sp:1.3},{x:420,move:25,sp:1.6}] },
+  { ch:4, name:'Dokuz Top', story:'Köyün geleneği: dokuz top, her biri için 5 saniye.', rule:'9 top, her top 5 saniye.', preview:.4, dist:[80,-24], grav:.92, shots:9, ballTime:5 },
+  { ch:4, name:'Zirve Fırtınası', story:'Zirvede fırtına ve sis bir arada. Görebildiğine at!', rule:'Fırtına + sis, hafif top.', preview:.35, dist:[90,-24], grav:.9, storm:130, fog:true },
+  { ch:4, name:'Dağın Efsanesi', story:'Dağın efsanesi {a} sisin içinden çıktı. Pota da her topta yer değiştiriyor!', rule:'Patron + 2 savunmacı, sis, değişen pota, altın son top.', preview:.25, fog:true, grav:.9, seq:[60,110,80,120,90], dist:[0,-24], gold:true,
+    defs:[{x:285,move:20,sp:1.4},{x:430,boss:true},{x:490,move:15,sp:1.8}], sky:{ skyTop:'#dfe4ea', skyMid:'#c3ccd6', skyLow:'#8e9aa8' } },
+  // ---------- 5. BÖLÜM · GECE LİGİ: karanlık sahalar, kayan potalar, gölge savunma ----------
+  { ch:5, name:'Projektörler', story:'Gece ligine hoş geldin. Projektörler yalnızca potayı aydınlatıyor.', rule:'Karanlık saha.', preview:.35, night:true, dist:[60,-20] },
+  { ch:5, name:'Ay Işığı', story:'Ay ışığında pota bir sağa bir sola kayıyor.', rule:'Karanlık + kayan pota.', preview:.35, night:true, dist:[60,-20], hoopMove:{ amp:35, sp:1 } },
+  { ch:5, name:'Neon Seri', story:'Neon tabelaların altında pota her topta yer değiştiriyor. Son top altın!', rule:'Karanlık + zikzak pota + altın son top.', preview:.35, night:true, seq:[30,110,50,100,20], dist:[0,-22], gold:true },
+  { ch:5, name:'Gece Bekçisi', story:'Gece bekçisi {a} fenerini bırakıp potayı korumaya geldi.', rule:'Karanlık + 1 kayan savunmacı.', preview:.35, night:true, dist:[60,-20], defs:[{x:300,move:30,sp:1.3}] },
+  { ch:5, name:'Karanlık Duvar', story:'Karanlıkta üç gölge potanın önünde zıplıyor.', rule:'Karanlık + 3 savunmacı.', preview:.35, night:true, dist:[40,-20], defs:[{x:268},{x:350},{x:432}] },
+  { ch:5, name:'Gece Yarısı', story:'Saat gece yarısı. Her top 5 saniye, her saniye iki kat puan.', rule:'Karanlık, top başına 5 saniye, saniye puanı ×2.', preview:.35, night:true, dist:[80,-24], ballTime:5, mul:2 },
+  { ch:5, name:'Elektrik Kesintisi', story:'Elektrikler kesildi! Yardım çizgisi neredeyse yok.', rule:'Karanlık + çok kısa yardım çizgisi.', preview:.15, night:true, dist:[60,-20] },
+  { ch:5, name:'Gece Rüzgârı', story:'Karanlıkta soğuk bir rüzgâr ve sallanan bir pota.', rule:'Karanlık + karşı rüzgâr + kayan pota.', preview:.3, night:true, dist:[70,-22], wind:-80, gust:true, hoopMove:{ amp:25, sp:.9 } },
+  { ch:5, name:'Daralan Çember', story:'Bu çember nefes alıyor gibi: bir daralıyor, bir genişliyor.', rule:'Karanlık + daralıp genişleyen çember.', preview:.3, night:true, dist:[60,-20], rimW:31, rimPulse:{ amp:4, sp:1.2 } },
+  { ch:5, name:'Yedi Yıldız', story:'Gökyüzünde yedi yıldız, elinde yedi top. Sonuncusu altın.', rule:'Karanlık, 7 top, altın son top, uzak pota.', preview:.3, night:true, dist:[90,-24], shots:7, gold:true },
+  { ch:5, name:'Gölge Savunma', story:'{a} ve {b} karanlıkta çok hızlı kayıyor.', rule:'Karanlık + 2 hızlı savunmacı.', preview:.3, night:true, dist:[80,-24], defs:[{x:285,move:28,sp:2},{x:430,move:30,sp:2.2}] },
+  { ch:5, name:'Gece Yağmuru', story:'Gece yağmuru başladı. Islak top ağır, saha karanlık.', rule:'Karanlık + yağmur (ağır top).', preview:.3, night:true, rain:true, grav:1.1, dist:[70,-22] },
+  { ch:5, name:'Zikzak Gece', story:'Pota hem kayıyor hem de her topta yer değiştiriyor.', rule:'Karanlık + zikzak + kayan pota.', preview:.3, night:true, seq:[15,110,25,105,30], hoopMove:{ amp:15, sp:1.2 }, dist:[0,-22] },
+  { ch:5, name:'Son Otobüs', story:'Son otobüse yetişmen lazım! 7 top, her biri 4 saniye.', rule:'Karanlık, 7 top, top başına 4 saniye, saniye puanı ×2.', preview:.35, night:true, dist:[50,-20], shots:7, ballTime:4, mul:2 },
+  { ch:5, name:'Gecenin Efsanesi', story:'Gecenin efsanesi {a} karanlıktan çıktı. Rüzgâr, kayan pota ve altın son top!', rule:'Patron + 2 hızlı savunmacı, karanlık, rüzgâr, kayan pota, altın son top.', preview:.2, night:true, dist:[90,-26], hoopMove:{ amp:22, sp:.9 }, wind:-60, gust:true, gold:true,
+    defs:[{x:282,move:22,sp:1.6},{x:430,boss:true},{x:500,move:15,sp:2}] },
+  // ---------- 6. BÖLÜM · KIŞ TURNUVASI: kar, ağır top, donmuş çemberler ----------
+  { ch:6, name:'İlk Kar', story:'Kış turnuvası başladı. Kar yağıyor, saha beyaz.', rule:'Kar yağışı.', preview:.45, snow:true, dist:[50,-20] },
+  { ch:6, name:'Buzlu Saha', story:'Soğukta top ağırlaştı. Biraz daha güçlü atmalısın.', rule:'Ağır top, uzak pota.', preview:.4, snow:true, grav:1.08, dist:[80,-24] },
+  { ch:6, name:'Kar Fırtınası', story:'Kar fırtınası! Rüzgâr hiç durmuyor.', rule:'Yön değiştiren rüzgâr.', preview:.4, snow:true, storm:110, dist:[60,-20] },
+  { ch:6, name:'Kartopu Ekibi', story:'Kartopu ekibi {a}, {b} ve arkadaşları potanın önünü kapattı.', rule:'3 savunmacı.', preview:.4, snow:true, dist:[50,-20], defs:[{x:275},{x:355},{x:435}] },
+  { ch:6, name:'Donmuş Çember', story:'Çember dondu ve büzüştü. Kusursuz atış şart.', rule:'Çok dar çember.', preview:.35, snow:true, dist:[70,-22], rimW:29 },
+  { ch:6, name:'Kızak Pisti', story:'Pota bir kızağın üstünde! Hızla bir o yana bir bu yana kayıyor.', rule:'Hızlı ve geniş kayan pota.', preview:.4, snow:true, dist:[60,-20], hoopMove:{ amp:45, sp:1.2 } },
+  { ch:6, name:'Soğuk Seri', story:'Pota her topta uzaklaşıyor, son topta biraz geri geliyor.', rule:'Değişen pota, ağır top.', preview:.4, snow:true, grav:1.05, seq:[0,40,80,120,80], dist:[0,-24] },
+  { ch:6, name:'Tipi', story:'Tipi başladı: kar, sis ve sert bir rüzgâr.', rule:'Sis + güçlü rüzgâr.', preview:.35, snow:true, fog:true, wind:90, gust:true, dist:[80,-24] },
+  { ch:6, name:'Nefes Buharı', story:'Soğukta çember daralıp genişliyor, pota da kayıyor.', rule:'Daralıp genişleyen çember + kayan pota.', preview:.35, snow:true, dist:[70,-22], rimPulse:{ amp:5, sp:1.5 }, hoopMove:{ amp:20, sp:.8 } },
+  { ch:6, name:'Buz Hokeycileri', story:'Buz hokeycileri {a} ve {b} buzda kayar gibi savunuyor.', rule:'2 hızlı kayan savunmacı, uzak pota.', preview:.35, snow:true, dist:[90,-24], defs:[{x:285,move:30,sp:2},{x:440,move:30,sp:2.3}] },
+  { ch:6, name:'Yılbaşı Gecesi', story:'Yılbaşı gecesi! 7 top, sonuncusu altın.', rule:'Karanlık, kar, 7 top, altın son top.', preview:.3, snow:true, night:true, dist:[80,-24], shots:7, gold:true },
+  { ch:6, name:'Çığ', story:'Dağdan çığ sesi geliyor. Rüzgâr deli gibi esiyor.', rule:'Çok güçlü fırtına, ağır top.', preview:.35, snow:true, storm:140, grav:1.06, dist:[70,-22] },
+  { ch:6, name:'Üç Buz Topu', story:'Üç top, dar çember, en uzak pota. Ama her saniye üç kat!', rule:'3 top; saniye puanı ×3. Dar çember.', preview:.3, snow:true, dist:[110,-28], rimW:30, shots:3, mul:3 },
+  { ch:6, name:'Kış Kampı', story:'Kış kampının en iyileri potayı kayan bir duvarla koruyor.', rule:'3 kayan savunmacı + kayan pota.', preview:.3, snow:true, dist:[60,-20], hoopMove:{ amp:15, sp:1 }, defs:[{x:270,move:15,sp:1.5},{x:350,move:18,sp:1.8},{x:425,move:12,sp:2}] },
+  { ch:6, name:'Kışın Efsanesi', story:'Kışın efsanesi {a} buz gibi soğukkanlı. Tipi, dar çember ve 7 top!', rule:'Patron + 2 savunmacı, tipi, dar ve kayan pota, 7 top.', preview:.2, snow:true, fog:true, wind:70, gust:true, grav:1.05, rimW:31, dist:[90,-26], hoopMove:{ amp:20, sp:.9 }, shots:7,
+    defs:[{x:280,move:20,sp:1.6},{x:430,boss:true},{x:500,move:15,sp:2}], sky:{ skyTop:'#e4ebf2', skyMid:'#cdd8e3', skyLow:'#9fb0c2', floor:'#7d6a64' } },
+  // ---------- 7. BÖLÜM · EFSANELER LİGİ: her şey bir arada ----------
+  { ch:7, name:'Efsaneler Kapısı', story:'Bütün efsaneleri yendin, şimdi Efsaneler Ligi’ndesin.', rule:'Uzak pota + rüzgâr + 1 kayan savunmacı.', preview:.35, dist:[100,-28], wind:50, gust:true, defs:[{x:300,move:25,sp:1.4}] },
+  { ch:7, name:'Kırık Saat', story:'Saat bozuk: her top yalnızca 4 saniye. Ama her saniye üç kat!', rule:'Top başına 4 saniye, saniye puanı ×3, 1 savunmacı.', preview:.35, dist:[80,-24], ballTime:4, mul:3, defs:[{x:320}] },
+  { ch:7, name:'Altın Merdiven', story:'{a} potayı her topta geri çekiyor; en tepede altın top bekliyor.', rule:'Pota her topta uzaklaşır + kayan savunmacı + altın son top.', preview:.35, seq:[0,30,60,90,120], dist:[0,-24], gold:true, defs:[{x:300,move:25,sp:1.5}] },
+  { ch:7, name:'Fırtınalı Gece', story:'Karanlık bir gece ve hiç durmayan bir fırtına.', rule:'Karanlık + fırtına.', preview:.3, night:true, storm:120, dist:[80,-24] },
+  { ch:7, name:'Dört Duvar', story:'Dört kişilik bir duvar! {a} ve {b} en öndeler.', rule:'4 kayan savunmacı.', preview:.3, dist:[60,-22], defs:[{x:265,move:10,sp:1.4},{x:330,move:12,sp:1.7},{x:395,move:12,sp:1.5},{x:455,move:10,sp:1.9}] },
+  { ch:7, name:'Hayalet Pota', story:'Sisin içinde hızla kayan bir pota. Hayalet gibi!', rule:'Sis + hızlı kayan pota.', preview:.3, fog:true, dist:[70,-22], hoopMove:{ amp:45, sp:1.3 } },
+  { ch:7, name:'Dar ve Uzak', story:'En dar çember, en uzak potada.', rule:'Çok dar çember, en uzak pota.', preview:.3, dist:[120,-30], rimW:28 },
+  { ch:7, name:'Dokuz Altın', story:'Dokuz top, her biri 5 saniye; sonuncusu altın.', rule:'9 top, top başına 5 saniye, rüzgâr, altın son top.', preview:.35, dist:[90,-24], shots:9, ballTime:5, wind:40, gust:true, gold:true },
+  { ch:7, name:'Patronun Çırağı', story:'Efsanelerin çırağı {a} patron kadar zıplıyor, iki yardımcısı da yanında.', rule:'Patron + 2 kayan savunmacı.', preview:.3, dist:[80,-24], defs:[{x:285,move:22,sp:1.6},{x:430,boss:true},{x:500,move:18,sp:1.9}] },
+  { ch:7, name:'Karlı Gece', story:'Kar, karanlık ve nefes alan bir çember. Pota her topta yer değiştiriyor.', rule:'Karanlık + kar + zikzak pota + daralıp genişleyen çember.', preview:.25, night:true, snow:true, seq:[20,110,40,120,30], dist:[0,-24], rimPulse:{ amp:4, sp:1.3 } },
+  { ch:7, name:'Yağmurda Prova', story:'Final öncesi son prova yağmurda. Islak top, kayan pota, iki savunmacı.', rule:'Yağmur (ağır top) + kayan pota + 2 kayan savunmacı.', preview:.3, rain:true, grav:1.12, dist:[70,-22], hoopMove:{ amp:20, sp:1 }, defs:[{x:285,move:22,sp:1.6},{x:420,move:22,sp:1.9}] },
+  { ch:7, name:'Işıklar Söndü', story:'Işıklar söndü, yardım çizgisi de yok sayılır. İki gölge savunuyor.', rule:'Karanlık + çok kısa yardım çizgisi + 2 savunmacı.', preview:.12, night:true, dist:[90,-24], defs:[{x:300,move:20,sp:1.5},{x:440}] },
+  { ch:7, name:'Kasırga', story:'Kasırga geldi! Sis, deli bir rüzgâr ve kayan pota.', rule:'Çok güçlü fırtına + sis + kayan pota.', preview:.25, storm:150, fog:true, dist:[80,-24], hoopMove:{ amp:25, sp:1 } },
+  { ch:7, name:'Son Seri', story:'Finalden önceki son seri: 7 top, değişen pota, iki savunmacı, altın son top.', rule:'7 top, top başına 5 saniye, saniye ×2, değişen pota, 2 savunmacı, altın son top.', preview:.25, shots:7, ballTime:5, mul:2, seq:[30,70,110,50,120,40,100], dist:[0,-24], gold:true, defs:[{x:285,move:20,sp:1.6},{x:410,move:20,sp:2}] },
+  { ch:7, name:'Efsanelerin Efsanesi', story:'Son maç. Efsanelerin efsanesi {a} karşında. Karanlık, fırtına, dar ve kayan pota, 7 top ve altın son top!', rule:'Final: patron + 2 hızlı savunmacı, karanlık, fırtına, dar kayan pota, 7 top, altın son top.', preview:.15, night:true, storm:110, rimW:31, dist:[95,-28], hoopMove:{ amp:22, sp:1 }, shots:7, gold:true,
+    defs:[{x:282,move:22,sp:1.8},{x:435,boss:true},{x:505,move:15,sp:2.1}], sky:{ skyTop:'#e9c9a8', skyMid:'#c98f6a', skyLow:'#7a4a3a', floor:'#5e3a2e' } },
+].map((l,i)=>({ ...l, ch:l.ch||1, n:i+1, id:'L'+(i+1), sky: l.sky || (l.night ? NIGHT_SKY : CH_SKY[l.ch||1]), stars: l.stars || autoStars(l, i+1) }));
+const LV_N = LEVELS.length, LV_BOSS = LEVELS.filter((l,i)=>i===LV_N-1 || LEVELS[i+1].ch!==l.ch).map(l=>l.n);
+const chOf = n => (LEVELS[n-1]||{}).ch || 1;
 const lvShots = lv => (lv && lv.shots) || 5;
 
 const SKY_DEF = { skyTop:C.skyTop, skyMid:'#f9e2c6', skyLow:C.skyLow, floor:C.floor };
@@ -2263,11 +2417,17 @@ function levelTick(dt){
     if(want!==lvSeqIdx){
       const air=court.balls.some(b=>!b.fade && b.y < -BR-1.5);
       lvSeqWait = air;
-      if(!air){ lvSeqIdx=want; setCourtXY(lvSeqH(lv,want), lv.dist?lv.dist[1]:0, lv.rimW||36);
+      if(!air){ lvSeqIdx=want; if(!lv.hoopMove && !lv.rimPulse) setCourtXY(lvSeqH(lv,want), lv.dist?lv.dist[1]:0, lv.rimW||36);
         if(want>0) court.floaters.push({ x:(RIM.x1+RIM.x2)/2, y:RIM.y-60, t:0, txt:'Pota yer değiştirdi' }); }
     } else lvSeqWait=false;
   }
-  if(lv.hoopMove) setCourtXY((lv.dist?lv.dist[0]:0) + Math.sin(LV_T*lv.hoopMove.sp)*lv.hoopMove.amp, lv.dist?lv.dist[1]:0, lv.rimW||36);
+  // kayan pota ve/veya daralıp genişleyen çember (seri potada, o anki yerin çevresinde)
+  if(lv.hoopMove || lv.rimPulse){
+    let h = lv.seq ? lvSeqH(lv, Math.max(0,lvSeqIdx)) : (lv.dist?lv.dist[0]:0);
+    if(lv.hoopMove) h += Math.sin(LV_T*lv.hoopMove.sp)*lv.hoopMove.amp;
+    const rw = (lv.rimW||36) + (lv.rimPulse ? Math.sin(LV_T*lv.rimPulse.sp*2)*lv.rimPulse.amp : 0);
+    setCourtXY(h, lv.dist?lv.dist[1]:0, rw);
+  }
   if(lv.storm) WIND = lv.storm*Math.sin(LV_T*.55) + 25*Math.sin(LV_T*2.3);
   else if(lv.gust) WIND = lv.wind*(.75 + .35*Math.sin(LV_T*1.4));
 }
@@ -2278,6 +2438,17 @@ function drawLevelFx(g){
     g.strokeStyle='rgba(90,110,140,.45)'; g.lineWidth=1.6; g.beginPath();
     for(let i=0;i<70;i++){ const x=((i*97 + LV_T*90) % 760) - 20, y=((i*53 + LV_T*620) % 440) - 400; g.moveTo(x,y); g.lineTo(x-4,y+16); }
     g.stroke();
+  }
+  if(lv.snow){
+    g.fillStyle='rgba(255,255,255,.85)'; g.beginPath();
+    for(let i=0;i<60;i++){ const x=((i*89 + LV_T*(18+i%5*6) + Math.sin(LV_T*.8+i)*14) % 760 + 760) % 760 - 20, y=((i*61 + LV_T*(55+i%4*12)) % 440) - 400, r=1.6+(i%3)*.9;
+      g.moveTo(x+r,y); g.arc(x,y,r,0,Math.PI*2); }
+    g.fill();
+  }
+  if(lv.fog){
+    const gr=g.createLinearGradient(PX+40,0,RIM.x2+60,0);
+    gr.addColorStop(0,'rgba(238,240,242,0)'); gr.addColorStop(.5,'rgba(238,240,242,.5)'); gr.addColorStop(1,'rgba(238,240,242,.72)');
+    g.fillStyle=gr; g.fillRect(-400,-700,W+800,700);
   }
   if(lv.night){
     const cx=(RIM.x1+RIM.x2)/2, gr=g.createRadialGradient(cx,-200,60, cx,-200,620);
@@ -2312,16 +2483,17 @@ function levelRows(){
 }
 
 // ---------------- level haritası ----------------
-function showLevels(){ renderLevels(); showOnly('ovLevels'); document.getElementById('ovLevels').scrollTop=0; }
+function showLevels(){ renderLevels(); showOnly('ovLevels'); const ov=document.getElementById('ovLevels'); ov.scrollTop=0;
+  const cur=ov.querySelector('.lv.cur'); if(cur && cur.dataset.lv>8) setTimeout(()=>{ try{ cur.scrollIntoView({ block:'center' }); }catch(e){} }, 30); }
 function renderLevels(){
   const b=lvBest(), tot=lvTotals();
   let firstOpen = LEVELS.findIndex((l,i)=>lvUnlocked(i) && !num(b[l.id]));
   let h = `<h2>Tek oyuncu · En çok puan</h2><h1>Macera</h1>
     <div class="lv-tot"><div><b>${fmt(tot.pts)}</b><small>toplam puan</small></div><div><b>${tot.st}/${LV_N*3}</b><small>yıldız</small></div></div>
-    <p class="note" style="text-align:center">Levellerde genelde 5 top var, her top için 10 saniye (bazı levellerde farklı). Topladığın puana göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puan, her levelin en iyi skorlarının toplamıdır.</p>
-    <div class="lvgrid"><div class="lv-ch">1. Bölüm · Mahalle</div>` + LEVELS.map((l,i)=>{
+    <p class="note" style="text-align:center">${LV_N} level, ${Object.keys(CHAPTERS).length} bölüm; her bölümün sonunda bir patron var. Levellerde genelde 5 top var, her top için 10 saniye (bazı levellerde farklı). Topladığın puana göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Yıldızsız biten level 1 can götürür.</p>
+    <div class="lvgrid">` + LEVELS.map((l,i)=>{
       const open=lvUnlocked(i), s=num(b[l.id]), k=starsFor(l,s);
-      const ch = (l.ch && !(LEVELS[i-1]||{}).ch) ? `<div class="lv-ch">${l.ch}. Bölüm · Şehir Potaları</div>` : '';
+      const ch = (i===0 || l.ch!==LEVELS[i-1].ch) ? `<div class="lv-ch">${l.ch}. Bölüm · ${CHAPTERS[l.ch]}</div>` : '';
       return ch + `<div class="lv${open?'':' lock'}${i===firstOpen?' cur':''}${LV_BOSS.includes(l.n)?' boss':''}" data-lv="${i}">
         <div class="n">${open?l.n:'🔒'}</div><div class="nm">${esc(l.name)}</div><div class="st">${starStr(k)}</div><div class="bs">${s?fmt(s):'&nbsp;'}</div></div>`;
     }).join('') + `</div>
@@ -2338,7 +2510,12 @@ document.getElementById('lvBody').addEventListener('click', e=>{
 });
 let lvNames=[];
 const fillNames = t => t.replace(/\{a\}/g, lvNames[0]||'').replace(/\{b\}/g, lvNames[1]||'');
-function startLevel(i){ lvNames=pickNames(2); curLevel=LEVELS[i]; LV_T=0; MODE='level'; showOnly(null); startTournament(); }
+function startLevel(i){
+  if(!hasLife() && !LV_BONUS){
+    document.getElementById('ovRound').classList.add('hidden');
+    if(game!=='menu'){ MODE='solo'; clearLevelEnv(); game='menu'; players=[]; setCourt(0); court.reset(PLAYER_BALL[0]); }
+    if(!visible('ovLevels')) showLevels(); showLives('empty'); return; }
+  lvNames=pickNames(2); curLevel=LEVELS[i]; LV_T=0; MODE='level'; showOnly(null); startTournament(); }
 function levelIntro(p){
   const lv=curLevel;
   document.getElementById('tRound').textContent = `Level ${lv.n} / ${LV_N}`;
@@ -2352,24 +2529,26 @@ function levelResults(){
   const el=id=>document.getElementById(id), lv=curLevel, me=players[0], sc=me.score;
   statGame('macera', sc);
   const before=num(lvBest()[lv.id]), rec=lvSave(lv.id, sc), k=starsFor(lv, sc), idx=lv.n-1;
+  statWDL('macera', k ? 'w' : 'l');
+  if(k) earnResult('w'); else loseLife();
   const nextOpenNow = idx<LV_N-1 && lvUnlocked(idx+1), wasOpen = idx<LV_N-1 && starsFor(lv,before)>=1;
   el('rTitle').textContent = `Level ${lv.n} · ${lv.name}`;
   el('rScore').innerHTML = `${fmt(sc)}<div class="lv-stars">${starStr(k)}</div>`;
   el('rMsg').textContent = k===0 ? `İlk yıldız için ${fmt(lv.stars[0])} puan gerekiyor. Bir daha dene!`
-    : (rec && before ? 'Yeni rekor! ' : '') + (k===3 ? 'Kusursuz, üç yıldız!' : `Güzel! Bir sonraki yıldız için ${fmt(lv.stars[k])} puan.`) + (nextOpenNow && !wasOpen ? ` Level ${lv.n+1} açıldı!` : lv.n===15 && k ? ' Mahallenin yeni efsanesi sensin! Şehir Potaları bölümü seni bekliyor.' : lv.n===LV_N && k ? ' Şehrin yeni efsanesi sensin!' : '');
+    : (rec && before ? 'Yeni rekor! ' : '') + (k===3 ? 'Kusursuz, üç yıldız!' : `Güzel! Bir sonraki yıldız için ${fmt(lv.stars[k])} puan.`) + (lv.n===LV_N && k ? ` ${LV_N} leveli bitirdin. Efsanelerin efsanesi sensin!` : LV_BOSS.includes(lv.n) && k && !wasOpen ? ` ${CHAPTERS[lv.ch]} bölümünü bitirdin! Sıradaki bölüm: ${CHAPTERS[lv.ch+1]}.` : nextOpenNow && !wasOpen ? ` Level ${lv.n+1} açıldı!` : '');
   const tot=lvTotals();
   el('rRows').innerHTML = `<div class="win"><span>Bu skor</span><b>${fmt(sc)}<small>${me.baskets} sayı</small></b></div>`+
     `<div><span>En iyi</span><b>${fmt(Math.max(before,sc))}</b></div>`+
     `<div><span>Hedefler</span><b>★${lv.stars[0]} · ★★${lv.stars[1]} · ★★★${lv.stars[2]}</b></div>`+
     `<div><span>Toplam puan (${LV_N} level)</span><b>${fmt(tot.pts)}<small>${tot.st}/${LV_N*3} ★</small></b></div>`;
-  el('rHint').textContent='';
+  el('rHint').textContent = k ? '' : `1 can gitti · kalan can: ${num(ECO.lives)}`;
   if(k===0 && adsOn()){
-    el('rHint').innerHTML = `<button id="btnAdBall" class="adoffer">▶ Reklam izle, ${lvShots(lv)+1} topla tekrar dene</button>`;
+    el('rHint').innerHTML = `1 can gitti · kalan can: ${num(ECO.lives)}<button id="btnAdBall" class="adoffer">▶ Reklam izle, ${lvShots(lv)+1} topla tekrar dene</button>`;
     el('btnAdBall').onclick = ()=> showRewarded(()=>{ LV_BONUS=1; el('ovRound').classList.add('hidden'); startLevel(idx); });
   }
   el('rMenu').style.display='block'; el('rMenu').textContent='Level haritası';
   const next = k>=1 && idx<LV_N-1;
-  el('btnNext').style.display=''; el('btnNext').textContent = next ? `Level ${lv.n+1}’e geç` : 'Tekrar dene';
+  el('btnNext').style.display=''; el('btnNext').textContent = next ? `Sonraki level · ${lv.n+1}` : 'Tekrar dene';
   el('btnNext').dataset.lvnext = next ? String(idx+1) : String(idx);
 }
 
@@ -2466,6 +2645,7 @@ function cpuMatchDone(){
   let msg = res==='w' ? 'Kazandın!' : res==='l' ? `Kaybettin. ${cm.oppName} kazandı.` : 'Berabere!';
   if(cm.kind==='league') statWDL('pcLeague', res); else if(cm.kind==='tour') statWDL('pcTour', res);
   if(cm.onDone){ const m=cm.onDone(sc, me.baskets, res); if(m) msg=m; }
+  earnResult(res);
   el('rTitle').textContent = `${cm.stage}${cm.ot?` · Uzatma ${cm.ot}`:''}`;
   el('rScore').textContent = fmt(sc);
   el('rMsg').textContent = msg;
@@ -2554,7 +2734,8 @@ function playCpuLeagueWeek(){
         const x=botScore(L.teams[a].r, T.def, 5).sc, y=botScore(L.teams[c].r, T.def, 5).sc; return { a, b:c, sa:x, sb:y };
       });
       L.results.push(wk); L.week++;
-      if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(L.tier===2 && pos===1) CPU.lgTitles=num(CPU.lgTitles)+1; }
+      if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(L.tier===2 && pos===1) CPU.lgTitles=num(CPU.lgTitles)+1;
+        if(pos===1) setTimeout(()=>earn(null, 0, LIFE_CHAMP, 'lig birinciliği'), 1800); }
       cpuSave();
       return (res==='w'?'Kazandın! +3 puan.':res==='d'?'Berabere. +1 puan.':`Kaybettin. ${opp.name} 3 puanı aldı.`) + (L.week>=7?' Sezon bitti!':'');
     } });
@@ -2599,7 +2780,8 @@ function simCpuTour(){
     if(!moved) break;
   }
   withCpuTour(()=>{ const st=tourState('cpu'); if(st.done && !T.done){ T.done=true; T.podium=st.podium;
-    const k=st.podium.indexOf('me'); if(k>=0){ const tr=CPU.trophies||(CPU.trophies={}); tr[['g','s','b'][k]]=num(tr[['g','s','b'][k]])+1; } } });
+    const k=st.podium.indexOf('me'); if(k>=0){ const tr=CPU.trophies||(CPU.trophies={}); tr[['g','s','b'][k]]=num(tr[['g','s','b'][k]])+1; }
+    if(k===0) setTimeout(()=>earn(null, 0, LIFE_CHAMP, 'turnuva şampiyonluğu'), 1800); } });
   cpuSave();
 }
 let cpuTrType='ko', cpuTrSize=8;
@@ -2855,6 +3037,30 @@ function onlineLeagueWDL(){
 }
 function onlineQuickWDL(){ if(cloudState!=='ready' || !UID) return null; return wdl((PL[UID]||{}).qm); }
 
+// tüm oyuncular: genel puan (BP) ve istatistikler (oyuncu kayıtlarındaki "gen" alanından)
+function allPlayersTable(){
+  if(cloudState!=='ready') return '';
+  const aw={}; standings().forEach(r=>aw[r.uid]=num(r.award));
+  const rows=Object.keys(PL).filter(u=>PL[u] && ((PL[u].gen && typeof PL[u].gen==='object') || aw[u]!==undefined)).map(u=>{
+    const g = u===UID ? genStats() : (PL[u].gen||{});
+    return { uid:u, bp:Math.max(0,Math.floor(num(g.bp)))+(aw[u]||0), w:num(g.w), d:num(g.d), l:num(g.l), st:num(g.lvSt) };
+  });
+  if(UID && !rows.some(r=>r.uid===UID)){ const g=genStats(); rows.push({ uid:UID, bp:totalBp(), w:g.w, d:g.d, l:g.l, st:g.lvSt }); }
+  rows.sort((a,b)=>b.bp-a.bp || b.w-a.w || b.st-a.st || nickOf(a.uid).localeCompare(nickOf(b.uid),'tr'));
+  const meI=rows.findIndex(r=>r.uid===UID), show=rows.slice(0,50);
+  if(meI>=50) show.push(rows[meI]);
+  if(!show.length) return '';
+  return `<div class="opt-label st-sec">Tüm oyuncular · genel puan</div>
+    <table class="gtable all"><tr><th></th><th>Oyuncu</th><th>Maç</th><th>G-B-M</th><th>★</th><th>BP</th></tr>` +
+    show.map(r=>{ const k=rows.indexOf(r); return `<tr class="${r.uid===UID?'me':''}"><td>${k+1}</td><td>${r.uid===UID?esc(onNick||'Sen'):nk(r.uid)}</td><td>${r.w+r.d+r.l}</td><td>${r.w}-${r.d}-${r.l}</td><td>${r.st}</td><td><b>${fmt(r.bp)}</b></td></tr>`; }).join('') +
+    `</table><p class="note">BP: genel puan (basketpuan). Maç ve G-B-M bütün modlardaki maçları, ★ Macera yıldızlarını gösterir.</p>`;
+}
+function overallWDL(){
+  const q=CPU.quick||{}, qAll={ w:0, d:0, l:0 };
+  CPU_CHARS.forEach(c=>{ const o=wdl(q[c.id]); qAll.w+=o.w; qAll.d+=o.d; qAll.l+=o.l; });
+  const z={w:0,d:0,l:0}, parts=[qAll, wdl(STATS.pcLeague), wdl(STATS.pcTour), wdl(STATS.room||{}), onlineQuickWDL()||z, onlineTourWDL()||z, onlineLeagueWDL()||z, wdl(STATS.macera)];
+  return parts.reduce((a,o)=>({ w:a.w+o.w, d:a.d+o.d, l:a.l+o.l }), { w:0, d:0, l:0 });
+}
 function showStats(){ initCloud(); renderStats(); showOnly('ovStats'); document.getElementById('ovStats').scrollTop=0; }
 function wdlBar(o){
   const t=tot(o)||1;
@@ -2877,8 +3083,7 @@ function renderStats(){
   const onQ=onlineQuickWDL(), onT=onlineTourWDL(), onL=onlineLeagueWDL(), room=STATS.room||{};
   const roomO=wdl(room);
   // genel
-  const parts=[qAll, pcLg, pcTr, roomO, onQ||{w:0,d:0,l:0}, onT||{w:0,d:0,l:0}, onL||{w:0,d:0,l:0}];
-  const all=parts.reduce((a,o)=>({ w:a.w+o.w, d:a.d+o.d, l:a.l+o.l }), { w:0, d:0, l:0 }), allT=tot(all);
+  const all=overallWDL(), allT=tot(all);
   const lvB=lvBest(), lvT=lvTotals(), lvDone=LEVELS.filter(l=>num(lvB[l.id])>0).length;
   let h=`<h2>Galibiyet · Beraberlik · Mağlubiyet</h2><h1>İstatistikler</h1>
     <div class="st-all">
@@ -2886,7 +3091,9 @@ function renderStats(){
       ${allT ? wdlBar(all) : ''}
       <div class="st-pct">${allT ? `Kazanma oranın <b>%${Math.round(all.w/allT*100)}</b>` : 'Rakipli bir maç oynadığında burada görünecek.'}</div>
     </div>
-    ${cloudOk ? '' : `<p class="note" style="text-align:center">Online istatistikler, sunucuya bağlanınca eklenir.</p>`}
+    <div class="eco-rows" style="margin-top:12px"><div><span>Genel puanın</span><b>${fmt(totalBp())} BP</b></div><div><span>Canın</span><b>❤ ${num(ECO.lives)}</b></div></div>
+    ${cloudOk ? '' : `<p class="note" style="text-align:center">Online istatistikler ve tüm oyuncular, sunucuya bağlanınca eklenir.</p>`}
+    ${allPlayersTable()}
 
     <div class="opt-label st-sec">Rakiple oyna · bilgisayara karşı</div>
     ${statRow('Hızlı maç', qAll, '')}
@@ -2922,7 +3129,116 @@ function statRoomOnce(rows){
   const res = same(me) ? (nTop>1 ? 'd' : 'w') : 'l';
   const ex={ games:1 }; if(i<3) ex['p'+(i+1)]=1;
   statWDL('room', res, ex);
+  earnResult(res, 'room:'+key);
 }
+
+
+// =====================================================================
+// BASKETPUAN (BP) ve CAN
+// Her modda galibiyet +10 BP, beraberlik +3 BP (Macera'da en az 1 yıldız = galibiyet).
+// Her 30 BP 1 can verir. Başlangıçta 3 can. Macera'da yıldızsız biten ya da yarıda
+// bırakılan level 1 can götürür; can yoksa Macera'ya girilemez.
+// Turnuva ve ligde 1. olmak +2 can, ödüllü reklam +2 can.
+// Toplam BP = maç BP'si (bu cihaz, üyelerde hesaba da yazılır) + turnuva/lig/oda ödül BP'si (üyeler).
+// =====================================================================
+const BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=30, LIFE_START=3, LIFE_AD=2, LIFE_CHAMP=2;
+function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
+let ECO = ecoLoad() || { bp:0, lives:LIFE_START, granted:0, given:{}, init:false };
+ECO.given = ECO.given && typeof ECO.given==='object' ? ECO.given : {};
+function ecoSave(){ store('eco', JSON.stringify(ECO)); ecoCloudSoon(); }
+function awardBp(){ if(!UID || cloudState!=='ready' || !isMember()) return 0; const r=standings().find(x=>x.uid===UID); return r ? num(r.award) : 0; }
+const totalBp = () => num(ECO.bp) + awardBp();
+// 30 BP'de bir can: yeni geçilen her 30'luk için +1
+function ecoLifeCheck(){
+  const want=Math.floor(totalBp()/BP_PER_LIFE), got=num(ECO.granted);
+  if(want>got){ const n=want-got; ECO.granted=want; ECO.lives=num(ECO.lives)+n; ecoSave(); hudPop('hudLives'); toastAll(`+${n} can! Her ${BP_PER_LIFE} basketpuan 1 can verir.`); }
+}
+// key: aynı ödül iki kez verilmesin (online sonuçlar her açılışta yeniden taranır)
+function earn(key, bp, lives, why){
+  if(key){ if(ECO.given[key]) return false; ECO.given[key]=1; }
+  if(bp) ECO.bp=num(ECO.bp)+bp;
+  if(lives) ECO.lives=num(ECO.lives)+lives;
+  ecoSave(); hudSync();
+  if(bp) hudPop('hudBp'); if(lives) hudPop('hudLives');
+  const parts=[]; if(bp) parts.push(`+${bp} basketpuan`); if(lives) parts.push(`+${lives} can`);
+  if(parts.length) toastAll(parts.join(' · ') + (why ? ' · '+why : ''));
+  setTimeout(ecoLifeCheck, bp && lives ? 1500 : 400);
+  return true;
+}
+// maç sonucu: 'w' galibiyet, 'd' beraberlik
+function earnResult(res, key){ if(res==='w') return earn(key, BP_WIN, 0, 'galibiyet'); if(res==='d') return earn(key, BP_DRAW, 0, 'beraberlik'); return false; }
+function loseLife(){ ECO.lives=Math.max(0, num(ECO.lives)-1); ecoSave(); hudSync(); hudPop('hudLives'); }
+const hasLife = () => num(ECO.lives)>0;
+// ---------- gösterge ----------
+function hudSync(){
+  const hud=document.getElementById('hud'); if(!hud) return;
+  document.getElementById('hudBpN').textContent=fmt(totalBp());
+  document.getElementById('hudLivesN').textContent=num(ECO.lives);
+  hud.classList.toggle('off', visible('ovSplash'));
+}
+function hudPop(id){ const b=document.getElementById(id); if(!b) return; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+// ---------- can ekranı ----------
+let livesBack=null;
+function showLives(reason){
+  const el=document.getElementById('lvsBody'), lives=num(ECO.lives), t=totalBp(), next=BP_PER_LIFE - (t % BP_PER_LIFE);
+  const adBtn = adsOn() ? `<button id="lvsAd">▶ Reklam izle · +${LIFE_AD} can</button>`
+    : IS_ADMIN ? `<button id="lvsAd">Yönetici · +${LIFE_AD} can</button>`
+    : `<p class="note">Reklamla can kazanmak uygulamada açık.</p>`;
+  el.innerHTML = `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
+    <div class="lives-big">❤ ${lives}</div>
+    <p>${reason==='empty' ? 'Macera levelleri can ister. Can kazanınca kaldığın yerden devam edersin.' : 'Macera’da yıldızsız biten ya da yarıda bırakılan level 1 can götürür.'}</p>
+    <div class="eco-rows">
+      <div><span>Basketpuan</span><b>${fmt(t)} BP</b></div>
+      <div><span>Sonraki cana</span><b>${fmt(next)} BP</b></div>
+      <div><span>Galibiyet · beraberlik (her mod)</span><b>+${BP_WIN} · +${BP_DRAW} BP</b></div>
+      <div><span>Her ${BP_PER_LIFE} basketpuan</span><b>+1 can</b></div>
+      <div><span>Turnuva ya da ligde 1.</span><b>+${LIFE_CHAMP} can</b></div>
+      <div><span>Reklam izle</span><b>+${LIFE_AD} can</b></div>
+    </div>
+    <div class="menu-btns" style="margin-top:6px">${adBtn}<button class="btn-ghost" id="lvsClose">Kapat</button></div>`;
+  const ad=document.getElementById('lvsAd');
+  if(ad) ad.onclick=()=>{ const give=()=>{ earn(null, 0, LIFE_AD, 'reklam ödülü'); showLives(); };
+    if(IS_ADMIN) give(); else showRewarded(give); };
+  document.getElementById('lvsClose').onclick=closeLives;
+  document.getElementById('ovLives').classList.remove('hidden');
+}
+function closeLives(){ document.getElementById('ovLives').classList.add('hidden'); }
+document.getElementById('hudLives').addEventListener('click', e=>{ e.stopPropagation(); audio(); if(visible('ovLives')) closeLives(); else showLives(); });
+document.getElementById('hudBp').addEventListener('click', e=>{ e.stopPropagation(); audio(); if(inGame()) return; closeLives(); showStats(); });
+['hudLives','hudBp'].forEach(id=>document.getElementById(id).addEventListener('pointerdown', e=>e.stopPropagation()));
+// ---------- online sonuçlardan BP ve şampiyonluk canı ----------
+// İlk taramada eski sonuçlar ödül vermeden işaretlenir (güncellemeyle geriye dönük ödül yağmasın).
+function ecoScanCloud(){
+  if(cloudState!=='ready' || !UID) return;
+  const first=!ECO.init, mark=k=>{ if(first) ECO.given[k]=1; };
+  for(const tid of Object.keys(TOURS)){
+    const st=tourState(tid); if(!st || st.t.status!=='run') continue;
+    for(const m of allMatches(st)) if(m.state==='done' && !m.bye && m.winner===UID){ const k='tw:'+tid+':'+m.key; first ? mark(k) : earnResult('w', k); }
+    if(st.done && st.podium[0]===UID){ const k='tc:'+tid; first ? mark(k) : earn(k, 0, LIFE_CHAMP, 'turnuva şampiyonluğu'); }
+  }
+  if(typeof LG!=='undefined'){
+    const cur=seasonKey(), seasons=[...new Set(Object.values(LG).map(r=>r && r.season))].filter(x=>typeof x==='string' && x<cur);
+    for(const sn of seasons) for(let t=0;t<4;t++){ const o=seasonOutcome(sn,t); if(o.q[0] && o.q[0].uid===UID){ const k='lc:'+sn; first ? mark(k) : earn(k, 0, LIFE_CHAMP, 'lig şampiyonluğu'); } }
+  }
+  // başka cihazdan gelen hesap: buluttaki BP daha yüksekse onu al (canlar yeniden verilmez)
+  const g=(PL[UID]||{}).gen;
+  if(g && num(g.bp)>num(ECO.bp)){ ECO.bp=num(g.bp); if(typeof g.lives==='number' && !ECO.init) ECO.lives=Math.max(num(ECO.lives), g.lives); ECO.granted=Math.max(num(ECO.granted), Math.floor(totalBp()/BP_PER_LIFE)); }
+  if(first){ ECO.init=true; ECO.granted=Math.max(num(ECO.granted), Math.floor(totalBp()/BP_PER_LIFE)); }
+  store('eco', JSON.stringify(ECO));
+  hudSync(); if(!first) ecoLifeCheck();
+}
+onCloud(()=>{ ecoScanCloud(); hudSync(); });
+hudSync();
+// üyelerde ödül basketpuanı ve genel puan için bulut bağlantısı açılışta kurulur
+(function ecoAuth(){ if(window.TP && TP.onAuth) TP.onAuth(u=>{ hudSync(); if(u && u.member) setTimeout(()=>{ initCloud(); ecoCloudSoon(); }, 1200); }); else setTimeout(ecoAuth, 80); })();
+// genel puan ve istatistikler herkesin görebilmesi için oyuncu kaydına yazılır
+let ecoT=null;
+function ecoCloudSoon(){ clearTimeout(ecoT); ecoT=setTimeout(ecoCloudPush, 1500); }
+function genStats(){
+  const all=overallWDL(), lt=lvTotals();
+  return { bp:num(ECO.bp), lives:num(ECO.lives), w:all.w, d:all.d, l:all.l, lvSt:lt.st, lvPts:lt.pts, lvDone:LEVELS.filter(l=>num(lvBest()[l.id])>0).length, at:Date.now() };
+}
+function ecoCloudPush(){ if(cloudState!=='ready' || !UID || !DB) return; writeMy({ nick:onNick||nickOf(UID)||'Oyuncu', gen:genStats() }); }
 
 // ---------- menü ----------
 const segP=document.getElementById('segPlayers');
@@ -3100,7 +3416,7 @@ let PAUSED=false, VIB = store('vib')!=='0';
 function buzz(p){ if(!VIB) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 const pzEl = id => document.getElementById(id);
 function inGame(){ return game!=='menu' && !visible('ovRound') && !visible('ovCount'); }
-function gameMenuSync(){ pzEl('gameMenuBtn').classList.toggle('show', inGame() && !visible('ovPause')); }
+function gameMenuSync(){ pzEl('gameMenuBtn').classList.toggle('show', inGame() && !visible('ovPause')); pzEl('hud').classList.toggle('off', visible('ovSplash')); }
 function pzLabels(){
   pzEl('pzSound').textContent = muted ? 'Ses: Kapalı' : 'Ses: Açık';
   pzEl('pzVib').textContent = VIB ? 'Titreşim: Açık' : 'Titreşim: Kapalı';
@@ -3112,7 +3428,7 @@ function pzConfirm(on){
   if(on){
     const cup = MODE==='match' && curMatch && (curMatch.league || curMatch.tid || curMatch.kind==='league' || curMatch.kind==='tour');
     pzEl('pzWarn').innerHTML = '<b>Emin misin?</b> Oyunu şimdi bitirirsen bu oyundan <b>hiçbir puan almazsın</b> ve bu oyunda kazandıklarını <b>kaybedersin</b>.'
-      + (MODE==='level' ? ' Yıldız ve rekor kaydedilmez.' : '')
+      + (MODE==='level' ? ' Yıldız ve rekor kaydedilmez, <b>1 can gider</b>.' : '')
       + (cup ? ' Lig ve turnuvada maçı kaybetmiş sayılabilirsin.' : '')
       + (MODE==='online' ? ' Odadan da çıkarsın.' : '');
   }
@@ -3146,7 +3462,7 @@ const BACK_SEL = {
   ovStart:'#setupBack', ovSolo:'#soloBack', ovStats:'#stBack', ovAccount:'#accBack', ovLevels:'#lvBack',
   ovTour:'[data-act="back"]', ovLeague:'[data-lg="back"]', ovCpu:'[data-go="back"],[data-go="hub"],[data-go="solo"]'
 };
-const OV_ORDER = ['ovPause','ovCount','ovRound','ovTurn','ovSplash','ovMenu','ovRules','ovStart','ovMulti','ovLobby','ovTours','ovTour',
+const OV_ORDER = ['ovLives','ovPause','ovCount','ovRound','ovTurn','ovSplash','ovMenu','ovRules','ovStart','ovMulti','ovLobby','ovTours','ovTour',
   'ovStand','ovLevels','ovSolo','ovCpu','ovStats','ovLeague','ovAccount'];
 // Geri adımları yalnızca kullanıcı dokunuşu sırasında eklenir: WebView, dokunuşsuz eklenen geçmiş kayıtlarını geri tuşunda atlayabilir.
 let navSkipPop=false;
@@ -3157,6 +3473,7 @@ function quitGame(){
   closePause(true);
   const m=MODE, cm=curMatch, back=cpuBack;
   REPLAY=null; turnEnding=true;
+  if(m==='level') loseLife();
   goMenu();
   if(m==='level') showLevels();
   else if(m==='online') showMulti();
@@ -3168,6 +3485,7 @@ function quitGame(){
 }
 function handleBack(){            // true: uygulamada kal, false: çıkışa izin ver
   const ov=openOv();
+  if(ov==='ovLives'){ closeLives(); return true; }
   if(ov==='ovPause'){ if(pzConfirmOpen()) pzConfirm(false); else closePause(); return true; }
   if(ov==='ovMenu' || ov==='ovSplash'){
     toastAll('Çıkmak için tekrar geri bas');
@@ -3198,7 +3516,7 @@ document.addEventListener('pointerup', navPush, true);
 document.addEventListener('keydown', navPush, true);
 
 // test kancası
-if(/[?&]test\b/.test(location.search)) window.__game = { get preview(){ return PREVIEW_OVR; }, get match(){ return curMatch && { def:curMatch.def, kind:curMatch.kind, stage:curMatch.stage }; }, get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
+if(/[?&]test\b/.test(location.search)) window.__game = { get eco(){ return ECO; }, earnResult, get preview(){ return PREVIEW_OVR; }, get match(){ return curMatch && { def:curMatch.def, kind:curMatch.kind, stage:curMatch.stage }; }, get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
   get timeLeft(){return timeLeft;}, set timeLeft(v){timeLeft=v;}, releasePoint,
   shoot(vx,vy){ const p=court; if(!p.canShoot()) return false; p.pending={vx,vy}; p.fig.go('release',.09); p.state='releasing'; p.timer=0; return true; } };
 })();
