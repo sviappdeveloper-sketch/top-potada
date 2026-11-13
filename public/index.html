@@ -430,7 +430,7 @@
     <ul>
       <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>3 cana kadar</b> (uygulama kapalıyken de); 3'ün üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
       <li><b>Puan kazanılan her yerde kaybetmek 1 can götürür:</b> online maçlar (hızlı maç, oda, lig, turnuva), bilgisayara karşı lig ve turnuva maçları, Macera’da yıldızsız biten level. Bu maçları ya da leveli yarıda bırakmak da 1 can götürür. Beraberlik can götürmez. Can yoksa Macera, online hızlı maç, oda, online lig ve bilgisayar ligi/turnuvası maçları açılmaz (online turnuvadaki maçların oynanabilir). Bilgisayarla hızlı maç ve serbest antrenman puan da can da götürmez.</li>
-      <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>50 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
+      <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>50 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +1 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
 
     <h3>Atış nasıl yapılır</h3>
@@ -3244,12 +3244,12 @@ function statRoomOnce(rows){
 //     oyuncu isterse can ekranında 50 BP ile 1 can alır.
 // Can: başlangıçta 3, en fazla 10; süreyle (20 dk'da 1) yalnız 3'e kadar dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
 //     1 can götürür. Can yoksa Macera ve yeni online maç (hızlı maç, oda, lig) açılmaz.
-//     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (10'u geçmez).
+//     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +1 can (10'u geçmez).
 // Genel puan = kazanılan toplam BP (maç BP'si + üyelerin turnuva/lig/oda ödül BP'si); harcananlar düşmez.
 // =====================================================================
 // lig galibiyeti: en alt lig (Bronz) 5, orta (Gümüş) 10, diğerleri (Altın, Elmas) 15 BP
 const lgWinBp = tier => tier<=0 ? 5 : tier===1 ? 10 : 15;
-const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=3, LIFE_MAX=10, LIFE_AD=2, LIFE_CHAMP=2;
+const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=3, LIFE_MAX=10, LIFE_AD=1, LIFE_CHAMP=2;
 function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
 let ECO = ecoLoad() || { bp:0, spent:0, lives:LIFE_START, given:{}, init:false };
 ECO.given = ECO.given && typeof ECO.given==='object' ? ECO.given : {};

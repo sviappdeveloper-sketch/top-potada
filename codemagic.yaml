@@ -85,10 +85,11 @@ workflows:
           python3 tool/asc_islem.py
 
   # Aynısı + sürümü Apple incelemesine gönderir. Yalnızca elle başlatılır.
+  # "asc-gonder" dalına gönderimle de çalışır; MIN_BUILD'den yeni derleme işlenene kadar bekler.
   asc-gonder:
     name: "App Store: incelemeye gönder"
     instance_type: mac_mini_m2
-    max_build_duration: 45
+    max_build_duration: 120
     environment:
       groups:
         - asc
@@ -96,6 +97,14 @@ workflows:
         ASC_KEY_ID: 9PJ9V3965R
         ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
         GONDER: evet
+        MIN_BUILD: "16"
+        BEKLE_DK: "100"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: asc-gonder
+          include: true
     scripts:
       - name: Hazırla ve incelemeye gönder
         script: |

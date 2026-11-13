@@ -273,8 +273,11 @@ adim("İnceleme bilgileri", inceleme)
 
 
 # ---------------------------------------------------------------- 8) derleme
+MIN_BUILD = int(os.environ.get("MIN_BUILD", "0") or 0)   # bundan büyük numaralı derleme beklenir
+
+
 def derleme():
-    deadline = time.time() + 25 * 60
+    deadline = time.time() + int(os.environ.get("BEKLE_DK", "25")) * 60
     while True:
         builds = call("GET", f"/builds?filter[app]={APP_ID}&filter[preReleaseVersion.version]={VER}"
                              f"&filter[preReleaseVersion.platform]=IOS&sort=-uploadedDate&limit=5")["data"]
@@ -284,6 +287,13 @@ def derleme():
         son = builds[0]
         a = son["attributes"]
         print(f"   derleme {a['version']}: {a['processingState']}")
+        if MIN_BUILD and int(a["version"]) <= MIN_BUILD:
+            if time.time() > deadline:
+                eksikler.append(f"{MIN_BUILD} numaradan yeni derleme gelmedi: biraz sonra yeniden çalıştır.")
+                return None
+            print(f"   {MIN_BUILD} numaradan yeni derleme bekleniyor…")
+            time.sleep(60)
+            continue
         if a["processingState"] == "VALID":
             break
         if a["processingState"] in ("INVALID", "FAILED"):
@@ -321,11 +331,24 @@ if GONDER:
     def gonder():
         if not BUILD:
             raise RuntimeError("bağlı derleme yok")
-        sub = call("POST", "/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": "IOS"},
-                   "relationships": {"app": {"data": {"type": "apps", "id": APP_ID}}}}})["data"]
-        call("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems",
-             "relationships": {"reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub["id"]}},
-                               "appStoreVersion": {"data": {"type": "appStoreVersions", "id": SID}}}}})
+        # Reddedilmiş (çözülmemiş sorunlu) ya da hazırlanan bir gönderim varsa onu yeniden gönder
+        acik = call("GET", f"/reviewSubmissions?filter[app]={APP_ID}&filter[platform]=IOS"
+                           f"&filter[state]=UNRESOLVED_ISSUES,READY_FOR_REVIEW&limit=5")["data"]
+        if acik:
+            sub = acik[0]
+            print("   mevcut gönderim:", sub["attributes"].get("state"))
+            try:
+                call("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems",
+                     "relationships": {"reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub["id"]}},
+                                       "appStoreVersion": {"data": {"type": "appStoreVersions", "id": SID}}}}}, quiet=True)
+            except urllib.error.HTTPError:
+                pass   # sürüm zaten bu gönderimde
+        else:
+            sub = call("POST", "/reviewSubmissions", {"data": {"type": "reviewSubmissions", "attributes": {"platform": "IOS"},
+                       "relationships": {"app": {"data": {"type": "apps", "id": APP_ID}}}}})["data"]
+            call("POST", "/reviewSubmissionItems", {"data": {"type": "reviewSubmissionItems",
+                 "relationships": {"reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub["id"]}},
+                                   "appStoreVersion": {"data": {"type": "appStoreVersions", "id": SID}}}}})
         call("PATCH", f"/reviewSubmissions/{sub['id']}", {"data": {"type": "reviewSubmissions", "id": sub["id"],
              "attributes": {"submitted": True}}})
         print("   İNCELEMEYE GÖNDERİLDİ. Sonuç 1–3 gün içinde e-postayla gelir.")
