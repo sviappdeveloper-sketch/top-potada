@@ -352,7 +352,7 @@
 
     <h3>Oyun modları</h3>
     <ul>
-      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve başlarken seviye seçersin (Kolay, Orta, Zor, Efsane; sezon sonunda değiştirilebilir): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
+      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve <b>seviyesi standarttır</b>; rakiplerin gücünü yalnızca ligin kademesi belirler (zorluk seçimi yalnızca hızlı maçta var): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
       <li><b>Tek oyuncu → Macera:</b> 7 bölüm (Mahalle, Şehir Potaları, Sahil Kupası, Dağ Köyü, Gece Ligi, Kış Turnuvası, Efsaneler Ligi), 100 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3, 7 ya da 9) ve her levelin kendi macerası var: rüzgâr, fırtına, gece, sis, kar, yağmur, ağır ya da hafif top, uzak, kayan, her topta yer değiştiren potalar, dar ya da daralıp genişleyen çember, altın son top, zıplayan ve kayan savunmacılar; her bölümün sonunda da bir patron. Zorluk level level artar. Yıldızsız biten ya da yarıda bırakılan level 1 can götürür; can yoksa Macera açılmaz. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır.</li>
       <li><b>Tek oyuncu → Serbest antrenman:</b> klasik 3 tur, her tur 5 top. Zorluğu (Kolay, Orta, Zor, Efsane: yardım çizgisinin uzunluğu) ve savunmacı olup olmayacağını sen seçersin. Can gitmez, basketpuan vermez.</li>
@@ -430,7 +430,7 @@
     <ul>
       <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>3 cana kadar</b> (uygulama kapalıyken de); 3'ün üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
       <li><b>Puan kazanılan her yerde kaybetmek 1 can götürür:</b> online maçlar (hızlı maç, oda, lig, turnuva), bilgisayara karşı lig ve turnuva maçları, Macera’da yıldızsız biten level. Bu maçları ya da leveli yarıda bırakmak da 1 can götürür. Beraberlik can götürmez. Can yoksa Macera, online hızlı maç, oda, online lig ve bilgisayar ligi/turnuvası maçları açılmaz (online turnuvadaki maçların oynanabilir). Bilgisayarla hızlı maç ve serbest antrenman puan da can da götürmez.</li>
-      <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>30 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
+      <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>50 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
 
     <h3>Atış nasıl yapılır</h3>
@@ -1987,7 +1987,7 @@ function renderStand(){
     if(!rows.length) h += `<p class="note" style="text-align:center">Henüz basketpuan kazanan yok. Bir online oda ya da turnuva bitince burada görünecek.</p>`;
     else h += `<table class="gtable stand"><tr><th></th><th>Oyuncu</th><th title="Turnuva birincilikleri">1.</th><th>2.</th><th>3.</th><th>BP</th></tr>` +
       rows.map((r,k)=>`<tr class="${r.uid===UID?'me':''}"><td>${k+1}</td><td>${nk(r.uid)}</td><td><span class="md g">${r.gold}</span></td><td><span class="md s">${r.silver}</span></td><td><span class="md b">${r.bronze}</span></td><td><b>${r.bp}</b></td></tr>`).join('') + `</table>`;
-    h += `<p class="note">Yalnızca üyeler sıralanır. Basketpuan (BP): online maçlarda galibiyet ${BP_WIN}, beraberlik ${BP_DRAW}; bilgisayar lig/turnuva ve Macera galibiyeti ${BP_WIN}; ayrıca turnuvalarda 1. ${BP_TOUR[0]}, 2. ${BP_TOUR[1]}, 3. ${BP_TOUR[2]}; online odalarda 1. ${BP_ROOM[0]}, 2. ${BP_ROOM[1]}, 3. ${BP_ROOM[2]}; lig sezon sonunda seviyeye göre. Madalya sütunları turnuva derecelerini gösterir.</p>`;
+    h += `<p class="note">Yalnızca üyeler sıralanır. Basketpuan (BP): online maçlarda galibiyet ${BP_WIN}, beraberlik ${BP_DRAW}; lig galibiyeti kademeye göre 5/10/15; bilgisayar turnuvası ve Macera galibiyeti ${BP_WIN}; ayrıca turnuvalarda 1. ${BP_TOUR[0]}, 2. ${BP_TOUR[1]}, 3. ${BP_TOUR[2]}; online odalarda 1. ${BP_ROOM[0]}, 2. ${BP_ROOM[1]}, 3. ${BP_ROOM[2]}; lig sezon sonunda seviyeye göre. Madalya sütunları turnuva derecelerini gösterir.</p>`;
     if(!isMember()) h += memberGate('Basketpuan kazanmak');
   }
   $('sdBody').innerHTML=h;
@@ -2626,7 +2626,10 @@ const CPU_NAMES = [   // erkek isimleri çoğunlukta (yaklaşık dörtte üç)
 // bilgisayar ligi zorluk seviyeleri: rakiplerin güç aralığı (kademe yükseldikçe biraz artar)
 const CPU_DIFF = [ { n:'Kolay', r:[1.1,1.9], c:'#7fb069' }, { n:'Orta', r:[2.0,3.0], c:'#3d8eb9' }, { n:'Zor', r:[3.1,4.0], c:'#8e6c8a' }, { n:'Efsane', r:[4.1,4.9], c:'#b03a2e' } ];
 const diffOf = r => r<1.95 ? CPU_DIFF[0] : r<3.05 ? CPU_DIFF[1] : r<4.05 ? CPU_DIFF[2] : CPU_DIFF[3];
-const lgDiff = L => Math.max(0, Math.min(3, L && typeof L.diff==='number' ? L.diff : 1));
+// bilgisayar liginin seviyesi standarttır (Orta); rakiplerin gücünü yalnızca lig kademesi belirler.
+// Zorluk seçimi yalnızca hızlı maçlarda (rakip seçerek) geçerlidir; turnuva da standarttır.
+const LG_STD_DIFF = 1;
+const lgDiff = L => LG_STD_DIFF;
 let nextDiff=null;
 const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 } ];
 const rnd = (a,b) => a + Math.random()*(b-a);
@@ -2649,6 +2652,12 @@ if(CPU.league && CPU.league.adj!==2 && Array.isArray(CPU.league.teams)){
   const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
   CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
   CPU.league.adj=2; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
+// eskiden seçilen lig seviyesi standarda çekilir (rakipler Orta seviyeye kaydırılır; kademe korunur)
+if(CPU.league && typeof CPU.league.diff==='number' && CPU.league.diff!==1 && Array.isArray(CPU.league.teams)){
+  const mid=[1.5,2.5,3.55,4.5], fix=mid[1]-mid[Math.max(0,Math.min(3,CPU.league.diff))];
+  CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
+  CPU.league.diff=1; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 function cpuSave(){ store('cpu', JSON.stringify(CPU)); }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
@@ -2709,7 +2718,7 @@ function renderCpuHub(){
     <div class="hub-sec"><div class="opt-label">Lig</div><small>Bronz → Gümüş → Altın</small></div>
     <div class="hc" data-go="lg" style="--hc:${T.c}">
       <div class="hc-row"><div><div class="hc-title">${lg ? `${T.n} ligi` : 'Bilgisayar ligi'}</div>
-        <div class="hc-meta">${lg ? `${CPU_DIFF[lgDiff(lg)].n} seviye · ${lg.season}. sezon` : 'Seviyeni seç, Bronz ligden başla'}</div></div>
+        <div class="hc-meta">${lg ? `${lg.season}. sezon` : 'Bronz ligden başla'}</div></div>
         <span class="hc-go">${lg ? 'Devam et' : 'Başla'} →</span></div>
       ${lg ? `<div class="wk">${Array.from({length:7},(_,i)=>`<i class="${i<wk?'on':''}"></i>`).join('')}</div><div class="wk-l">${wk>=7 ? 'Sezon tamamlandı' : `${wk+1}. hafta sırada · ${wk}/7 oynandı`}</div>` : ''}
       <div class="hc-rules">8 kişi, herkes herkesle 1 maç. İlk 2 üst lige çıkar, son 2 düşer.${num(CPU.lgTitles)?` · 🏆 ${num(CPU.lgTitles)} şampiyonluk`:''}</div></div>
@@ -2769,8 +2778,8 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
   for(let r=0;r<7;r++){ const w=[]; for(let i=0;i<4;i++) w.push([arr[i], arr[7-i]]); weeks.push(w); arr.splice(1,0,arr.pop()); }
   return weeks;
 }
-function newCpuLeague(tier, season, diff){
-  const D=CPU_DIFF[diff], names=pickNames(7);
+function newCpuLeague(tier, season){
+  const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
   CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:2,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
@@ -2789,12 +2798,12 @@ function renderCpuLeague(){
   const L=CPU.league;
   if(!L){
     cpuEl().innerHTML=`<h2>Rakiple oyna · Bilgisayar ligi</h2><h1>Seviye seç</h1>
-      <p class="note" style="text-align:center">Lig 3 kademelidir: Bronz’dan başlarsın, Gümüş ve Altın’a yükselirsin. Seçtiğin seviye, ligdeki rakiplerin ne kadar güçlü olacağını belirler.</p>
-      ${diffCards('lgdiff', -1)}<div class="back" data-go="hub">← Rakiple oyna</div>`;
+      <p class="note" style="text-align:center">Lig 3 kademelidir: Bronz’dan başlarsın, Gümüş ve Altın’a yükselirsin. Ligin seviyesi standarttır; rakiplerin gücünü ligin kademesi belirler.</p>
+      <div class="menu-btns"><button data-go="lgstart">Bronz ligden başla</button></div><div class="back" data-go="hub">← Rakiple oyna</div>`;
     return;
   }
   const T=CPU_TIERS[L.tier], D=CPU_DIFF[lgDiff(L)], tb=lgTable(L), done=L.week>=7, myPos=tb.findIndex(x=>x.me)+1;
-  let h=`<h2>Rakiple oyna · Bilgisayar ligi</h2><h1>${T.n} ligi</h1><div class="lg-season">${L.season}. sezon · <b style="color:${D.c}">${D.n}</b> seviye · ${done?'sezon bitti':`${L.week+1}. hafta / 7`}</div>`;
+  let h=`<h2>Rakiple oyna · Bilgisayar ligi</h2><h1>${T.n} ligi</h1><div class="lg-season">${L.season}. sezon · ${done?'sezon bitti':`${L.week+1}. hafta / 7`}</div>`;
   if(!done){
     const pair=L.sched[L.week].find(p=>p[0]===0||p[1]===0), opp=L.teams[pair[0]===0?pair[1]:pair[0]];
     h+=`<div class="lg-me" style="--tc:${T.c}"><div class="lg-tier">${T.n} ligi</div>
@@ -2805,9 +2814,7 @@ function renderCpuLeague(){
     const up = L.tier<2 && myPos<=2, down = L.tier>0 && myPos>=7, champ = L.tier===2 && myPos===1;
     h+=`<div class="next" style="text-align:center"><div class="nx-stage">${myPos}. oldun</div>
       <div class="nx-vs">${champ ? '🏆 Altın ligin şampiyonusun!' : up ? `${CPU_TIERS[L.tier+1].n} ligine yükseldin!` : down ? `${CPU_TIERS[L.tier-1].n} ligine düştün.` : `${T.n} liginde kaldın.`}</div>
-      <div class="opt-label" style="margin-top:12px">Yeni sezonun seviyesi</div>
-      <div class="seg" id="nsDiff">${CPU_DIFF.map((d,i)=>`<button data-go="nsdiff" data-d="${i}" class="${(nextDiff??lgDiff(L))===i?'on':''}">${d.n}</button>`).join('')}</div>
-      <button data-go="lgnew">Yeni sezona başla</button></div>`;
+      <button data-go="lgnew" style="margin-top:12px">Yeni sezona başla</button></div>`;
   }
   h+=`<table class="gtable lg"><tr><th></th><th>Oyuncu</th><th>O</th><th>G-B-M</th><th>Puan</th></tr>`+tb.map((x,i)=>{
     const z = (L.tier<2 && i<2) ? 'up' : (L.tier>0 && i>=6) ? 'down' : '';
@@ -2818,7 +2825,6 @@ function renderCpuLeague(){
     h+=`<div class="opt-label" style="margin-top:14px">${L.results.length}. hafta sonuçları</div><div class="mlist">`+last.map(m=>{
       const A=L.teams[m.a], B=L.teams[m.b]; const me=A.me||B.me;
       return `<div class="mrow${me?' me':''}"><span${m.sa>m.sb?' class="w"':''}>${A.me?'Sen':esc(A.name)}</span><em>${fmt(m.sa)} – ${fmt(m.sb)}</em><span${m.sb>m.sa?' class="w"':''}>${B.me?'Sen':esc(B.name)}</span></div>`; }).join('')+`</div>`; }
-  if(!done) h+=`<div class="back" data-go="lgreset" style="margin-top:6px">Seviyeyi değiştir (lig baştan başlar)</div>`;
   h+=`<div class="back" data-go="hub">← Rakiple oyna</div>`;
   cpuEl().innerHTML=h;
 }
@@ -2841,7 +2847,7 @@ function playCpuLeagueWeek(){
 function nextCpuSeason(){
   const L=CPU.league, pos=lgTable(L).findIndex(x=>x.me)+1;
   let t=L.tier; if(t<2 && pos<=2) t++; else if(t>0 && pos>=7) t--;
-  newCpuLeague(t, L.season+1, nextDiff ?? lgDiff(L)); nextDiff=null; renderCpuLeague();
+  newCpuLeague(t, L.season+1); nextDiff=null; renderCpuLeague();
 }
 
 // ---------------- bilgisayar turnuvası (online turnuvayla aynı mantık) ----------------
@@ -2985,7 +2991,7 @@ document.getElementById('cpuBody').addEventListener('click', e=>{
   else if(a==='lg') showCpuLeague();
   else if(a==='lgplay') playCpuLeagueWeek();
   else if(a==='lgnew') nextCpuSeason();
-  else if(a==='lgdiff'){ newCpuLeague(0, 1, +b.dataset.d); renderCpuLeague(); }
+  else if(a==='lgstart'){ newCpuLeague(0, 1); renderCpuLeague(); }
   else if(a==='nsdiff'){ nextDiff=+b.dataset.d; renderCpuLeague(); }
   else if(a==='lgreset'){ CPU.league=null; cpuSave(); renderCpuLeague(); }
   else if(a==='tr') showCpuTour();
@@ -3235,7 +3241,7 @@ function statRoomOnce(rows){
 // BASKETPUAN (BP) ve CAN
 // BP: online maçlarda galibiyet +10, beraberlik +3; bilgisayara karşı yalnızca lig ve turnuva
 //     galibiyeti +10; Macera'da en az 1 yıldız +10. BP birikir, kendiliğinden cana dönüşmez:
-//     oyuncu isterse can ekranında 30 BP ile 1 can alır.
+//     oyuncu isterse can ekranında 50 BP ile 1 can alır.
 // Can: başlangıçta 3, en fazla 10; süreyle (20 dk'da 1) yalnız 3'e kadar dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
 //     1 can götürür. Can yoksa Macera ve yeni online maç (hızlı maç, oda, lig) açılmaz.
 //     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (10'u geçmez).
@@ -3243,7 +3249,7 @@ function statRoomOnce(rows){
 // =====================================================================
 // lig galibiyeti: en alt lig (Bronz) 5, orta (Gümüş) 10, diğerleri (Altın, Elmas) 15 BP
 const lgWinBp = tier => tier<=0 ? 5 : tier===1 ? 10 : 15;
-const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=30, LIFE_START=3, LIFE_MAX=10, LIFE_AD=2, LIFE_CHAMP=2;
+const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=3, LIFE_MAX=10, LIFE_AD=2, LIFE_CHAMP=2;
 function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
 let ECO = ecoLoad() || { bp:0, spent:0, lives:LIFE_START, given:{}, init:false };
 ECO.given = ECO.given && typeof ECO.given==='object' ? ECO.given : {};
