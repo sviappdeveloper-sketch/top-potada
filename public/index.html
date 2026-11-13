@@ -416,7 +416,7 @@
       <tr><td>3.</td><td>3 · 1</td></tr>
     </table>
     <ul>
-      <li><b>Online maçlarda galibiyet +10 BP, beraberlik +3 BP</b> (hızlı maç, oda, lig, turnuva). <b>Bilgisayara karşı</b> yalnızca <b>lig ve turnuva galibiyetleri</b> +10 BP verir; hızlı maç vermez. Macera’da en az 1 yıldızla biten level +10 BP, <b>3 yıldızla</b> biten level <b>+5 BP daha</b> (toplam +15) verir. Bu basketpuanı misafirler de kazanır; üye olunca hesabına da yazılır. Aynı telefonda oynanan oyunlar ve serbest antrenman basketpuan vermez.</li>
+      <li><b>Online maçlarda galibiyet +10 BP, beraberlik +3 BP</b> (hızlı maç, oda, lig, turnuva). <b>Lig galibiyetleri</b> (online ve bilgisayar ligi) ligin kademesine göre puan verir: <b>en alt lig (Bronz) +5, orta lig (Gümüş) +10, diğer ligler (Altın, Elmas) +15 BP</b>; online ligde beraberlik +3. <b>Bilgisayara karşı</b> yalnızca <b>lig ve turnuva galibiyetleri</b> puan verir (turnuva +10); hızlı maç vermez. Macera’da en az 1 yıldızla biten level +10 BP, <b>3 yıldızla</b> biten level <b>+5 BP daha</b> (toplam +15) verir. Bu basketpuanı misafirler de kazanır; üye olunca hesabına da yazılır. Aynı telefonda oynanan oyunlar ve serbest antrenman basketpuan vermez.</li>
       <li>Yukarıdaki derece ödülleri yalnızca <b>üyelere</b> verilir. Online odada derece ödülü, en az 2 oyuncu oyunu bitirdiğinde dağıtılır. Lig ödülleri yukarıdaki tabloda.</li>
       <li>Harcanabilir basketpuanın ve canın her ekranda sağ üstte görünür. Puan durumu ve istatistiklerdeki genel puan, harcadıkların düşülmeden toplam kazandığın basketpuandır.</li>
       <li><b>Puan durumu</b> ekranı tüm oyuncuları toplam basketpuana göre sıralar; eşitlikte turnuva birincilikleri, sonra ikincilikler ve üçüncülükler belirler.</li>
@@ -1243,7 +1243,8 @@ function showRoundResults(){
   if(MODE==='match' && curMatch && curMatch.league){
     const me=players[0];
     renderLeagueResult(); el('ovRound').classList.remove('hidden');
-    finishLeagueMatch(me.score, me.baskets).then(r=>{ matchWritten=true; renderLeagueResult(); if(r) earnResult(r); });
+    const lgT=num(curMatch.tier);
+    finishLeagueMatch(me.score, me.baskets).then(r=>{ matchWritten=true; renderLeagueResult(); if(r==='w') earn(null, lgWinBp(lgT), 0, 'lig galibiyeti'); else if(r) onlineResult(r); });
     return;
   }
   if(MODE==='match'){
@@ -2709,10 +2710,11 @@ function cpuMatchDone(){
   const sc=me.score, os=num(cm.os), res = sc>os ? 'w' : sc<os ? 'l' : 'd';
   let msg = res==='w' ? 'Kazandın!' : res==='l' ? `Kaybettin. ${cm.oppName} kazandı.` : 'Berabere!';
   if(cm.kind==='league') statWDL('pcLeague', res); else if(cm.kind==='tour') statWDL('pcTour', res);
+  const cpuLgT = cm.kind==='league' && CPU.league ? num(CPU.league.tier) : 0;
   if(cm.onDone){ const m=cm.onDone(sc, me.baskets, res); if(m) msg=m; }
   if(cm.kind==='online') onlineResult(res);                                        // online hızlı maç
   else if(cm.kind==='league' || cm.kind==='tour'){                                  // bilgisayar: yalnız lig/turnuva
-    if(res==='w') earn(null, BP_WIN, 0, 'galibiyet'); else if(res==='l') loseLife('mağlubiyet'); }
+    if(res==='w') earn(null, cm.kind==='league' ? lgWinBp(cpuLgT) : BP_WIN, 0, cm.kind==='league' ? 'lig galibiyeti' : 'galibiyet'); else if(res==='l') loseLife('mağlubiyet'); }
   el('rTitle').textContent = `${cm.stage}${cm.ot?` · Uzatma ${cm.ot}`:''}`;
   el('rScore').textContent = fmt(sc);
   el('rMsg').textContent = msg;
@@ -3210,6 +3212,8 @@ function statRoomOnce(rows){
 //     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (10'u geçmez).
 // Genel puan = kazanılan toplam BP (maç BP'si + üyelerin turnuva/lig/oda ödül BP'si); harcananlar düşmez.
 // =====================================================================
+// lig galibiyeti: en alt lig (Bronz) 5, orta (Gümüş) 10, diğerleri (Altın, Elmas) 15 BP
+const lgWinBp = tier => tier<=0 ? 5 : tier===1 ? 10 : 15;
 const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=30, LIFE_START=3, LIFE_MAX=10, LIFE_AD=2, LIFE_CHAMP=2;
 function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
 let ECO = ecoLoad() || { bp:0, spent:0, lives:LIFE_START, given:{}, init:false };
@@ -3286,8 +3290,9 @@ function showLives(reason){
     <div class="eco-rows">
       <div><span>Harcanabilir basketpuan</span><b>${fmt(w)} BP</b></div>
       <div><span>Genel puan (toplam kazanılan)</span><b>${fmt(totalBp())} BP</b></div>
-      <div><span>Online galibiyet · beraberlik</span><b>+${BP_WIN} · +${BP_DRAW} BP</b></div>
-      <div><span>Bilgisayar ligi ve turnuvasında galibiyet</span><b>+${BP_WIN} BP</b></div>
+      <div><span>Online galibiyet · beraberlik (lig hariç)</span><b>+${BP_WIN} · +${BP_DRAW} BP</b></div>
+      <div><span>Lig galibiyeti: Bronz · Gümüş · Altın/Elmas</span><b>+5 · +10 · +15 BP</b></div>
+      <div><span>Bilgisayar turnuvası galibiyeti</span><b>+${BP_WIN} BP</b></div>
       <div><span>Macera’da level geçmek · 3 yıldız</span><b>+${BP_WIN} · +${BP_WIN+BP_3STAR} BP</b></div>
       <div><span>Her 20 dakika (3 cana kadar)</span><b>+1 can</b></div>
       <div><span>Online, bilgisayar ligi/turnuvası mağlubiyeti</span><b>−1 can</b></div>
