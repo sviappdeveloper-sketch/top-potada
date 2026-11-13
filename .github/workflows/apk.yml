@@ -23,6 +23,22 @@ jobs:
       - name: Deneme APK'sı ve Play Store paketi (imzasız AAB) derle
         working-directory: android
         run: gradle --no-daemon assembleDebug bundleRelease
+      # Play Store yükleme anahtarı GitHub gizli ayarlarında varsa (PLAY_KEYSTORE_B64, PLAY_KEYSTORE_PASS)
+      # AAB imzalanır ve apk dalına TopPotada-play.aab olarak konur. Anahtar depoya hiç yazılmaz.
+      - name: Play Store paketini imzala (anahtar varsa)
+        env:
+          KS_B64: ${{ secrets.PLAY_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.PLAY_KEYSTORE_PASS }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ]; then
+            echo "$KS_B64" | base64 -d > /tmp/upload.jks
+            cp android/app/build/outputs/bundle/release/app-release.aab /tmp/TopPotada-play.aab
+            jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore /tmp/upload.jks -storepass "$KS_PASS" -keypass "$KS_PASS" /tmp/TopPotada-play.aab upload
+            jarsigner -verify /tmp/TopPotada-play.aab | grep -q "jar verified"
+            rm -f /tmp/upload.jks
+          else
+            echo "Play anahtarı tanımlı değil; imzalı AAB atlandı."
+          fi
       - name: Çıktıları apk dalına koy
         run: |
           cp android/app/build/outputs/apk/debug/app-debug.apk /tmp/TopPotada.apk
@@ -32,7 +48,9 @@ jobs:
           git checkout --orphan apk
           git rm -rf --quiet .
           cp /tmp/TopPotada.apk /tmp/TopPotada-imzasiz.aab .
+          if [ -f /tmp/TopPotada-play.aab ]; then cp /tmp/TopPotada-play.aab .; fi
           echo "Derleme: ${GITHUB_SHA}" > SURUM.txt
           git add TopPotada.apk TopPotada-imzasiz.aab SURUM.txt
+          if [ -f TopPotada-play.aab ]; then git add TopPotada-play.aab; fi
           git commit -m "Derleme ${GITHUB_SHA::7}"
           git push -f origin apk
