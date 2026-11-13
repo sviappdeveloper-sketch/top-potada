@@ -425,7 +425,7 @@
     <h3>Can</h3>
     <ul>
       <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>3 cana kadar</b> (uygulama kapalıyken de); 3'ün üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
-      <li><b>Online maç kaybı</b> (hızlı maç, oda, lig, turnuva) ve Macera’da yıldızsız biten ya da yarıda bırakılan level <b>1 can</b> götürür. Online maçı yarıda bırakmak da 1 can götürür. Can yoksa Macera, online hızlı maç, oda ve lig maçı açılmaz (süren turnuva maçları oynanabilir).</li>
+      <li><b>Puan kazanılan her yerde kaybetmek 1 can götürür:</b> online maçlar (hızlı maç, oda, lig, turnuva), bilgisayara karşı lig ve turnuva maçları, Macera’da yıldızsız biten level. Bu maçları ya da leveli yarıda bırakmak da 1 can götürür. Beraberlik can götürmez. Can yoksa Macera, online hızlı maç, oda, online lig ve bilgisayar ligi/turnuvası maçları açılmaz (online turnuvadaki maçların oynanabilir). Bilgisayarla hızlı maç ve serbest antrenman puan da can da götürmez.</li>
       <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>30 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
 
@@ -2698,6 +2698,8 @@ function showCpuHub(){ cpuBack=showCpuHub; cpuShow(renderCpuHub); }
 // ---------------- maç başlatma (bilgisayar / online hızlı maç) ----------------
 function startCpuMatch(o){
   // o: { kind, stage, def, oppName, os, ob, ot, key, back }
+  // puan kazanılan maçlar (online, bilgisayar ligi/turnuvası) can ister
+  if((o.kind==='league' || o.kind==='tour' || o.kind==='online') && needLife()) return;
   curMatch = { cpu:true, ...o, opp:null, tid:null };
   cpuBack = o.back;
   MODE='match'; showOnly(null); startTournament();
@@ -2709,7 +2711,8 @@ function cpuMatchDone(){
   if(cm.kind==='league') statWDL('pcLeague', res); else if(cm.kind==='tour') statWDL('pcTour', res);
   if(cm.onDone){ const m=cm.onDone(sc, me.baskets, res); if(m) msg=m; }
   if(cm.kind==='online') onlineResult(res);                                        // online hızlı maç
-  else if((cm.kind==='league' || cm.kind==='tour') && res==='w') earn(null, BP_WIN, 0, 'galibiyet');   // bilgisayar: yalnız lig/turnuva galibiyeti
+  else if(cm.kind==='league' || cm.kind==='tour'){                                  // bilgisayar: yalnız lig/turnuva
+    if(res==='w') earn(null, BP_WIN, 0, 'galibiyet'); else if(res==='l') loseLife('mağlubiyet'); }
   el('rTitle').textContent = `${cm.stage}${cm.ot?` · Uzatma ${cm.ot}`:''}`;
   el('rScore').textContent = fmt(sc);
   el('rMsg').textContent = msg;
@@ -3276,7 +3279,7 @@ function showLives(reason){
   el.innerHTML = `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
     <div class="lives-big">❤ ${lives}<small style="font-size:18px;color:#8f8178"> / ${LIFE_MAX}</small></div>
     <p class="note" style="text-align:center">${full ? 'Canın dolu.' : lives>=LIFE_REGEN_MAX ? `Süreyle can ${LIFE_REGEN_MAX}’e kadar dolar; daha fazlası için basketpuan, reklam ya da şampiyonluk.` : `Her 20 dakikada 1 can dolar (${LIFE_REGEN_MAX}’e kadar) · sonraki can <b id="lvsT">${mmss(regenLeft())}</b>`}</p>
-    <p>${reason==='empty' ? 'Macera ve online maçlar can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Online maç kaybı ve Macera’da yıldızsız ya da yarıda bırakılan level 1 can götürür.'}</p>
+    <p>${reason==='empty' ? 'Macera, online maçlar ve bilgisayar ligi/turnuvası can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Puan kazanılan her yerde kaybetmek 1 can götürür: online maçlar, bilgisayar ligi ve turnuvası, Macera.'}</p>
     <div class="menu-btns" style="margin-top:4px">
       <button id="lvsBuy" ${canBuy?'':'disabled style="opacity:.4"'}>${BP_PER_LIFE} BP ver · +1 can</button>${adBtn}
     </div>
@@ -3287,7 +3290,7 @@ function showLives(reason){
       <div><span>Bilgisayar ligi ve turnuvasında galibiyet</span><b>+${BP_WIN} BP</b></div>
       <div><span>Macera’da level geçmek · 3 yıldız</span><b>+${BP_WIN} · +${BP_WIN+BP_3STAR} BP</b></div>
       <div><span>Her 20 dakika (3 cana kadar)</span><b>+1 can</b></div>
-      <div><span>Online mağlubiyet</span><b>−1 can</b></div>
+      <div><span>Online, bilgisayar ligi/turnuvası mağlubiyeti</span><b>−1 can</b></div>
       <div><span>Turnuva ya da ligde 1.</span><b>+${LIFE_CHAMP} can</b></div>
     </div>
     <div class="menu-btns" style="margin-top:6px"><button class="btn-ghost" id="lvsClose">Kapat</button></div>`;
@@ -3602,7 +3605,7 @@ function quitGame(){
   const m=MODE, cm=curMatch, back=cpuBack, wasFree=FREE_GAME;
   REPLAY=null; turnEnding=true;
   if(m==='level') loseLife('level yarıda kaldı');
-  else if(m==='online' || (m==='match' && cm && (!cm.cpu || cm.kind==='online'))) loseLife('maçı bıraktın');
+  else if(m==='online' || (m==='match' && cm && (!cm.cpu || cm.kind==='online' || cm.kind==='league' || cm.kind==='tour'))) loseLife('maçı bıraktın');
   goMenu();
   if(m==='level') showLevels();
   else if(m==='solo' && wasFree) showSolo(true);
@@ -3646,7 +3649,7 @@ document.addEventListener('pointerup', navPush, true);
 document.addEventListener('keydown', navPush, true);
 
 // test kancası
-if(/[?&]test\b/.test(location.search)) window.__game = { get eco(){ return ECO; }, earnResult, get preview(){ return PREVIEW_OVR; }, get match(){ return curMatch && { def:curMatch.def, kind:curMatch.kind, stage:curMatch.stage }; }, get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
+if(/[?&]test\b/.test(location.search)) window.__game = { get eco(){ return ECO; }, earnResult, cpuMatch:o=>startCpuMatch(o), get preview(){ return PREVIEW_OVR; }, get match(){ return curMatch && { def:curMatch.def, kind:curMatch.kind, stage:curMatch.stage }; }, get replayScore(){ return REPLAY ? REPLAY.score : null; }, botAim:(r,d)=>botAimVelocity(r,d), setDef:n=>{ DEF_N=n; DEF_CFG=null; court.reset(PLAYER_BALL[0]); }, setSig:(a,k)=>{ BOT_SIG0=a; BOT_SIGK=k; },  court, get players(){return players;}, get game(){return game;}, get turnIdx(){return turnIdx;}, get round(){return round;},
   get timeLeft(){return timeLeft;}, set timeLeft(v){timeLeft=v;}, releasePoint,
   shoot(vx,vy){ const p=court; if(!p.canShoot()) return false; p.pending={vx,vy}; p.fig.go('release',.09); p.state='releasing'; p.timer=0; return true; } };
 })();
