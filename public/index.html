@@ -423,7 +423,7 @@
 
     <h3>Can</h3>
     <ul>
-      <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar (uygulama kapalıyken de); sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
+      <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>3 cana kadar</b> (uygulama kapalıyken de); 3'ün üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
       <li><b>Online maç kaybı</b> (hızlı maç, oda, lig, turnuva) ve Macera’da yıldızsız biten ya da yarıda bırakılan level <b>1 can</b> götürür. Online maçı yarıda bırakmak da 1 can götürür. Can yoksa Macera, online hızlı maç, oda ve lig maçı açılmaz (süren turnuva maçları oynanabilir).</li>
       <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>30 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
@@ -3150,7 +3150,7 @@ function statRoomOnce(rows){
 // BP: online maçlarda galibiyet +10, beraberlik +3; bilgisayara karşı yalnızca lig ve turnuva
 //     galibiyeti +10; Macera'da en az 1 yıldız +10. BP birikir, kendiliğinden cana dönüşmez:
 //     oyuncu isterse can ekranında 30 BP ile 1 can alır.
-// Can: başlangıçta 3, en fazla 10; her 20 dakikada 1 can dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
+// Can: başlangıçta 3, en fazla 10; süreyle (20 dk'da 1) yalnız 3'e kadar dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
 //     1 can götürür. Can yoksa Macera ve yeni online maç (hızlı maç, oda, lig) açılmaz.
 //     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (10'u geçmez).
 // Genel puan = kazanılan toplam BP (maç BP'si + üyelerin turnuva/lig/oda ödül BP'si); harcananlar düşmez.
@@ -3184,18 +3184,19 @@ function onlineResult(res, key){
   return false;
 }
 const earnResult = onlineResult;   // eski adla çağrılan yerler için
-function loseLife(why){ const had=num(ECO.lives); if(had>=LIFE_MAX) ECO.regenAt=Date.now(); ECO.lives=Math.max(0, had-1); ecoSave(); hudSync(); if(had){ hudPop('hudLives'); if(why) toastAll(`-1 can · ${why}`); } }
+function loseLife(why){ const had=num(ECO.lives); if(had>=LIFE_REGEN_MAX) ECO.regenAt=Date.now(); ECO.lives=Math.max(0, had-1); ecoSave(); hudSync(); if(had){ hudPop('hudLives'); if(why) toastAll(`-1 can · ${why}`); } }
 const hasLife = () => num(ECO.lives)>0;
-// her 20 dakikada 1 can kendiliğinden dolar (en fazla 10'a kadar); uygulama kapalıyken geçen süre de sayılır
-const LIFE_REGEN_MS = 20*60*1000;
+// her 20 dakikada 1 can kendiliğinden dolar, ama yalnızca 3 cana kadar (daha fazlası BP, reklam ve
+// şampiyonlukla; toplam en fazla 10). Uygulama kapalıyken geçen süre de sayılır.
+const LIFE_REGEN_MS = 20*60*1000, LIFE_REGEN_MAX = 3;
 function regenTick(){
   const now=Date.now();
-  if(num(ECO.lives)>=LIFE_MAX || !num(ECO.regenAt) || num(ECO.regenAt)>now){ ECO.regenAt=now; store('eco', JSON.stringify(ECO)); return; }
+  if(num(ECO.lives)>=LIFE_REGEN_MAX || !num(ECO.regenAt) || num(ECO.regenAt)>now){ ECO.regenAt=now; store('eco', JSON.stringify(ECO)); return; }
   const n=Math.floor((now-num(ECO.regenAt))/LIFE_REGEN_MS);
-  if(n>0){ const got=addLives(n); ECO.regenAt = num(ECO.lives)>=LIFE_MAX ? now : num(ECO.regenAt)+n*LIFE_REGEN_MS; ecoSave(); hudSync();
+  if(n>0){ const got=addLives(Math.min(n, LIFE_REGEN_MAX-num(ECO.lives))); ECO.regenAt = num(ECO.lives)>=LIFE_REGEN_MAX ? now : num(ECO.regenAt)+n*LIFE_REGEN_MS; ecoSave(); hudSync();
     if(got){ hudPop('hudLives'); toastAll(`+${got} can doldu`); if(visible('ovLives')) showLives(); } }
 }
-const regenLeft = () => num(ECO.lives)>=LIFE_MAX ? 0 : Math.max(0, LIFE_REGEN_MS - (Date.now()-num(ECO.regenAt)));
+const regenLeft = () => num(ECO.lives)>=LIFE_REGEN_MAX ? 0 : Math.max(0, LIFE_REGEN_MS - (Date.now()-num(ECO.regenAt)));
 const mmss = ms => { const t=Math.ceil(ms/1000); return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; };
 // can gerektiren yere girerken: can yoksa can ekranı açılır
 function needLife(){ if(hasLife()) return false; showLives('empty'); return true; }
@@ -3222,7 +3223,7 @@ function showLives(reason){
     : `<p class="note">Reklamla can kazanmak uygulamada açık.</p>`;
   el.innerHTML = `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
     <div class="lives-big">❤ ${lives}<small style="font-size:18px;color:#8f8178"> / ${LIFE_MAX}</small></div>
-    <p class="note" style="text-align:center">${full ? 'Canın dolu.' : `Her 20 dakikada 1 can dolar · sonraki can <b id="lvsT">${mmss(regenLeft())}</b>`}</p>
+    <p class="note" style="text-align:center">${full ? 'Canın dolu.' : lives>=LIFE_REGEN_MAX ? `Süreyle can ${LIFE_REGEN_MAX}’e kadar dolar; daha fazlası için basketpuan, reklam ya da şampiyonluk.` : `Her 20 dakikada 1 can dolar (${LIFE_REGEN_MAX}’e kadar) · sonraki can <b id="lvsT">${mmss(regenLeft())}</b>`}</p>
     <p>${reason==='empty' ? 'Macera ve online maçlar can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Online maç kaybı ve Macera’da yıldızsız ya da yarıda bırakılan level 1 can götürür.'}</p>
     <div class="menu-btns" style="margin-top:4px">
       <button id="lvsBuy" ${canBuy?'':'disabled style="opacity:.4"'}>${BP_PER_LIFE} BP ver · +1 can</button>${adBtn}
@@ -3233,7 +3234,7 @@ function showLives(reason){
       <div><span>Online galibiyet · beraberlik</span><b>+${BP_WIN} · +${BP_DRAW} BP</b></div>
       <div><span>Bilgisayar ligi ve turnuvasında galibiyet</span><b>+${BP_WIN} BP</b></div>
       <div><span>Macera’da level geçmek · 3 yıldız</span><b>+${BP_WIN} · +${BP_WIN+BP_3STAR} BP</b></div>
-      <div><span>Her 20 dakika</span><b>+1 can</b></div>
+      <div><span>Her 20 dakika (3 cana kadar)</span><b>+1 can</b></div>
       <div><span>Online mağlubiyet</span><b>−1 can</b></div>
       <div><span>Turnuva ya da ligde 1.</span><b>+${LIFE_CHAMP} can</b></div>
     </div>
