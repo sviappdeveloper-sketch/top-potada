@@ -353,7 +353,7 @@
 
     <h3>Oyun modları</h3>
     <ul>
-      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve <b>yalnızca Efsane seviyesinde</b> oynanır (Bronz savunmacısız, Gümüş 1 savunmacı; Altın'da zorluk biraz düşük: 1 savunmacı, daha yavaş rakipler). <b>Bilgisayar turnuvası</b> da yalnızca Efsane'dir. Rakiplerin adının yanında seviye yazmaz (zorluk seçimi yalnızca hızlı maçta var): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
+      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve <b>yalnızca Efsane seviyesinde</b> oynanır (Bronz savunmacısız, Gümüş 1, Altın 2 savunmacı). <b>Bilgisayar turnuvası</b> da yalnızca Efsane'dir. Rakiplerin adının yanında seviye yazmaz (zorluk seçimi yalnızca hızlı maçta var): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
       <li><b>Tek oyuncu → Macera:</b> 7 bölüm (Mahalle, Şehir Potaları, Sahil Kupası, Dağ Köyü, Gece Ligi, Kış Turnuvası, Efsaneler Ligi), 100 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3, 7 ya da 9) ve her levelin kendi macerası var: rüzgâr, fırtına, gece, sis, kar, yağmur, ağır ya da hafif top, uzak, kayan, her topta yer değiştiren potalar, dar ya da daralıp genişleyen çember, altın son top, zıplayan ve kayan savunmacılar, <b>çift pota</b> (iki uçta pota, sen ortadasın; sayıdan sonra öbür potaya atmalısın, aynı potaya üst üste sayı geçmez); her bölümün sonunda da bir patron. Zorluk level level artar. Yıldızsız biten ya da yarıda bırakılan level 1 can götürür; can yoksa Macera açılmaz. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Bitirdiğin bir leveli sonuç ekranından ya da level haritasından istediğin kadar <b>tekrar oynayabilirsin</b>; oyun içi menüden de leveli baştan başlatabilirsin (1 can gider). Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır.</li>
       <li><b>Tek oyuncu → Serbest antrenman:</b> klasik 3 tur, her tur 5 top. Zorluğu (Kolay, Orta, Zor, Efsane: yardım çizgisinin uzunluğu) ve savunmacı olup olmayacağını sen seçersin. Can gitmez, basketpuan vermez.</li>
@@ -2690,7 +2690,7 @@ const diffOf = r => r<1.95 ? CPU_DIFF[0] : r<3.05 ? CPU_DIFF[1] : r<4.05 ? CPU_D
 const LG_STD_DIFF = 3;
 const lgDiff = L => LG_STD_DIFF;
 let nextDiff=null;
-const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:1 } ];   // Altın kolaylaştırıldı: 2 → 1 savunmacı
+const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 } ];
 const rnd = (a,b) => a + Math.random()*(b-a);
 // Bilgisayarın skoru: her atış için düşünme süresi ve isabet olasılığı (savunmacı düşürür)
 function botScore(r, def, shots){
@@ -2705,12 +2705,12 @@ function botScore(r, def, shots){
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
 // bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
-const CPU_TIER_R = [0, .4, -.25];   // Altın: rakipler biraz yavaşladı (eskiden +0.30)
+const CPU_TIER_R = [.2, .4, 0];   // rakip gücü kademe eki: Bronz +0.2, Gümüş +0.4, Altın 0 (eskiden +0.3)
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
 if(CPU.league && num(CPU.league.adj)<2 && Array.isArray(CPU.league.teams)){
   const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
   CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
-  CPU.league.adj=3; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+  CPU.league.adj=4; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 // süren ligdeki rakipler Efsane seviyesine çekilir (kademe korunur)
 if(CPU.league && CPU.league.diff!==LG_STD_DIFF && Array.isArray(CPU.league.teams)){
@@ -2729,6 +2729,12 @@ if(CPU.league && CPU.league.tier===2 && CPU.league.adj===2 && Array.isArray(CPU.
   CPU.league.adj=3; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 if(CPU.league && CPU.league.adj===2) CPU.league.adj=3;
+// süren sezon: Altın rakipleri bir kademe güçlendi (-0.25 → 0), Bronz rakipleri de (0 → +0.2)
+if(CPU.league && CPU.league.adj===3 && Array.isArray(CPU.league.teams)){
+  const fx = CPU.league.tier===2 ? .25 : CPU.league.tier===0 ? .2 : 0;
+  if(fx) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fx)).toFixed(2); });
+  CPU.league.adj=4; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
 function cpuSave(){ store('cpu', JSON.stringify(CPU)); }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 function pickNames(n){ return shuffle(CPU_NAMES).slice(0,n); }
@@ -2850,7 +2856,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season){
   const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:3,
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:4,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
@@ -2868,7 +2874,7 @@ function renderCpuLeague(){
   const L=CPU.league;
   if(!L){
     cpuEl().innerHTML=`<h2>Rakiple oyna · Bilgisayar ligi</h2><h1>Seviye seç</h1>
-      <p class="note" style="text-align:center">Lig 3 kademelidir: Bronz’dan başlarsın, Gümüş ve Altın’a yükselirsin. Bilgisayar ligi yalnızca Efsane seviyesinde oynanır. Gümüş'te 1 savunmacı var; Altın'da zorluk biraz düşük (1 savunmacı, daha yavaş rakipler).</p>
+      <p class="note" style="text-align:center">Lig 3 kademelidir: Bronz’dan başlarsın, Gümüş ve Altın’a yükselirsin. Bilgisayar ligi yalnızca Efsane seviyesinde oynanır. Gümüş'te 1, Altın'da 2 savunmacı var.</p>
       <div class="menu-btns"><button data-go="lgstart">Bronz ligden başla</button></div><div class="back" data-go="hub">← Rakiple oyna</div>`;
     return;
   }
@@ -2879,7 +2885,6 @@ function renderCpuLeague(){
     h+=`<div class="lg-me" style="--tc:${T.c}"><div class="lg-tier">${T.n} ligi</div>
       <div class="nx-vs">Bu haftaki rakibin: <b>${esc(opp.name)}</b></div>
       <div class="nx-def">${T.def?T.def+' savunmacı':'Savunmacı yok'} · Galibiyet 3, beraberlik 1 puan</div>
-      ${L.tier===2 ? `<div class="msg" style="margin:10px 0 0;color:#2b8a3e;background:rgba(43,138,62,.1);border-color:rgba(43,138,62,.35)">⬇ Altın ligde zorluk azaltıldı: savunmacı 2 → 1, rakipler biraz daha yavaş.</div>` : ''}
       <button data-go="lgplay">${L.week+1}. haftayı oyna</button></div>`;
   } else {
     const up = L.tier<2 && myPos<=2, down = L.tier>0 && myPos>=7, champ = L.tier===2 && myPos===1;
@@ -2890,7 +2895,7 @@ function renderCpuLeague(){
   h+=`<table class="gtable lg"><tr><th></th><th>Oyuncu</th><th>O</th><th>G-B-M</th><th>Puan</th></tr>`+tb.map((x,i)=>{
     const z = (L.tier<2 && i<2) ? 'up' : (L.tier>0 && i>=6) ? 'down' : '';
         return `<tr class="${z}${x.me?' me':''}"><td>${i+1}</td><td>${x.me?'<b>Sen</b>'+myBadge():esc(x.name)}</td><td>${x.o}</td><td>${x.w}-${x.d}-${x.l}</td><td><b>${x.pts}</b></td></tr>`; }).join('')+`</table>
-    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (1 savunmacı).</p>`;
+    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (2 savunmacı).</p>`;
   if(L.results.length){ const last=L.results[L.results.length-1];
     h+=`<div class="opt-label" style="margin-top:14px">${L.results.length}. hafta sonuçları</div><div class="mlist">`+last.map(m=>{
       const A=L.teams[m.a], B=L.teams[m.b]; const me=A.me||B.me;
