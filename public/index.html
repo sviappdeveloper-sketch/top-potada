@@ -1181,7 +1181,12 @@ class Court {
     if((botTurn() && game==='play') || (game==='replay' && REPLAY)){
       g.fillStyle=C.ink; g.font='800 28px ui-sans-serif,system-ui,sans-serif';
       if(g.letterSpacing!==undefined) g.letterSpacing='3px';
-      fillTextM(g, trUpper(game==='replay' ? REPLAY.name : curMatch.oppName)+' ATIYOR…', 330, -305);
+      { // "ATIYOR" ardından üç nokta sırayla yanar: . → .. → ... → (baştan)
+        const base=trUpper(game==='replay' ? REPLAY.name : curMatch.oppName)+' ATIYOR', n=Math.floor(performance.now()/380)%4;
+        const wB=g.measureText(base).width, wD=g.measureText('...').width, x0=330-(wB+wD)/2, ta=g.textAlign;
+        g.textAlign='left'; g.fillText(base, x0, -305);
+        for(let i=0;i<3;i++){ g.globalAlpha = i<n ? 1 : .15; g.fillText('.', x0+wB+i*wD/3, -305); }
+        g.globalAlpha=1; g.textAlign=ta; }
       if(g.letterSpacing!==undefined) g.letterSpacing='0px';
     } else if(this.state==='sitting' || this.state==='doubting'){
       g.globalAlpha=.55+.45*Math.sin(performance.now()/300); g.fillStyle=C.ink; g.font='700 24px ui-sans-serif,system-ui,sans-serif';
