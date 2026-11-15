@@ -230,6 +230,19 @@
   #gameMenuBtn.show{display:inline-flex!important}
   #ovLives{z-index:10}
   .lives-big{font-size:44px;font-weight:800;color:#c0392b;margin:4px 0 2px}
+  .lv-hero{font-size:52px;font-weight:800;color:#c0392b;line-height:1;margin:6px 0 4px}
+  .lv-hero small{font-size:20px;color:#8f8178;font-weight:700}
+  .lv-timer{font-size:14px;color:#8f8178;margin-bottom:12px}
+  .lv-timer b{color:var(--ink)}
+  .lv-wallet{display:flex;gap:8px;margin:12px 0 4px}
+  .lv-wallet div{flex:1;background:rgba(255,255,255,.55);border:1px solid rgba(38,34,30,.12);border-radius:12px;padding:8px 4px}
+  .lv-wallet b{display:block;font-size:19px;color:#e8590c}
+  .lv-wallet small{font-size:11px;color:#8f8178;letter-spacing:.04em}
+  .eco-box{margin:12px 0 0;background:rgba(255,255,255,.45);border:1px solid rgba(38,34,30,.12);border-radius:14px;padding:4px 12px 2px;text-align:left}
+  .eco-h{font-size:11px;font-weight:800;letter-spacing:.1em;color:#8f8178;text-transform:uppercase;padding:8px 0 4px}
+  .eco-box .r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(38,34,30,.1);font-size:14px}
+  .eco-box .r b{white-space:nowrap;color:#2b8a3e}
+  .eco-box .r b.neg{color:#c0392b}
   .eco-rows{margin:14px 0;border-top:1.5px solid var(--ink);text-align:left}
   .eco-rows div{display:flex;justify-content:space-between;gap:8px;padding:8px 2px;border-bottom:1px solid rgba(38,34,30,.15);font-size:14px}
   .gtable.all td:nth-child(2){max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2705,12 +2718,12 @@ function botScore(r, def, shots){
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
 // bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
-const CPU_TIER_R = [.2, .4, 0];   // rakip gücü kademe eki: Bronz +0.2, Gümüş +0.4, Altın 0 (eskiden +0.3)
+const CPU_TIER_R = [.4, .4, 0];   // rakip gücü kademe eki: Bronz +0.4, Gümüş +0.4, Altın 0 (eskiden +0.3)
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
 if(CPU.league && num(CPU.league.adj)<2 && Array.isArray(CPU.league.teams)){
   const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
   CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
-  CPU.league.adj=4; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+  CPU.league.adj=5; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 // süren ligdeki rakipler Efsane seviyesine çekilir (kademe korunur)
 if(CPU.league && CPU.league.diff!==LG_STD_DIFF && Array.isArray(CPU.league.teams)){
@@ -2734,6 +2747,11 @@ if(CPU.league && CPU.league.adj===3 && Array.isArray(CPU.league.teams)){
   const fx = CPU.league.tier===2 ? .25 : CPU.league.tier===0 ? .2 : 0;
   if(fx) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fx)).toFixed(2); });
   CPU.league.adj=4; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
+// süren sezon: Bronz rakipleri bir tık daha güçlendi (+0.2 → +0.4)
+if(CPU.league && CPU.league.adj===4 && Array.isArray(CPU.league.teams)){
+  if(CPU.league.tier===0) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+.2)).toFixed(2); });
+  CPU.league.adj=5; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 function cpuSave(){ store('cpu', JSON.stringify(CPU)); }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
@@ -2856,7 +2874,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season){
   const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:4,
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:5,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
@@ -3391,29 +3409,34 @@ function showLives(reason){
     : IS_ADMIN ? `<button class="btn-ghost" id="lvsAd">Yönetici · +${LIFE_AD} can</button>`
     : `<p class="note">Reklamla can kazanmak uygulamada açık.</p>`;
   const bpView = reason==='bp';
-  const head = bpView ? `<h2>Puanların</h2><h1>Basketpuan</h1>
-    <div class="lives-big" style="color:#e8590c">🏀 ${fmt(w)}</div>
-    <p><b>BP = Basketpuan.</b> Maç ve level kazandıkça birikir. İstersen ${BP_PER_LIFE} basketpuan verip 1 can alırsın. Canın: <b>❤ ${lives} / ${LIFE_MAX}</b></p>`
-    : `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canlar'}</h2><h1>Can</h1>
-    <div class="lives-big">❤ ${lives}<small style="font-size:18px;color:#8f8178"> / ${LIFE_MAX}</small></div>`;
+  const head = bpView
+    ? `<h2>Puanların</h2><h1>Basketpuan</h1><div class="lv-hero" style="color:#e8590c">🏀 ${fmt(w)}<small> BP</small></div>
+       <div class="lv-timer">Maç ve level kazandıkça birikir · ${BP_PER_LIFE} BP = 1 can · canın <b>❤ ${lives}</b></div>`
+    : `<h2>${reason==='empty' ? 'Canın kalmadı' : 'Canların'}</h2><div class="lv-hero">❤ ${lives}<small> / ${LIFE_MAX}</small></div>
+       <div class="lv-timer">${full ? 'Canın dolu' : lives>=LIFE_REGEN_MAX ? `Süreyle en fazla ${LIFE_REGEN_MAX} can dolar` : `Sonraki can <b id="lvsT">${mmss(regenLeft())}</b> · her 20 dk 1 can (${LIFE_REGEN_MAX}’e kadar)`}</div>`;
   el.innerHTML = head + `
-    <p class="note" style="text-align:center">${full ? 'Canın dolu.' : lives>=LIFE_REGEN_MAX ? `Süreyle can ${LIFE_REGEN_MAX}’e kadar dolar; daha fazlası için basketpuan, reklam ya da şampiyonluk.` : `Her 20 dakikada 1 can dolar (${LIFE_REGEN_MAX}’e kadar) · sonraki can <b id="lvsT">${mmss(regenLeft())}</b>`}</p>
-    <p>${bpView ? '' : reason==='empty' ? 'Macera, online maçlar ve bilgisayar ligi/turnuvası can ister. Basketpuanınla can alabilir ya da reklam izleyebilirsin.' : full ? `Canın dolu. En fazla ${LIFE_MAX} can toplanabilir.` : 'Puan kazanılan her yerde kaybetmek 1 can götürür: online maçlar, bilgisayar ligi ve turnuvası, Macera.'}</p>
+    ${reason==='empty' ? '<p class="note" style="margin-top:0">Macera, online maç, bilgisayar ligi ve turnuvası için can gerekir.</p>' : ''}
     <div class="menu-btns" style="margin-top:4px">
       <button id="lvsBuy" ${canBuy?'':'disabled style="opacity:.4"'}>${BP_PER_LIFE} BP ver · +1 can</button>${adBtn}
     </div>
-    <div class="eco-rows">
-      <div><span>Harcanabilir basketpuan</span><b>${fmt(w)} BP</b></div>
-      <div><span>Genel puan (toplam kazanılan)</span><b>${fmt(totalBp())} BP</b></div>
-      <div><span>Online galibiyet · beraberlik (lig hariç)</span><b>+${BP_WIN} · +${BP_DRAW} BP</b></div>
-      <div><span>Lig galibiyeti: Bronz · Gümüş · Altın/Elmas</span><b>+5 · +10 · +15 BP</b></div>
-      <div><span>Bilgisayar turnuvası galibiyeti</span><b>+${BP_WIN} BP</b></div>
-      <div><span>Macera’da level geçmek · 3 yıldız</span><b>+${BP_WIN} · +${BP_WIN+BP_3STAR} BP</b></div>
-      <div><span>Her 20 dakika (3 cana kadar)</span><b>+1 can</b></div>
-      <div><span>Online, bilgisayar ligi/turnuvası mağlubiyeti</span><b>−1 can</b></div>
-      <div><span>Turnuva ya da ligde 1.</span><b>+${LIFE_CHAMP} can</b></div>
+    ${!full && !canBuy ? `<p class="note" style="margin:6px 0 0">BP ile can için ${BP_PER_LIFE} BP gerekir; sende ${fmt(w)} BP var.</p>` : ''}
+    <div class="lv-wallet">
+      <div><b>${fmt(w)}</b><small>HARCANABİLİR BP</small></div>
+      <div><b>${fmt(totalBp())}</b><small>GENEL PUAN</small></div>
     </div>
-    <div class="menu-btns" style="margin-top:6px"><button class="btn-ghost" id="lvsClose">Kapat</button></div>`;
+    <div class="eco-box"><div class="eco-h">Basketpuan kazan</div>
+      <div class="r"><span>Online maç: galibiyet / beraberlik</span><b>+${BP_WIN} / +${BP_DRAW}</b></div>
+      <div class="r"><span>Lig galibiyeti: Bronz / Gümüş / Altın+</span><b>+5 / +10 / +15</b></div>
+      <div class="r"><span>Bilgisayar turnuvası galibiyeti</span><b>+${BP_WIN}</b></div>
+      <div class="r"><span>Macera: level / 3 yıldız</span><b>+${BP_WIN} / +${BP_WIN+BP_3STAR}</b></div>
+    </div>
+    <div class="eco-box"><div class="eco-h">Can</div>
+      <div class="r"><span>Her 20 dakikada (${LIFE_REGEN_MAX}’e kadar)</span><b>+1</b></div>
+      <div class="r"><span>Reklam izle ya da ${BP_PER_LIFE} BP ver</span><b>+${LIFE_AD} / +1</b></div>
+      <div class="r"><span>Turnuva ya da ligde 1. ol</span><b>+${LIFE_CHAMP}</b></div>
+      <div class="r"><span>Kaybetmek (online, bilgisayar ligi/turnuvası, Macera)</span><b class="neg">−1</b></div>
+    </div>
+    <div class="menu-btns" style="margin-top:14px"><button class="btn-ghost" id="lvsClose">Kapat</button></div>`;
   document.getElementById('lvsBuy').onclick=()=>{ if(buyLife()) showLives(reason==='bp'?'bp':undefined); };
   const ad=document.getElementById('lvsAd');
   if(ad) ad.onclick=()=>{ const give=()=>{ earn(null, 0, LIFE_AD, 'reklam ödülü'); showLives(); };
