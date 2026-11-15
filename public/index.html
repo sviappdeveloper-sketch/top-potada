@@ -283,6 +283,11 @@
   <button id="hudLives" aria-label="Can">❤ <b id="hudLivesN">3</b><small id="hudLivesT"></small></button>
   <button id="gameMenuBtn" aria-label="Oyun menüsü">☰</button>
 </div>
+<div class="ov hidden" id="ovExtra" style="z-index:11"><div class="card">
+  <h2>Topların bitti</h2><h1>Bir top daha?</h1>
+  <p id="exTxt"></p>
+  <div class="menu-btns"><button id="exYes">Evet</button><button class="btn-ghost" id="exNo">Hayır, maç bitsin</button></div>
+</div></div>
 <div class="ov hidden" id="ovPause"><div class="card">
   <h2 id="pzSub">Oyun durdu</h2><h1>Menü</h1>
   <div class="menu-btns">
@@ -366,7 +371,7 @@
 
     <h3>Oyun modları</h3>
     <ul>
-      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 3 kademelidir (Bronz, Gümüş, Altın) ve <b>yalnızca Efsane seviyesinde</b> oynanır (Bronz savunmacısız, Gümüş 1, Altın 2 savunmacı). <b>Bilgisayar turnuvası</b> da yalnızca Efsane'dir. Rakiplerin adının yanında seviye yazmaz (zorluk seçimi yalnızca hızlı maçta var): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
+      <li><b>Tek oyuncu → Rakiple oyna:</b> Bilgisayar rakiplere karşı. <b>Hızlı maç</b>ta seviyeyi seçersin: Kolay, Orta, Zor, Efsane (zorlaştıkça savunmacı da artar). Bilgisayar oyuncusunun adı her maçta değişir. <b>Bilgisayar ligi</b> 4 kademelidir (Bronz, Gümüş, Altın, Elmas; Bronz savunmacısız, Gümüş 1, Altın 2, Elmas 3 savunmacı). Her kademedeki şampiyonlukların istatistiklerde ayrı görünür. <b>Bilgisayar turnuvası</b> da yalnızca Efsane'dir. Rakiplerin adının yanında seviye yazmaz (zorluk seçimi yalnızca hızlı maçta var): 8 kişilik ligde herkesle 1 maç yaparsın; ilk 2 üst lige çıkar, son 2 düşer, Altın ligin birincisi şampiyon olur. <b>Turnuva</b> online turnuvalarla aynı kurallarla, eleme ya da grup usulü 8/16 kişilik oynanır. Bilgisayar her maçta sahada <b>önce kendi 5 atışını yapar</b> (izlerken sağ alttaki hız düğmesiyle hızlandırabilirsin); sonra sen onun skorunu geçmeye çalışırsın.</li>
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
       <li><b>Tek oyuncu → Macera:</b> 7 bölüm (Mahalle, Şehir Potaları, Sahil Kupası, Dağ Köyü, Gece Ligi, Kış Turnuvası, Efsaneler Ligi), 100 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3, 7 ya da 9) ve her levelin kendi macerası var: rüzgâr, fırtına, gece, sis, kar, yağmur, ağır ya da hafif top, uzak, kayan, her topta yer değiştiren potalar, dar ya da daralıp genişleyen çember, altın son top, zıplayan ve kayan savunmacılar, <b>çift pota</b> (iki uçta pota, sen ortadasın; sayıdan sonra öbür potaya atmalısın, aynı potaya üst üste sayı geçmez); her bölümün sonunda da bir patron. Zorluk level level artar. Yıldızsız biten ya da yarıda bırakılan level 1 can götürür; can yoksa Macera açılmaz. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Bitirdiğin bir leveli sonuç ekranından ya da level haritasından istediğin kadar <b>tekrar oynayabilirsin</b>; oyun içi menüden de leveli baştan başlatabilirsin (1 can gider). Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır.</li>
       <li><b>Tek oyuncu → Serbest antrenman:</b> klasik 3 tur, her tur 5 top. Zorluğu (Kolay, Orta, Zor, Efsane: yardım çizgisinin uzunluğu) ve savunmacı olup olmayacağını sen seçersin. Can gitmez, basketpuan vermez.</li>
@@ -615,7 +620,7 @@
   <h2>Tek oyuncu</h2><h1 id="soloTitle">Mod seç</h1>
   <div class="modes" id="soloModes">
     <button class="mode hl" id="soloMacera"><b>Macera</b><small>100 level · 7 bölüm · patronlar · yıldızlar</small></button>
-    <button class="mode" id="soloCpu"><b>Rakiple oyna</b><small>Bilgisayara karşı: hızlı maç, 3 kademeli lig, turnuva</small></button>
+    <button class="mode" id="soloCpu"><b>Rakiple oyna</b><small>Bilgisayara karşı: hızlı maç, 4 kademeli lig, turnuva</small></button>
     <button class="mode" id="soloOnline"><b>Online oyna</b><small>Gerçek rakipler: hızlı maç, online oda, turnuvalar</small></button>
     <button class="mode" id="soloFree"><b>Serbest antrenman</b><small>3 tur · zorluk ve savunmacı seçimi · can gitmez</small></button>
   </div>
@@ -664,10 +669,10 @@ const MATCH_PREVIEW = 0.5;   // hızlı maç
 // Lig ve turnuva: kılavuz Orta'dan (0.4) başlar, üst kademelerde Zor'a (0.12) iner. Kolay (0.8) hiç kullanılmaz.
 // turnuva (tur zorluğu 0-3): grup/son 16 ve çeyrek Orta, yarı final ve 3.lük kısalır, final Zor
 // online lig (Bronz-Gümüş-Altın-Elmas): Bronz Orta, en üst lig Zor. Bilgisayar ligi: Gümüş ve Altın birbirine yakın
-const TOUR_PREVIEW = [0.4, 0.4, 0.26, 0.12], LEAGUE_PREVIEW4 = [0.4, 0.3, 0.2, 0.12], LEAGUE_PREVIEW3 = [0.4, 0.22, 0.18];   // bilgisayar ligi (kademeye göre)   // bilgisayar ligi: Gümüş biraz zorlaştı, Altın biraz kolaylaştı (arası açıktı)
+const TOUR_PREVIEW = [0.4, 0.4, 0.26, 0.12], LEAGUE_PREVIEW4 = [0.4, 0.3, 0.2, 0.12], LEAGUE_PREVIEW3 = [0.4, 0.22, 0.18, 0.16];   // bilgisayar ligi (kademeye göre)   // bilgisayar ligi: Gümüş biraz zorlaştı, Altın biraz kolaylaştı (arası açıktı)
 function cupPreview(m){
   const d = Math.max(0, Math.floor(num(m.def)));
-  if(m.cpu && m.kind==='league') return LEAGUE_PREVIEW3[Math.min(typeof m.tier==='number' ? m.tier : d, 2)];
+  if(m.cpu && m.kind==='league') return LEAGUE_PREVIEW3[Math.min(typeof m.tier==='number' ? m.tier : d, 3)];
   if(m.league) return LEAGUE_PREVIEW4[Math.min(d, 3)];
   return TOUR_PREVIEW[Math.min(d, 3)];
 }
@@ -1007,7 +1012,7 @@ class Court {
     this.color=color; this.balls=this.balls ? this.balls.map(b=>(b.fade=true,b)) : [];
     this.rack=SHOTS-1; this.holding=true; this.fig=new Figure(PX); this.fig.jersey=color; this.state='ready'; this.timer=0;
     this.net=0; this.floaters=[]; this.idle=0; this.aim=null; this.lastLaunch=0; this.timeUp=false; this.pending=null;
-    this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); this.shotN=0;
+    this.defs = DEF_CFG ? makeDefendersCfg(DEF_CFG) : makeDefenders(DEF_N); this.shotN=0; this.extra=0; this.noExtra=false;
   }
   get left(){ return this.rack + (this.holding?1:0); }
   // oyun başında: savunmacılar tohumla yeniden kurulur, adım sayacı sıfırlanır
@@ -1019,7 +1024,7 @@ class Court {
   launch(vx, vy, ptsOverride){
     const r=releasePoint(); const b=new Ball(r.x, r.y); b.vx=vx; b.vy=vy; b.color=this.color; b.sid=(this.shotN=(this.shotN||0)+1);
     b.pts = BASE_PTS + Math.floor(Math.max(0,timeLeft))*PTS_PER_SEC*PTS_MUL;   // değer, atış anındaki kalan süreye göre
-    if(ptsOverride==null && game==='play' && MODE==='level' && curLevel && curLevel.gold && this.left===1){ b.pts*=3; b.gold=true; b.color='#e9b949';
+    if(ptsOverride==null && game==='play' && MODE==='level' && curLevel && curLevel.gold && this.left===1 && !this.extra){ b.pts*=3; b.gold=true; b.color='#e9b949';
       this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Altın top ×3' }); }
     if(ptsOverride!=null) b.pts=ptsOverride;
     if(game==='play') SHOTLOG.push([this.simTick||0, vx, vy, b.pts]);
@@ -1204,6 +1209,7 @@ const court = new Court();
 function releasePoint(){ const j=solve(POSES.release, PX, 1); return { x:j.hand.x+3, y:j.hand.y-6 }; }
 
 function startTournament(){
+  EXTRA_ASK=false; document.getElementById('ovExtra').classList.add('hidden');
   document.getElementById('btnRetry').style.display='none';
   const isMatch = MODE==='match' && curMatch, isLevel = MODE==='level' && curLevel;
   if(!isLevel) clearLevelEnv();
@@ -1435,6 +1441,7 @@ function showRewarded(onReward){
 }
 function showOnly(id){ ['ovSplash','ovMenu','ovRules','ovStart','ovTurn','ovRound','ovMulti','ovLobby','ovCount','ovTours','ovTour','ovStand','ovLevels','ovSolo','ovCpu','ovStats','ovLeague','ovAccount'].forEach(o=>document.getElementById(o).classList.toggle('hidden', o!==id)); }
 function goMenu(){
+  EXTRA_ASK=false; document.getElementById('ovExtra').classList.add('hidden');
   FREE_GAME=false; document.getElementById('btnRetry').style.display='none';
   if(MODE==='level') MODE='solo';
   clearLevelEnv();
@@ -1883,14 +1890,14 @@ const typeName = t => (t.type==='grp' ? 'Grup usulü' : 'Eleme') + ` · ${t.size
 function tierOf(u){
   let t=0;
   if(u && cloudState==='ready' && typeof LG!=='undefined'){ try{ t=tierFor(u, seasonKey()); }catch(e){ t=0; } }
-  if(u && u===UID && CPU && CPU.league && CPU.league.tier===2) t=Math.max(t,2);
+  if(u && u===UID && CPU && CPU.league && CPU.league.tier>=2) t=Math.max(t,CPU.league.tier);
   return t;
 }
 const tierHtml = t => t>=3 ? ' <span class="tier-b" title="Elmas lig">💎</span>' : t===2 ? ' <span class="tier-b gold" title="Altın lig">🪙</span>' : '';
 const tierTxt = t => t>=3 ? ' 💎' : t===2 ? ' 🪙' : '';
 function tierBadge(u){ return u ? tierHtml(tierOf(u)) : ''; }
 function badgeTxt(u){ return u ? tierTxt(tierOf(u)) : ''; }
-function myBadge(){ return UID ? tierBadge(UID) : (CPU && CPU.league && CPU.league.tier===2 ? tierHtml(2) : ''); }
+function myBadge(){ return UID ? tierBadge(UID) : (CPU && CPU.league && CPU.league.tier>=2 ? tierHtml(CPU.league.tier) : ''); }
 const nk = u => (u===UID ? (nickOf(u)==='Sen' ? '<b>Sen</b>' : `${esc(nickOf(u))} <small>(sen)</small>`) : esc(nickOf(u))) + tierBadge(u);
 function needNick(){
   const el=$('tsNick'); const v=(el ? el.value : onNick).trim().slice(0,14);
@@ -2229,7 +2236,7 @@ function leagueAwards(){
   const seasons=[...new Set(Object.values(LG).map(r=>r && r.season))].filter(s=>typeof s==='string' && s<cur);
   for(const s of seasons) for(let t=0;t<4;t++){
     const o=seasonOutcome(s,t);
-    for(const u in o.awards){ const x=out[u]||(out[u]={ bp:0, champs:0 }); x.bp+=o.awards[u]; if(o.awards[u]===BP_LEAGUE[t][0]) x.champs++; }
+    for(const u in o.awards){ const x=out[u]||(out[u]={ bp:0, champs:0, tiers:[0,0,0,0] }); x.bp+=o.awards[u]; if(o.awards[u]===BP_LEAGUE[t][0]){ x.champs++; x.tiers[t]++; } }
   }
   return out;
 }
@@ -2703,7 +2710,8 @@ const diffOf = r => r<1.95 ? CPU_DIFF[0] : r<3.05 ? CPU_DIFF[1] : r<4.05 ? CPU_D
 const LG_STD_DIFF = 3;
 const lgDiff = L => LG_STD_DIFF;
 let nextDiff=null;
-const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 } ];
+const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 }, { n:'Elmas', c:'#3fa7d6', r:[4,5], def:3 } ];
+const CPU_TOP = CPU_TIERS.length-1;   // en üst kademe (Elmas)
 const rnd = (a,b) => a + Math.random()*(b-a);
 // Bilgisayarın skoru: her atış için düşünme süresi ve isabet olasılığı (savunmacı düşürür)
 function botScore(r, def, shots){
@@ -2718,12 +2726,12 @@ function botScore(r, def, shots){
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
 // bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
-const CPU_TIER_R = [.4, .4, 0];   // rakip gücü kademe eki: Bronz +0.4, Gümüş +0.4, Altın 0 (eskiden +0.3)
+const CPU_TIER_R = [.6, .4, 0, .35];   // rakip gücü kademe eki: Bronz +0.6, Elmas +0.35, Gümüş +0.4, Altın 0 (eskiden +0.3)
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
 if(CPU.league && num(CPU.league.adj)<2 && Array.isArray(CPU.league.teams)){
   const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
   CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
-  CPU.league.adj=5; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+  CPU.league.adj=6; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 // süren ligdeki rakipler Efsane seviyesine çekilir (kademe korunur)
 if(CPU.league && CPU.league.diff!==LG_STD_DIFF && Array.isArray(CPU.league.teams)){
@@ -2753,6 +2761,15 @@ if(CPU.league && CPU.league.adj===4 && Array.isArray(CPU.league.teams)){
   if(CPU.league.tier===0) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+.2)).toFixed(2); });
   CPU.league.adj=5; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
+// süren sezon: Bronz rakipleri bir tık daha güçlendi (+0.4 → +0.6)
+if(CPU.league && CPU.league.adj===5 && Array.isArray(CPU.league.teams)){
+  if(CPU.league.tier===0) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+.2)).toFixed(2); });
+  CPU.league.adj=6; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
+// lig şampiyonlukları kademe kademe tutulur (eski sayaç yalnızca Altın şampiyonluklarıydı)
+if(!Array.isArray(CPU.lgChamps)){ CPU.lgChamps=[0,0,num(CPU.lgTitles),0]; try{ store('cpu', JSON.stringify(CPU)); }catch(e){} }
+while(CPU.lgChamps.length<CPU_TIERS.length) CPU.lgChamps.push(0);
+const cpuChampTotal = () => CPU.lgChamps.reduce((a,b)=>a+num(b),0);
 function cpuSave(){ store('cpu', JSON.stringify(CPU)); }
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
 function pickNames(n){ return shuffle(CPU_NAMES).slice(0,n); }
@@ -2809,13 +2826,13 @@ function renderCpuHub(){
     CPU_CHARS.map(c=>{ const s=q[c.id]||{}; return `<div class="bot" data-q="${c.id}" style="--bc:${c.c}">
       <div class="bt-top"><span class="bt-av">${esc(c.lvl[0])}</span><div><b>${c.lvl}</b><span class="bt-def">${c.def?`🛡 ${c.def} savunmacı`:'Savunmacı yok'}</span></div></div>
       <div class="bt-bio">${esc(c.bio)}</div>${recText(s)}</div>`; }).join('') + `</div>
-    <div class="hub-sec"><div class="opt-label">Lig</div><small>Yalnızca Efsane · Bronz → Gümüş → Altın</small></div>
+    <div class="hub-sec"><div class="opt-label">Lig</div><small>Bronz → Gümüş → Altın → Elmas</small></div>
     <div class="hc" data-go="lg" style="--hc:${T.c}">
       <div class="hc-row"><div><div class="hc-title">${lg ? `${T.n} ligi` : 'Bilgisayar ligi'}</div>
         <div class="hc-meta">${lg ? `${lg.season}. sezon` : 'Bronz ligden başla'}</div></div>
         <span class="hc-go">${lg ? 'Devam et' : 'Başla'} →</span></div>
       ${lg ? `<div class="wk">${Array.from({length:7},(_,i)=>`<i class="${i<wk?'on':''}"></i>`).join('')}</div><div class="wk-l">${wk>=7 ? 'Sezon tamamlandı' : `${wk+1}. hafta sırada · ${wk}/7 oynandı`}</div>` : ''}
-      <div class="hc-rules">Bütün rakipler Efsane seviyesinde. 8 kişi, herkes herkesle 1 maç. İlk 2 üst lige çıkar, son 2 düşer.${num(CPU.lgTitles)?` · 🏆 ${num(CPU.lgTitles)} şampiyonluk`:''}</div></div>
+      <div class="hc-rules">8 kişi, herkes herkesle 1 maç. İlk 2 üst lige çıkar, son 2 düşer.${cpuChampTotal()?` · 🏆 ${cpuChampTotal()} şampiyonluk`:''}</div></div>
     <div class="hub-sec"><div class="opt-label">Turnuva</div><small>Eleme ya da grup</small></div>
     <div class="hc" data-go="tr" style="--hc:#e8590c">
       <div class="hc-row"><div><div class="hc-title">${trOn ? 'Süren turnuva' : 'Yeni turnuva'}</div>
@@ -2866,7 +2883,7 @@ function startQuick(id){
       return res==='w' ? `Kazandın! ${nm} bu maçı kaybetti.` : res==='l' ? `${nm} kazandı. Rövanş?` : 'Berabere!'; } });
 }
 
-// ---------------- bilgisayar ligi (3 kademe) ----------------
+// ---------------- bilgisayar ligi (4 kademe) ----------------
 function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
   const arr=[0,1,2,3,4,5,6,7], weeks=[];
   for(let r=0;r<7;r++){ const w=[]; for(let i=0;i<4;i++) w.push([arr[i], arr[7-i]]); weeks.push(w); arr.splice(1,0,arr.pop()); }
@@ -2874,7 +2891,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season){
   const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:5,
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:6,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
@@ -2892,7 +2909,7 @@ function renderCpuLeague(){
   const L=CPU.league;
   if(!L){
     cpuEl().innerHTML=`<h2>Rakiple oyna · Bilgisayar ligi</h2><h1>Seviye seç</h1>
-      <p class="note" style="text-align:center">Lig 3 kademelidir: Bronz’dan başlarsın, Gümüş ve Altın’a yükselirsin. Bilgisayar ligi yalnızca Efsane seviyesinde oynanır. Gümüş'te 1, Altın'da 2 savunmacı var.</p>
+      <p class="note" style="text-align:center">Lig 4 kademelidir: Bronz’dan başlarsın, Gümüş, Altın ve Elmas’a yükselirsin. Gümüş'te 1, Altın'da 2, Elmas'ta 3 savunmacı var.</p>
       <div class="menu-btns"><button data-go="lgstart">Bronz ligden başla</button></div><div class="back" data-go="hub">← Rakiple oyna</div>`;
     return;
   }
@@ -2905,15 +2922,15 @@ function renderCpuLeague(){
       <div class="nx-def">${T.def?T.def+' savunmacı':'Savunmacı yok'} · Galibiyet 3, beraberlik 1 puan</div>
       <button data-go="lgplay">${L.week+1}. haftayı oyna</button></div>`;
   } else {
-    const up = L.tier<2 && myPos<=2, down = L.tier>0 && myPos>=7, champ = L.tier===2 && myPos===1;
+    const up = L.tier<CPU_TOP && myPos<=2, down = L.tier>0 && myPos>=7, champ = myPos===1;
     h+=`<div class="next" style="text-align:center"><div class="nx-stage">${myPos}. oldun</div>
-      <div class="nx-vs">${champ ? '🏆 Altın ligin şampiyonusun!' : up ? `${CPU_TIERS[L.tier+1].n} ligine yükseldin!` : down ? `${CPU_TIERS[L.tier-1].n} ligine düştün.` : `${T.n} liginde kaldın.`}</div>
+      <div class="nx-vs">${champ ? `🏆 ${T.n} liginin şampiyonusun!${up ? ` ${CPU_TIERS[L.tier+1].n} ligine yükseldin!` : ''}` : up ? `${CPU_TIERS[L.tier+1].n} ligine yükseldin!` : down ? `${CPU_TIERS[L.tier-1].n} ligine düştün.` : `${T.n} liginde kaldın.`}</div>
       <button data-go="lgnew" style="margin-top:12px">Yeni sezona başla</button></div>`;
   }
   h+=`<table class="gtable lg"><tr><th></th><th>Oyuncu</th><th>O</th><th>G-B-M</th><th>Puan</th></tr>`+tb.map((x,i)=>{
-    const z = (L.tier<2 && i<2) ? 'up' : (L.tier>0 && i>=6) ? 'down' : '';
+    const z = (L.tier<CPU_TOP && i<2) ? 'up' : (L.tier>0 && i>=6) ? 'down' : '';
         return `<tr class="${z}${x.me?' me':''}"><td>${i+1}</td><td>${x.me?'<b>Sen</b>'+myBadge():esc(x.name)}</td><td>${x.o}</td><td>${x.w}-${x.d}-${x.l}</td><td><b>${x.pts}</b></td></tr>`; }).join('')+`</table>
-    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (2 savunmacı).</p>`;
+    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (2 savunmacı), Elmas (3 savunmacı).</p>`;
   if(L.results.length){ const last=L.results[L.results.length-1];
     h+=`<div class="opt-label" style="margin-top:14px">${L.results.length}. hafta sonuçları</div><div class="mlist">`+last.map(m=>{
       const A=L.teams[m.a], B=L.teams[m.b]; const me=A.me||B.me;
@@ -2931,7 +2948,7 @@ function playCpuLeagueWeek(){
         const x=botScore(L.teams[a].r, T.def, 5).sc, y=botScore(L.teams[c].r, T.def, 5).sc; return { a, b:c, sa:x, sb:y };
       });
       L.results.push(wk); L.week++;
-      if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(L.tier===2 && pos===1) CPU.lgTitles=num(CPU.lgTitles)+1;
+      if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(pos===1){ CPU.lgChamps[L.tier]=num(CPU.lgChamps[L.tier])+1; if(L.tier===2) CPU.lgTitles=num(CPU.lgTitles)+1; }
         if(pos===1) setTimeout(()=>earn(null, 0, LIFE_CHAMP, 'lig birinciliği'), 1800); }
       cpuSave();
       return (res==='w'?'Kazandın! +3 puan.':res==='d'?'Berabere. +1 puan.':`Kaybettin. ${opp.name} 3 puanı aldı.`) + (L.week>=7?' Sezon bitti!':'');
@@ -2939,7 +2956,7 @@ function playCpuLeagueWeek(){
 }
 function nextCpuSeason(){
   const L=CPU.league, pos=lgTable(L).findIndex(x=>x.me)+1;
-  let t=L.tier; if(t<2 && pos<=2) t++; else if(t>0 && pos>=7) t--;
+  let t=L.tier; if(t<CPU_TOP && pos<=2) t++; else if(t>0 && pos>=7) t--;
   newCpuLeague(t, L.season+1); nextDiff=null; renderCpuLeague();
 }
 
@@ -3263,6 +3280,8 @@ function wdlBar(o){
   const t=tot(o)||1;
   return `<div class="wbar"><span class="w" style="width:${o.w/t*100}%"></span><span class="d" style="width:${o.d/t*100}%"></span><span class="l" style="width:${o.l/t*100}%"></span></div>`;
 }
+// kademe kademe şampiyonluklar: "🏆 Bronz 1 · Gümüş 0 · Altın 2 · Elmas 0"
+const champLine = arr => '🏆 ' + ['Bronz','Gümüş','Altın','Elmas'].map((n,i)=>`${n} ${num(arr && arr[i])}`).join(' · ');
 function statRow(title, o, sub){
   const t=tot(o), pct = t ? Math.round(o.w/t*100) : 0;
   return `<div class="st-row"><div class="st-h"><b>${title}</b><span>${t ? `${o.w} G · ${o.d} B · ${o.l} M` : 'Henüz maç yok'}</span></div>
@@ -3295,13 +3314,13 @@ function renderStats(){
     <div class="opt-label st-sec">Rakiple oyna · bilgisayara karşı</div>
     ${statRow('Hızlı maç', qAll, '')}
     <div class="st-lv">${qLv.map(({c,o})=>`<div style="--bc:${c.c}"><b>${c.lvl}</b><span>${o.w}-${o.d}-${o.l}</span></div>`).join('')}</div>
-    ${statRow('Bilgisayar ligi', pcLg, `${num(CPU.lgTitles)} şampiyonluk${CPU.league ? ` · şu an ${CPU_TIERS[CPU.league.tier].n}` : ''}`)}
+    ${statRow('Bilgisayar ligi', pcLg, `${champLine(CPU.lgChamps)}${CPU.league ? `<br>Şu an ${CPU_TIERS[CPU.league.tier].n} liginde` : ''}`)}
     ${statRow('Bilgisayar turnuvası', pcTr, `Kupalar: 🥇${num(tro.g)} 🥈${num(tro.s)} 🥉${num(tro.b)}`)}
 
     <div class="opt-label st-sec">Online · gerçek rakipler</div>
     ${onQ ? statRow('Online hızlı maç', onQ, '') : statRow('Online hızlı maç', {w:0,d:0,l:0}, cloudOk?'':'bağlantı bekleniyor')}
     ${onT ? statRow('Online turnuva', onT, `${onT.titles} şampiyonluk`) : statRow('Online turnuva', {w:0,d:0,l:0}, cloudOk?'':'bağlantı bekleniyor')}
-    ${typeof LG!=='undefined' ? (onL ? statRow('Online lig', onL, `${onL.seasons} sezon`) : statRow('Online lig', {w:0,d:0,l:0}, cloudOk?'':'bağlantı bekleniyor')) : ''}
+    ${typeof LG!=='undefined' ? (onL ? statRow('Online lig', onL, `${onL.seasons} sezon<br>${champLine(((cloudOk && UID) ? (leagueAwards()[UID]||{}).tiers : null) || [0,0,0,0])}`) : statRow('Online lig', {w:0,d:0,l:0}, cloudOk?'':'bağlantı bekleniyor')) : ''}
     ${statRow('Online oda', roomO, `${num(room.games)} oda · 1.: ${num(room.p1)} · 2.: ${num(room.p2)} · 3.: ${num(room.p3)}`)}
 
     <div class="opt-label st-sec">Tek başına</div>
@@ -3387,6 +3406,34 @@ const regenLeft = () => num(ECO.lives)>=LIFE_REGEN_MAX ? 0 : Math.max(0, LIFE_RE
 const mmss = ms => { const t=Math.ceil(ms/1000); return `${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`; };
 // can gerektiren yere girerken: can yoksa can ekranı açılır
 function needLife(){ if(hasLife()) return false; showLives('empty'); return true; }
+// ---------- maç sonunda +1 top (BP_EXTRA basketpuan karşılığı) ----------
+// Toplar bitince, harcanabilir basketpuanı BP_EXTRA ve üstü olan oyuncuya maçın sonunda sorulur.
+// Evet: BP_EXTRA BP harcanır, bir top daha atar (sonra yine sorulabilir). Hayır: maç olduğu gibi biter.
+const BP_EXTRA = 90;
+let EXTRA_ASK=false;
+function extraBallOk(){
+  if(game!=='play' || court.timeUp || court.left>0 || court.noExtra) return false;
+  if(walletBp()<BP_EXTRA || round!==ROUNDS-1) return false;
+  if(MODE==='level') return !!curLevel;
+  if(MODE==='match' && curMatch && curMatch.cpu) return curMatch.botPlays ? turnIdx===0 : turnIdx===players.length-1;
+  return false;
+}
+function askExtraBall(){
+  EXTRA_ASK=true;
+  document.getElementById('exTxt').innerHTML = `<b>${BP_EXTRA} basketpuan</b> karşılığında bir top daha atabilirsin.<br>Basketpuanın: <b>${fmt(walletBp())} BP</b>`;
+  document.getElementById('exYes').textContent = `Evet · ${BP_EXTRA} BP ver`;
+  document.getElementById('ovExtra').classList.remove('hidden');
+}
+document.getElementById('exYes').onclick=()=>{ audio();
+  document.getElementById('ovExtra').classList.add('hidden');
+  if(walletBp()<BP_EXTRA || game!=='play'){ EXTRA_ASK=false; return; }
+  ECO.spent=num(ECO.spent)+BP_EXTRA; ecoSave(); hudSync(); hudPop('hudBp');
+  court.rack=1; court.extra=(court.extra||0)+1; court.fig.go('empty',.15); court.state='turn'; court.timer=0;
+  timeLeft=BALL_TIME; lastTick=99;
+  court.floaters.push({ x:PX+60, y:-260, t:0, txt:`+1 top · −${BP_EXTRA} BP` });
+  EXTRA_ASK=false;
+};
+document.getElementById('exNo').onclick=()=>{ audio(); document.getElementById('ovExtra').classList.add('hidden'); EXTRA_ASK=false; court.noExtra=true; };
 function buyLife(){
   if(walletBp()<BP_PER_LIFE || num(ECO.lives)>=LIFE_MAX) return false;
   ECO.spent=num(ECO.spent)+BP_PER_LIFE; addLives(1); ecoSave(); hudSync(); hudPop('hudLives'); hudPop('hudBp');
@@ -3670,10 +3717,11 @@ function frame(now){
       const s=Math.ceil(timeLeft); if(s<=3 && s>0 && s<lastTick){ lastTick=s; sfx.tick(); }
       if(timeLeft<=0) court.burnBall();
     }
-    if(!turnEnding && court.turnOver()){
+    if(!turnEnding && !EXTRA_ASK && court.turnOver()){
       const sinceLaunch = performance.now()-court.lastLaunch;
       const noneInAir = court.balls.every(b=>b.fade || b.y >= -BR-1.5);
-      if((noneInAir && (sinceLaunch>900 || court.lastLaunch===0)) || sinceLaunch>5000){ turnEnding=true; setTimeout(function endT(){ if(PAUSED) return setTimeout(endT,250); endTurn(); }, court.timeUp?1100:700); }
+      if((noneInAir && (sinceLaunch>900 || court.lastLaunch===0)) || sinceLaunch>5000){
+        if(extraBallOk()) askExtraBall(); else { turnEnding=true; setTimeout(function endT(){ if(PAUSED) return setTimeout(endT,250); endTurn(); }, court.timeUp?1100:700); } }
     }
   }
   }
