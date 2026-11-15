@@ -2822,7 +2822,7 @@ function renderCpuHub(){
   const T = lg ? CPU_TIERS[lg.tier] : CPU_TIERS[0], wk = lg ? Math.min(lg.week,7) : 0, trOn = tr && !tr.done;
   const cups = num(tro.g)+num(tro.s)+num(tro.b);
   let h=`<h2>Tek oyuncu · Bilgisayara karşı</h2><h1>Rakiple oyna</h1>
-    <div class="hub-sec"><div class="opt-label">Hızlı maç</div><small>Rakibin adı her maçta değişir</small></div><div class="bots">` +
+    <div class="hub-sec"><div class="opt-label">Hızlı maç</div></div><div class="bots">` +
     CPU_CHARS.map(c=>{ const s=q[c.id]||{}; return `<div class="bot" data-q="${c.id}" style="--bc:${c.c}">
       <div class="bt-top"><span class="bt-av">${esc(c.lvl[0])}</span><div><b>${c.lvl}</b><span class="bt-def">${c.def?`🛡 ${c.def} savunmacı`:'Savunmacı yok'}</span></div></div>
       <div class="bt-bio">${esc(c.bio)}</div>${recText(s)}</div>`; }).join('') + `</div>
