@@ -3414,13 +3414,23 @@ let EXTRA_ASK=false;
 function extraBallOk(){
   if(game!=='play' || court.timeUp || court.left>0 || court.noExtra) return false;
   if(walletBp()<BP_EXTRA || round!==ROUNDS-1) return false;
-  if(MODE==='level') return !!curLevel;
-  if(MODE==='match' && curMatch && curMatch.cpu) return curMatch.botPlays ? turnIdx===0 : turnIdx===players.length-1;
+  // yalnızca kaybedilen maçta: Macera'da yıldız alamıyorsan, maçta rakibin önündeyse
+  const me=players[turnIdx]; if(!me) return false;
+  if(MODE==='level') return !!curLevel && starsFor(curLevel, me.score)===0;
+  if(MODE==='match' && curMatch && curMatch.cpu && curMatch.os!=null){
+    const mine = curMatch.botPlays ? turnIdx===0 : turnIdx===players.length-1;
+    return mine && me.score < num(curMatch.os);
+  }
   return false;
+}
+function extraGapText(){
+  const me=players[turnIdx]; if(!me) return '';
+  if(MODE==='level'){ const need=curLevel.stars[0]; return need ? `1 yıldız için <b>${fmt(need)}</b> puan gerekiyor, sende <b>${fmt(me.score)}</b>.` : ''; }
+  return `Rakibin <b>${fmt(num(curMatch.os))}</b>, sen <b>${fmt(me.score)}</b>.`;
 }
 function askExtraBall(){
   EXTRA_ASK=true;
-  document.getElementById('exTxt').innerHTML = `<b>${BP_EXTRA} basketpuan</b> karşılığında bir top daha atabilirsin.<br>Basketpuanın: <b>${fmt(walletBp())} BP</b>`;
+  document.getElementById('exTxt').innerHTML = `Kaybediyorsun! ${extraGapText()}<br><b>${BP_EXTRA} basketpuan</b> karşılığında bir top daha atabilirsin.<br>Basketpuanın: <b>${fmt(walletBp())} BP</b>`;
   document.getElementById('exYes').textContent = `Evet · ${BP_EXTRA} BP ver`;
   document.getElementById('ovExtra').classList.remove('hidden');
 }
