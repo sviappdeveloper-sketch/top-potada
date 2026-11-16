@@ -193,7 +193,7 @@ async function initFirebase(){
   // ---- room: Firestore üzerinde canlı oda (kalp atışıyla) ----
   class FsRoom {
     constructor(name){
-      this.name=name; this.me=auth.currentUser.uid; this.p={}; this.t=Date.now(); this.subs=new Set(); this.snap=Object.freeze([]); this.raw=new Map();
+      this.name=name; this.me=auth.currentUser.uid; this.p={}; this.t=Date.now(); this.subs=new Set(); this.snap=Object.freeze([]); this.raw=new Map(); this.arrive=new Map();
       this.ref=F.doc(fs, 'rooms', name, 'peers', this.me);
     }
     async start(){
@@ -207,13 +207,25 @@ async function initFirebase(){
     listen(){
       // dinleyici hata verirse (bağlantı kopması) 2 sn sonra yeniden bağlanır
       this.unsub && this.unsub();
-      this.unsub=F.onSnapshot(F.collection(fs, 'rooms', this.name, 'peers'), s=>{ this.raw=new Map(s.docs.map(d=>[d.id, d.data()])); this.rebuild(); },
+      this.unsub=F.onSnapshot(F.collection(fs, 'rooms', this.name, 'peers'), s=>{
+          // Canlılık, telefonların saatine değil bu telefona haberin geliş anına göre ölçülür
+          // (iki telefonun saati 15-20 sn farklıysa rakip "ayrıldı" görünüyordu).
+          const now=Date.now();
+          for(const c of s.docChanges()){
+            const id=c.doc.id, v=c.doc.data()||{};
+            if(c.type==='removed'){ this.arrive.delete(id); continue; }
+            // odaya ilk bakışta çoktan terk edilmiş kayıtları canlı sayma (yazanın saatine göre 2 dk)
+            if(c.type==='added' && !this.arrive.has(id) && now-(v.seen||0) > 120000) continue;
+            this.arrive.set(id, now);
+          }
+          this.raw=new Map(s.docs.map(d=>[d.id, d.data()])); this.rebuild(); },
         ()=>{ if(this.left) return; clearTimeout(this.rl); this.rl=setTimeout(()=>{ if(!this.left) this.listen(); }, 2000); });
     }
     rebuild(){
       const now=Date.now(), arr=[];
       const entry=(id,pres,seen)=>Object.freeze({ peer:id, by:id, isMe:id===this.me, sameTab:id===this.me, kind:'viewer', guest:false, presence:Object.freeze({...pres}), updatedAt:seen||now });
-      for(const [id,v] of this.raw){ if(id===this.me) continue; if(now-(v.seen||0) > 20000) continue; arr.push(entry(id, v.p||{}, v.seen)); }
+      // kalp atışı 5 sn'de bir gelir; 25 sn hiç haber gelmeyen oyuncu odadan ayrılmış sayılır
+      for(const [id,v] of this.raw){ if(id===this.me) continue; const at=this.arrive.get(id); if(!at || now-at > 25000) continue; arr.push(entry(id, v.p||{}, at)); }
       arr.push(entry(this.me, this.p, now));
       this.snap=Object.freeze(arr);
       const ch={ peers:this.snap, joined:[], left:[], updated:[] };

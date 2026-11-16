@@ -1457,7 +1457,7 @@ function pushPresence(st){
 }
 // canlı tablo satırları (oyuna başlamış herkes)
 function onlineRows(sortIt){
-  const now=Date.now(), iDone=round>=ROUNDS, live=new Set();
+  const now=Date.now(), iDone=round>=ROUNDS, live=new Set(orderedPeers().map(p=>p.peer));
   const rows = orderedPeers().filter(p=>p.sameTab || (p.presence.st && p.presence.st!=='lobby')).map(p=>{
     const pr=p.presence, me=p.sameTab;
     const loc = me ? players[0] : null;
@@ -1472,11 +1472,11 @@ function onlineRows(sortIt){
     if(!peerChg[p.peer] || peerChg[p.peer].sig!==sig) peerChg[p.peer]={ sig, at:now };
     if(!me && iDone && st!=='done' && now-peerChg[p.peer].at > STALE_MS){ r.st='done'; r.status='yanıt vermiyor'; }
     if(onlineStarted) roster[p.peer]={ ...r, me:false, rs:null };
-    live.add(p.peer);
     return r;
   });
   // oyun sırasında odadan düşen/çıkan oyuncular son skorlarıyla listede kalır, beklenmez
-  if(onlineStarted) for(const id in roster) if(!live.has(id)) rows.push({ ...roster[id], st:'done', status:'odadan ayrıldı' });
+  // önce "Tekrar oyna" diyen oyuncu son skoruyla kalır ("yeni oyunda"), gerçekten çıkan "odadan ayrıldı" görünür
+  if(onlineStarted) for(const id in roster) if(!rows.some(r=>r.id===id)) rows.push({ ...roster[id], st:'done', status: live.has(id) ? 'tekrar oynamak istiyor' : 'odadan ayrıldı' });
   if(sortIt) rows.sort((a,b)=>b.score-a.score || b.baskets-a.baskets);
   return rows.slice(0,4);
 }
