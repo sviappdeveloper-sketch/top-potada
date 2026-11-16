@@ -14,6 +14,7 @@ const TP = window.TP = {
   error: '',
   onAuth(fn){ listeners.add(fn); if(TP.user) setTimeout(()=>fn(TP.user)); return ()=>listeners.delete(fn); },
   signInGoogle: async()=>{}, signInApple: async()=>{}, signOut: async()=>{}, deleteAuthUser: async()=>{},
+  signInEmail: async()=>{}, signUpEmail: async()=>{}, resetPassword: async()=>{},
 };
 let readyResolve; const ready = new Promise(r=>readyResolve=r);
 TP.ready = ready;
@@ -39,7 +40,7 @@ async function initFirebase(){
   const fs = F.getFirestore(app);
   TP.mode = 'firebase';
 
-  const info = u => u ? ({ uid:u.uid, anon:u.isAnonymous, member: u.providerData.some(p=>p.providerId==='google.com' || p.providerId==='apple.com'),
+  const info = u => u ? ({ uid:u.uid, anon:u.isAnonymous, member: u.providerData.some(p=>p.providerId==='google.com' || p.providerId==='apple.com' || p.providerId==='password'),
     name:u.displayName||'', email:u.email||'', photo:u.photoURL||'' }) : null;
   if(!IOS){ try{ await A.getRedirectResult(auth); }catch(e){ handleCredErr(e); } }
   A.onAuthStateChanged(auth, async u=>{
@@ -109,6 +110,21 @@ async function initFirebase(){
     await auth.currentUser.reload();
     setUser(info(auth.currentUser));
   };
+  // E-posta ve şifre ile üyelik (Google/Apple hesabı kullanmak istemeyenler için)
+  TP.signInEmail = async (email, pass)=>{
+    await A.signInWithEmailAndPassword(auth, email, pass);
+    setUser(info(auth.currentUser));
+  };
+  TP.signUpEmail = async (email, pass, name)=>{
+    const cur = auth.currentUser;
+    if(cur && cur.isAnonymous) await A.linkWithCredential(cur, A.EmailAuthProvider.credential(email, pass));   // misafir ilerlemesi korunur
+    else await A.createUserWithEmailAndPassword(auth, email, pass);
+    if(name && !auth.currentUser.displayName){ try{ await A.updateProfile(auth.currentUser, { displayName:name }); }catch(e){} }
+    await auth.currentUser.reload();
+    await auth.currentUser.getIdToken(true);     // kurallar üyeliği belirteçteki giriş türünden okur
+    setUser(info(auth.currentUser));
+  };
+  TP.resetPassword = async email => { await A.sendPasswordResetEmail(auth, email); };
   TP.signInGoogle = async ()=>{
     if(NATIVE) return signInNative();
     const cur = auth.currentUser, prov = provider();
@@ -141,6 +157,9 @@ async function initFirebase(){
     }
     try{ await A.deleteUser(u); }
     catch(e){
+      if(e && e.code==='auth/requires-recent-login' && !u.providerData.some(p=>p.providerId==='google.com')){
+        throw Object.assign(new Error('relogin'), { code:'tp/relogin' });     // e-posta üyeliği: yeniden giriş gerekir
+      }
       if(e && e.code==='auth/requires-recent-login'){
         if(NATIVE){ const t=await nativeToken(); if(!t) return; await A.reauthenticateWithCredential(u, A.GoogleAuthProvider.credential(t)); }
         else await A.reauthenticateWithPopup(u, provider());

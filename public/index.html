@@ -148,6 +148,7 @@
   .badge.mem{background:#2a9d8f;border-color:#2a9d8f;color:#fff;margin-left:2px}
   .gbtn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#26221e;border:1.5px solid #26221e;letter-spacing:.06em;padding:12px 22px;font-size:14px}
   .gbtn.abtn{background:#000;color:#fff;border-color:#000}.gbtn .a{font-size:18px;line-height:1;margin-top:-2px}
+  .gbtn .e{font-weight:900;font-size:17px;line-height:1;margin-top:-2px}
   .gbtn .g{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#4285f4;color:#fff;font-weight:900;font-size:13px;letter-spacing:0}
   .gate{border:2px dashed rgba(38,34,30,.35);border-radius:18px;padding:16px;margin:14px 0;text-align:center}
   .gate-t{font-weight:800;font-size:16px;margin-bottom:4px}
@@ -2033,16 +2034,21 @@ onCloud(()=>{
 setInterval(()=>{ if(visible('ovTour')) renderTour(); }, 20000);
 
 // =====================================================================
-// ÜYELİK: misafir oynar; turnuva, lig ve basketpuan yalnızca Google üyeleri için
+// ÜYELİK: misafir oynar; turnuva, lig ve basketpuan yalnızca üyeler için (Google, Apple ya da e-posta)
 // =====================================================================
 const isMember = () => !!(window.TP && TP.user && TP.user.member);
 const hasApple = () => !!(window.TPAndroid && typeof window.TPAndroid.appleSignIn==='function');   // yalnızca iOS uygulaması
 const hasGoogle = () => !(window.TPiOS && window.TPiOSGoogle === false);   // iOS'ta Google ayarı girilmediyse gizli
-const signInBtn = (label='Google ile giriş yap') => (hasGoogle() ? `<button class="gbtn js-signin"><span class="g">G</span>${label}</button>` : '')
-  + (hasApple() ? `${hasGoogle() ? '<div style="height:10px"></div>' : ''}<button class="gbtn abtn js-apple"><span class="a"></span>Apple ile giriş yap</button>` : '');
+const hasEmail = () => !!(window.TP && TP.mode==='firebase');   // e-posta ve şifre ile üyelik
+const signInBtn = (label='Google ile giriş yap') => [
+  hasGoogle() ? `<button class="gbtn js-signin"><span class="g">G</span>${label}</button>` : '',
+  hasApple() ? `<button class="gbtn abtn js-apple"><span class="a"></span>Apple ile giriş yap</button>` : '',
+  hasEmail() ? `<button class="gbtn js-email"><span class="e">@</span>E-posta ile giriş yap</button>` : ''
+].filter(Boolean).join('<div style="height:10px"></div>');
+const signInWays = () => [hasGoogle() ? 'Google' : '', hasApple() ? 'Apple' : ''].filter(Boolean).join(' ya da ') + ' hesabınla' + (hasEmail() ? ' ya da e-postanla' : '');
 function memberGate(what){
   return `<div class="gate"><div class="gate-t">${what} yalnızca üyelere açık</div>
-    <p class="note">Ücretsiz üye olmak için ${hasApple() ? (hasGoogle() ? 'Google ya da Apple' : 'Apple') : 'Google'} hesabınla giriş yap. Misafir olarak oynadığın her şey hesabına taşınır.</p>${signInBtn()}</div>`;
+    <p class="note">Ücretsiz üye olmak için ${signInWays()} giriş yap. Misafir olarak oynadığın her şey hesabına taşınır.</p>${signInBtn()}</div>`;
 }
 let signingIn=false;
 async function doSignIn(apple){
@@ -2056,7 +2062,40 @@ async function doSignIn(apple){
   }
   signingIn=false;
 }
-document.addEventListener('click', e=>{ if(e.target.closest('.js-signin')){ e.preventDefault(); doSignIn(false); } else if(e.target.closest('.js-apple')){ e.preventDefault(); doSignIn(true); } });
+document.addEventListener('click', e=>{ if(e.target.closest('.js-signin')){ e.preventDefault(); doSignIn(false); } else if(e.target.closest('.js-apple')){ e.preventDefault(); doSignIn(true); }
+  else if(e.target.closest('.js-email')){ e.preventDefault(); emailMode=true; showAccount(); } });
+
+// ---------------- e-posta ve şifre ile üyelik ----------------
+let emailMode=false, emailBusy=false;
+const emailForm = () => `<div class="opt-label">E-posta ile üyelik</div>
+  <label class="field"><span class="dot" style="background:#e8833a"></span><input id="emMail" type="email" inputmode="email" placeholder="E-posta" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+  <label class="field" style="margin-top:12px"><span class="dot" style="background:#26221e"></span><input id="emPass" type="password" placeholder="Şifre (en az 6 karakter)" autocomplete="current-password"></label>
+  <div class="menu-btns" style="margin-top:16px"><button class="btn-ghost" id="emIn">Giriş yap</button><button class="btn-ghost" id="emUp">Yeni üyelik aç</button></div>
+  <p class="note" style="margin-top:12px"><a href="#" id="emForgot">Şifremi unuttum</a> · <a href="#" id="emBack">Diğer giriş yolları</a></p>`;
+const EMAIL_ERR = { 'auth/invalid-email':'Geçerli bir e-posta yaz.', 'auth/missing-email':'E-postanı yaz.', 'auth/missing-password':'Şifreni yaz.',
+  'auth/weak-password':'Şifre en az 6 karakter olmalı.', 'auth/email-already-in-use':'Bu e-posta ile zaten üyelik var. Giriş yap.',
+  'auth/credential-already-in-use':'Bu e-posta ile zaten üyelik var. Giriş yap.', 'auth/invalid-credential':'E-posta ya da şifre hatalı.',
+  'auth/wrong-password':'E-posta ya da şifre hatalı.', 'auth/user-not-found':'E-posta ya da şifre hatalı.',
+  'auth/too-many-requests':'Çok fazla deneme. Biraz sonra tekrar dene.', 'auth/network-request-failed':'İnternet bağlantını kontrol et.',
+  'auth/operation-not-allowed':'E-posta ile giriş şu an kapalı.' };
+async function doEmail(kind){
+  if(emailBusy || !window.TP) return;
+  const mail=(document.getElementById('emMail').value||'').trim(), pass=document.getElementById('emPass').value||'';
+  if(!mail){ toastAll('E-postanı yaz.'); return; }
+  if(kind!=='forgot' && pass.length<6){ toastAll('Şifre en az 6 karakter olmalı.'); return; }
+  emailBusy=true;
+  try{
+    if(kind==='forgot'){ await TP.resetPassword(mail); toastAll('Şifre yenileme bağlantısı e-postana gönderildi.', 5000); }
+    else if(kind==='up'){ await TP.signUpEmail(mail, pass, onNick || mail.split('@')[0].slice(0,14)); emailMode=false; toastAll('Üyeliğin açıldı.'); }
+    else { await TP.signInEmail(mail, pass); emailMode=false; }
+  }catch(e){
+    const code=String((e && e.code) || '');
+    toastAll(EMAIL_ERR[code] || ('İşlem yapılamadı. Tekrar dene.' + (code ? ' (' + code.replace(/^auth\//,'') + ')' : '')), 5000);
+    console.error(e);
+  }
+  emailBusy=false;
+  if(visible('ovAccount')) renderAccount();
+}
 function toastAll(t, ms){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toastAll.t); toastAll.t=setTimeout(()=>el.classList.remove('on'), ms||3200); }
 
 let authUid=null;
@@ -2096,8 +2135,8 @@ function renderAccount(){
   if(!u){ h+=`<p class="note">Bağlanılıyor…</p>`; }
   else if(!u.member){
     h+=`<p>Misafir olarak tek oyuncu, aynı telefonda ve online odada oynayabilirsin.</p>
-      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; ${hasApple() ? (hasGoogle() ? 'Google ya da Apple' : 'Apple') : 'Google'} hesabınla tek dokunuşla olur.</li></ul>
-      ${signInBtn('Google ile giriş yap')}`;
+      <ul class="rules" style="max-width:320px;margin:0 auto 16px"><li><b>Üye olunca:</b> turnuvalara ve lige katılırsın, basketpuan kazanırsın, puan durumunda yer alırsın.</li><li>Üyelik ücretsizdir; ${signInWays()} olur.</li></ul>
+      ${emailMode ? emailForm() : signInBtn('Google ile giriş yap')}`;
   } else {
     const st = cloudState==='ready' ? standings().find(r=>r.uid===UID) : null;
     h+=`<div class="acc-id">${u.photo?`<img src="${esc(u.photo)}" alt="" referrerpolicy="no-referrer">`:''}<div><b>${esc(u.name||'')}</b><br><small>${esc(u.email||'')}</small></div></div>
@@ -2111,16 +2150,22 @@ function renderAccount(){
   }
   h+=`<p class="note" style="margin-top:18px"><a href="gizlilik.html" target="_blank" rel="noopener">Gizlilik politikası</a> · <a href="hesap-silme.html" target="_blank" rel="noopener">Hesap silme</a></p>`;
   h+=`<div class="back" id="accBack">← Ana menü</div>`;
+  // yazılmakta olan e-posta/şifre, ekran yenilenince kaybolmasın
+  const keep = ['emMail','emPass'].map(id=>{ const x=document.getElementById(id); return x ? { id, v:x.value, f:document.activeElement===x } : null; }).filter(Boolean);
   el.innerHTML=h;
   const q=id=>document.getElementById(id);
-  q('accBack').onclick=()=>{ delStep=0; goMenu(); };
+  keep.forEach(k=>{ const x=q(k.id); if(x){ x.value=k.v; if(k.f) x.focus(); } });
+  q('accBack').onclick=()=>{ delStep=0; emailMode=false; goMenu(); };
+  if(q('emIn')){ q('emIn').onclick=()=>doEmail('in'); q('emUp').onclick=()=>doEmail('up');
+    q('emForgot').onclick=e=>{ e.preventDefault(); doEmail('forgot'); };
+    q('emBack').onclick=e=>{ e.preventDefault(); emailMode=false; renderAccount(); }; }
   if(q('accSave')) q('accSave').onclick=async()=>{ const v=q('accNick').value.trim().slice(0,14); if(!v) return; onNick=v; store('nick',v); await writeMy({ nick:v }); toastAll('Adın kaydedildi.'); renderAcctChip(); };
   if(q('accOut')) q('accOut').onclick=async()=>{ await TP.signOut(); if(TP.mode==='demo') location.reload(); };
   if(q('accDel')) q('accDel').onclick=async()=>{
     if(!delStep){ delStep=1; renderAccount(); return; }
     q('accDel').disabled=true;
     try{ await deleteMyData(); await TP.deleteAuthUser(); toastAll('Hesabın silindi.'); setTimeout(()=>location.reload(), 900); }
-    catch(e){ console.error(e); toastAll('Silinemedi. Tekrar dene.'); q('accDel').disabled=false; }
+    catch(e){ console.error(e); toastAll(e && e.code==='tp/relogin' ? 'Güvenlik için önce çıkış yapıp yeniden giriş yap, sonra tekrar sil.' : 'Silinemedi. Tekrar dene.', 6000); q('accDel').disabled=false; }
   };
 }
 async function deleteMyData(){
