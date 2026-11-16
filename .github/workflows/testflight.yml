@@ -48,11 +48,6 @@ jobs:
           echo "BUILD_NO=$N" >> $GITHUB_ENV
           echo "::notice title=derleme::Derleme numarası $N"
 
-      - name: Xcode projesini üret
-        run: |
-          brew install xcodegen
-          cd ios && xcodegen generate
-
       - name: Sertifika ve App Store profili (API ile)
         run: |
           python3 -m pip install --quiet --break-system-packages pyjwt cryptography || python3 -m pip install --quiet pyjwt cryptography
@@ -70,14 +65,29 @@ jobs:
           done
           echo "KC=$KC" >> $GITHUB_ENV
 
+      - name: Xcode projesini üret (imza yalnızca uygulama hedefine)
+        run: |
+          brew install xcodegen
+          python3 -m pip install --quiet --break-system-packages pyyaml || python3 -m pip install --quiet pyyaml
+          python3 - <<'PY'
+          import os, yaml
+          p = "ios/project.yml"
+          d = yaml.safe_load(open(p))
+          t = d["targets"]["TopPotada"]
+          base = t.setdefault("settings", {}).setdefault("base", {})
+          base.update({"CODE_SIGN_STYLE": "Manual", "DEVELOPMENT_TEAM": os.environ["APPLE_TEAM_ID"],
+                       "CODE_SIGN_IDENTITY": "Apple Distribution", "PROVISIONING_PROFILE_SPECIFIER": os.environ["PROFILE_NAME"]})
+          yaml.safe_dump(d, open(p, "w"), allow_unicode=True, sort_keys=False)
+          print("İmza ayarları TopPotada hedefine yazıldı")
+          PY
+          cd ios && xcodegen generate
+
       - name: Arşivle (imzalı)
         run: |
           set -o pipefail
           cd ios
           if ! xcodebuild -project TopPotada.xcodeproj -scheme TopPotada -configuration Release \
                -destination 'generic/platform=iOS' -archivePath $RUNNER_TEMP/TopPotada.xcarchive \
-               CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
-               CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
                OTHER_CODE_SIGN_FLAGS="--keychain $KC" archive > /tmp/arsiv.txt 2>&1; then
             grep -iE "error:" /tmp/arsiv.txt | head -20 | while IFS= read -r l; do echo "::error title=arsiv::$l"; done
             tail -40 /tmp/arsiv.txt; exit 1
