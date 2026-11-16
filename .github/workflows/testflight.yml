@@ -1,0 +1,116 @@
+name: iOS TestFlight (GitHub)
+# Codemagic'in ücretsiz dakikaları bittiğinde aynı işi GitHub'ın ücretsiz Mac sunucusunda yapar:
+# derler, imzalar ve App Store Connect'e (TestFlight) yükler.
+# Gerekli tek gizli değer: depo Settings > Secrets and variables > Actions > ASC_KEY_P8
+# (App Store Connect .p8 anahtarının tüm içeriği). Başka bir anahtar kullanılıyorsa ASC_KEY_ID de eklenir.
+# Başlatmak için: "testflight" dalına gönderim ya da Actions sekmesinden "Run workflow".
+on:
+  push:
+    branches: [testflight]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: { group: testflight, cancel-in-progress: true }
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || '9PJ9V3965R' }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || '195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e' }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      APPLE_TEAM_ID: GS55JS3WKJ
+      P12_PASS: toppotada-ci-gecici
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Anahtar kontrolü
+        run: |
+          if [ -z "$ASC_KEY_P8" ]; then
+            echo "::error title=anahtar::ASC_KEY_P8 gizli değeri eksik (Settings > Secrets and variables > Actions)"; exit 1
+          fi
+
+      - name: Xcode 26 seç (App Store iOS 26 SDK istiyor)
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$X" ]; then echo "::error title=xcode::Bu sunucuda Xcode 26 yok"; ls -d /Applications/Xcode*; exit 1; fi
+          sudo xcode-select -s "$X/Contents/Developer"
+          echo "::notice title=xcode::$(xcodebuild -version | tr '\n' ' ')"
+
+      - name: Derleme numarası
+        run: |
+          # Codemagic'in verdiği numaralardan (23'e kadar) her zaman büyük olsun
+          N=$((100 + ${{ github.run_number }}))
+          sed -i '' "s/^CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = $N/" ios/Config.xcconfig
+          echo "BUILD_NO=$N" >> $GITHUB_ENV
+          echo "::notice title=derleme::Derleme numarası $N"
+
+      - name: Xcode projesini üret
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+
+      - name: Sertifika ve App Store profili (API ile)
+        run: |
+          python3 -m pip install --quiet --break-system-packages pyjwt cryptography || python3 -m pip install --quiet pyjwt cryptography
+          python3 tool/ios_signing.py
+          PROFILE_UUID="$(grep '^PROFILE_UUID=' $GITHUB_ENV | tail -1 | cut -d= -f2-)"
+          KC=$RUNNER_TEMP/ci.keychain-db
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p ci "$KC"
+          security import $RUNNER_TEMP/dagitim.p12 -P "$P12_PASS" -A -t cert -f pkcs12 -k "$KC"
+          security set-key-partition-list -S apple-tool:,apple: -k ci "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          for d in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$d"; cp $RUNNER_TEMP/profil.mobileprovision "$d/$PROFILE_UUID.mobileprovision"
+          done
+          echo "KC=$KC" >> $GITHUB_ENV
+
+      - name: Arşivle (imzalı)
+        run: |
+          set -o pipefail
+          cd ios
+          if ! xcodebuild -project TopPotada.xcodeproj -scheme TopPotada -configuration Release \
+               -destination 'generic/platform=iOS' -archivePath $RUNNER_TEMP/TopPotada.xcarchive \
+               CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+               CODE_SIGN_IDENTITY="Apple Distribution" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+               OTHER_CODE_SIGN_FLAGS="--keychain $KC" archive > /tmp/arsiv.txt 2>&1; then
+            grep -iE "error:" /tmp/arsiv.txt | head -20 | while IFS= read -r l; do echo "::error title=arsiv::$l"; done
+            tail -40 /tmp/arsiv.txt; exit 1
+          fi
+          echo "::notice title=arsiv::Arşiv tamam"
+
+      - name: IPA oluştur ve App Store Connect'e yükle
+        run: |
+          set -o pipefail
+          cat > $RUNNER_TEMP/export.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>provisioningProfiles</key><dict><key>com.toppotada.oyun</key><string>$PROFILE_NAME</string></dict>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/TopPotada.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/export.plist -exportPath $RUNNER_TEMP/ipa > /tmp/export.txt 2>&1 \
+            || { grep -iE "error" /tmp/export.txt | head -20 | while IFS= read -r l; do echo "::error title=ipa::$l"; done; exit 1; }
+          IPA=$(ls $RUNNER_TEMP/ipa/*.ipa | head -1)
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s\n' "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
+          xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee /tmp/yukle.txt
+          grep -qiE "No errors uploading|UPLOAD SUCCEEDED" /tmp/yukle.txt || { echo "::error title=yukle::Yükleme başarısız"; exit 1; }
+          echo "::notice title=yukle::Derleme $BUILD_NO App Store Connect'e yüklendi"
+
+      - name: Temizlik
+        if: always()
+        run: |
+          rm -f ~/.appstoreconnect/private_keys/*.p8
+          [ -n "$KC" ] && security delete-keychain "$KC" || true
