@@ -198,10 +198,17 @@ async function initFirebase(){
     }
     async start(){
       await F.setDoc(this.ref, { p:{}, seen:Date.now(), t:this.t });
-      this.unsub=F.onSnapshot(F.collection(fs, 'rooms', this.name, 'peers'), s=>{ this.raw=new Map(s.docs.map(d=>[d.id, d.data()])); this.rebuild(); }, ()=>{});
-      this.hb=setInterval(()=>{ F.setDoc(this.ref, { seen:Date.now() }, { merge:true }).catch(()=>{}); this.rebuild(); }, 5000);
+      this.listen();
+      // kalp atışı tüm durumu yeniden yazar: arada kaybolan bir güncelleme (ör. "bitirdim") en geç 5 sn'de karşıya ulaşır
+      this.hb=setInterval(()=>{ F.setDoc(this.ref, { p:clean(this.p), seen:Date.now(), t:this.t }).catch(()=>{}); this.rebuild(); }, 5000);
       this.unload=()=>{ F.deleteDoc(this.ref).catch(()=>{}); }; window.addEventListener('pagehide', this.unload);
       return this;
+    }
+    listen(){
+      // dinleyici hata verirse (bağlantı kopması) 2 sn sonra yeniden bağlanır
+      this.unsub && this.unsub();
+      this.unsub=F.onSnapshot(F.collection(fs, 'rooms', this.name, 'peers'), s=>{ this.raw=new Map(s.docs.map(d=>[d.id, d.data()])); this.rebuild(); },
+        ()=>{ if(this.left) return; clearTimeout(this.rl); this.rl=setTimeout(()=>{ if(!this.left) this.listen(); }, 2000); });
     }
     rebuild(){
       const now=Date.now(), arr=[];
@@ -224,7 +231,7 @@ async function initFirebase(){
     connected(){ return true; }
     onConnection(fn){ setTimeout(()=>fn(true)); return ()=>{}; }
     emit(){ return Promise.resolve(); } on(){ return ()=>{}; }
-    async leave(){ clearInterval(this.hb); clearTimeout(this.wt); this.unsub && this.unsub(); window.removeEventListener('pagehide', this.unload); await F.deleteDoc(this.ref).catch(()=>{}); }
+    async leave(){ this.left=true; clearTimeout(this.rl); clearInterval(this.hb); clearTimeout(this.wt); this.unsub && this.unsub(); window.removeEventListener('pagehide', this.unload); await F.deleteDoc(this.ref).catch(()=>{}); }
   }
   const room = { join: async name=>{ await ready; return new FsRoom(name).start(); } };
   const user = { id: async()=>{ await ready; return auth.currentUser ? auth.currentUser.uid : null; }, can: async()=>true, isOwner:()=>false, canEdit:()=>false };

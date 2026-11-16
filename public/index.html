@@ -1327,7 +1327,7 @@ document.getElementById('btnNext').onclick = () => {
 function nextAfterResults(){
   if(MODE==='level' && curLevel){ startLevel(+document.getElementById('btnNext').dataset.lvnext||0); return; }
   if(MODE==='match' && curMatch && curMatch.cpu){ const back=cpuBack||showCpuHub; MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; back(); return; }
-  if(MODE==='online' && round>=ROUNDS){ leaveOnline(); showMulti(); return; }
+  if(MODE==='online' && round>=ROUNDS){ rematch(); return; }
   if(MODE==='match' && curMatch && curMatch.league){ MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; showLeague(); return; }
   if(MODE==='match'){ const tid=curMatch && curMatch.tid; MODE='solo'; curMatch=null; DEF_N=0; court.reset(PLAYER_BALL[0]); game='menu'; openTid=tid; renderTour(); showOnly('ovTour'); return; }
   if(round>=ROUNDS) startTournament(); else { turnIdx=0; prepareTurn(); }
@@ -1419,6 +1419,10 @@ setTimeout(leaveSplash, 3600);
 
 // ---------- online oda ----------
 let roomApi=null, rm=null, myCode='', amHost=false, myColorIdx=0, onlineStarted=false, myT0=0, unsubPeers=null, joinedAt=0;
+// lastG: oynanan son oyunun numarası (rövanşta aynı odada yeni oyun). roster: oyuna başlayan herkesin son bilinen durumu
+// (odadan düşen oyuncu sıralamadan silinmesin). peerChg: oyuncunun durumu en son ne zaman değişti.
+let lastG=0, roster={}, peerChg={};
+const STALE_MS = 45000;   // ben bitirdikten sonra bu kadar süre hiç ilerlemeyen oyuncu beklenmez
 const CODE_CHARS='ABCDEFGHJKLMNPRSTUVYZ';
 const esc = t => String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => (typeof v==='number' && isFinite(v)) ? v : 0;
@@ -1453,16 +1457,26 @@ function pushPresence(st){
 }
 // canlı tablo satırları (oyuna başlamış herkes)
 function onlineRows(sortIt){
+  const now=Date.now(), iDone=round>=ROUNDS, live=new Set();
   const rows = orderedPeers().filter(p=>p.sameTab || (p.presence.st && p.presence.st!=='lobby')).map(p=>{
     const pr=p.presence, me=p.sameTab;
     const loc = me ? players[0] : null;
     const st = me ? (round>=ROUNDS ? 'done' : (game==='between'?'between':'playing')) : String(pr.st||'');
     const rd = me ? Math.min(round+1,ROUNDS) : num(pr.rd);
-    return { me, nm:String(pr.nm).slice(0,14), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))],
+    const r = { id:p.peer, me, nm:String(pr.nm).slice(0,14), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))],
       score: me&&loc ? loc.score : num(pr.sc), baskets: me&&loc ? loc.baskets : num(pr.bk), roundPts: me&&loc ? loc.roundPts : num(pr.rp),
       rs: !me && pr.rs && Array.isArray(pr.rs.shots) && pr.rs.shots.length ? pr.rs : null,
       st, status: st==='done' ? 'bitirdi' : st==='between' ? `${Math.max(1,rd-1)}. tur bitti` : `${rd}. tur` };
+    // ilerleme takibi: skor/tur/durum değişmedikçe saat ilerlemez
+    const sig=[st,rd,r.score,r.baskets].join('|');
+    if(!peerChg[p.peer] || peerChg[p.peer].sig!==sig) peerChg[p.peer]={ sig, at:now };
+    if(!me && iDone && st!=='done' && now-peerChg[p.peer].at > STALE_MS){ r.st='done'; r.status='yanıt vermiyor'; }
+    if(onlineStarted) roster[p.peer]={ ...r, me:false, rs:null };
+    live.add(p.peer);
+    return r;
   });
+  // oyun sırasında odadan düşen/çıkan oyuncular son skorlarıyla listede kalır, beklenmez
+  if(onlineStarted) for(const id in roster) if(!live.has(id)) rows.push({ ...roster[id], st:'done', status:'odadan ayrıldı' });
   if(sortIt) rows.sort((a,b)=>b.score-a.score || b.baskets-a.baskets);
   return rows.slice(0,4);
 }
@@ -1483,7 +1497,7 @@ async function enterRoom(code, host){
     if(others.some(p=>p.presence.ph==='go')) return bail('Bu odada oyun çoktan başladı.');
     if(others.length>=4) return bail('Oda dolu (en fazla 4 oyuncu).');
   }
-  myCode=code; amHost=host; MODE='online'; onlineStarted=false; myT0=Date.now(); joinedAt=Date.now();
+  myCode=code; amHost=host; MODE='online'; onlineStarted=false; myT0=Date.now(); joinedAt=Date.now(); lastG=0; roster={}; peerChg={};
   rm.presence({ nm:onNick, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0 }).catch(()=>{});
   unsubPeers = rm.onPeers(onPeersChange, () => { if(MODE==='online'){ document.getElementById('lbWait').textContent='Bağlantı koptu.'; } });
   onMsg(''); document.getElementById('lbCode').textContent=code; renderLobby(); showOnly('ovLobby');
@@ -1494,14 +1508,18 @@ function leaveOnline(){
   MODE='solo'; onlineStarted=false; amHost=false;
 }
 function renderLobby(){
-  const ps=orderedPeers().filter(p=>p.sameTab || p.presence.st==='lobby' || p.presence.ph);
-  const host=hostPeer();
-  document.getElementById('lbRows').innerHTML = ps.map((p,k)=>`<div><span><span class="dot" style="background:${PLAYER_BALL[k%4]}"></span>${esc(String(p.presence.nm).slice(0,14))}${p.sameTab?' <small>(sen)</small>':''}</span><b>${p.presence.role==='host'?'<span class="badge">kurucu</span>':''}</b></div>`).join('');
+  const all=orderedPeers().filter(p=>p.sameTab || p.presence.st==='lobby' || p.presence.ph);
+  const ps=all.filter(p=>p.sameTab || p.presence.st==='lobby');           // bekleme ekranında olanlar
+  const away=all.filter(p=>!p.sameTab && p.presence.st!=='lobby');         // hâlâ önceki oyunun sonucuna bakanlar
+  let host=hostPeer();
+  // kurucu odadan ayrıldıysa odada en uzun süredir bulunan oyuncu kurucu olur
+  if(!host && rm && !amHost && Date.now()-joinedAt>3000 && ps.length && ps[0].sameTab){ amHost=true; rm.presence({ role:'host' }).catch(()=>{}); host=ps[0]; }
+  document.getElementById('lbRows').innerHTML = ps.concat(away).map((p,k)=>`<div${k>=ps.length?' style="opacity:.5"':''}><span><span class="dot" style="background:${PLAYER_BALL[k%4]}"></span>${esc(String(p.presence.nm).slice(0,14))}${p.sameTab?' <small>(sen)</small>':''}${k>=ps.length?' <small>(sonuç ekranında)</small>':''}</span><b>${p.presence.role==='host'?'<span class="badge">kurucu</span>':''}</b></div>`).join('');
   const go=document.getElementById('btnGo'), wait=document.getElementById('lbWait');
   go.style.display = amHost ? '' : 'none';
   go.disabled = ps.length>4;
   go.textContent = ps.length>1 ? `Başlat (${ps.length} oyuncu)` : 'Başlat';
-  wait.textContent = amHost ? (ps.length<2 ? 'Arkadaşların kodla katılsın. İstersen tek başına da başlatabilirsin.' : ps.length>4 ? 'En fazla 4 oyuncu olabilir.' : 'Herkes geldiyse başlat.')
+  wait.textContent = amHost && away.length ? `${away.map(p=>String(p.presence.nm).slice(0,14)).join(', ')} "Tekrar oyna" desin, sonra başlat.` : amHost ? (ps.length<2 ? 'Arkadaşların kodla katılsın. İstersen tek başına da başlatabilirsin.' : ps.length>4 ? 'En fazla 4 oyuncu olabilir.' : 'Herkes geldiyse başlat.')
                             : (host ? 'Kurucunun başlatması bekleniyor…' : (Date.now()-joinedAt>2500 ? 'Kurucu odadan ayrıldı.' : 'Bağlanılıyor…'));
 }
 // ---------- canlı oda: rakiplerin atışları "hayalet top" olarak sahada görünür ----------
@@ -1526,7 +1544,7 @@ function onPeersChange(){
   spawnGhosts();
   const host=hostPeer();
   if(!onlineStarted){
-    if(host && host.presence.ph==='go' && !host.sameTab) beginOnline();
+    if(host && host.presence.ph==='go' && !host.sameTab && num(host.presence.g)>lastG) beginOnline();
     else if(!document.getElementById('ovLobby').classList.contains('hidden')) renderLobby();
   } else if(game==='between'){
     renderOnlineResults();
@@ -1534,6 +1552,8 @@ function onPeersChange(){
 }
 function beginOnline(){
   if(onlineStarted) return; onlineStarted=true; myShotN=0; for(const k in ghostSeen) delete ghostSeen[k];
+  const hp=hostPeer(); if(hp && !hp.sameTab) lastG=Math.max(lastG, num(hp.presence.g));
+  roster={}; peerChg={};
   const ps=orderedPeers();
   myColorIdx=Math.max(0, Math.min(3, ps.findIndex(p=>p.sameTab)));
   rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1 }).catch(()=>{});
@@ -1542,7 +1562,7 @@ function beginOnline(){
 }
 let roomAwarded='';
 function awardRoom(rows){
-  const h=hostPeer(), key=(myCode+'-'+(h ? num(h.presence.t0) : myT0)).replace(/[^A-Za-z0-9_-]/g,'');
+  const h=hostPeer(), key=(myCode+'-'+(h ? num(h.presence.t0) : myT0)+'-'+lastG).replace(/[^A-Za-z0-9_-]/g,'');
   if(roomAwarded===key || rows.length<2) return;
   roomAwarded=key;
   const place = rows.findIndex(r=>r.me)+1, bp = place>=1 && place<=3 ? BP_ROOM[place-1] : 0;
@@ -1567,6 +1587,7 @@ function renderOnlineResults(){
     el('rTitle').textContent='Sen bitirdin';
     el('rScore').textContent=fmt(me.score);
     el('rMsg').textContent='Diğer oyuncular bitiriyor… Sıralama canlı güncelleniyor.';
+    el('rMenu').textContent='Beklemeden odadan çık';
     el('rHint').textContent=''; el('btnNext').style.display='none';
   } else {
     const lead=rows[0], tie=rows.length>1 && rows[1].score===lead.score && rows[1].baskets===lead.baskets;
@@ -1576,7 +1597,8 @@ function renderOnlineResults(){
     const myPlace=rows.findIndex(r=>r.me)+1, myBp = rows.length>=2 && myPlace<=3 ? BP_ROOM[myPlace-1] : 0;
     el('rHint').textContent = isMember() ? '' : 'Misafirsin: basketpuan yalnızca üyelere verilir.';
     el('rMsg').textContent = (tie ? `${fmt(lead.score)} puanda eşitlik.` : `${fmt(lead.score)} puanla ${lead.me?'turnuvanın galibisin':'turnuvanın galibi'}.`) + (myBp ? ` Sen ${myPlace}. oldun: +${myBp} basketpuan.` : '');
-    el('rHint').textContent=''; el('btnNext').style.display=''; el('btnNext').textContent='Çoklu oyuncu menüsü';
+    el('btnNext').style.display=''; el('btnNext').textContent='Tekrar oyna';
+    el('rMenu').textContent='Odadan çık';
   }
 }
 document.getElementById('btnCreate').onclick=async()=>{ audio(); if(!readNick()) return; await enterRoom(newCode(), true); };
@@ -1589,10 +1611,21 @@ document.getElementById('btnJoin').onclick=async()=>{
 document.getElementById('joinCode').addEventListener('input', e=>{ e.target.value=e.target.value.toUpperCase().replace(/[^A-ZÇĞİÖŞÜ]/g,'').slice(0,4); });
 document.getElementById('btnGo').onclick=()=>{
   if(!amHost || !rm) return;
-  rm.presence({ ph:'go' }).catch(()=>{});
+  lastG++;
+  rm.presence({ ph:'go', g:lastG }).catch(()=>{});
   beginOnline();
 };
 document.getElementById('lbLeave').onclick=()=>{ leaveOnline(); showMulti(); };
+// Tekrar oyna: aynı odanın bekleme ekranına dönülür; kurucu "Başlat" deyince herkes yeni oyuna girer
+function rematch(){
+  document.getElementById('ovRound').classList.add('hidden');
+  if(!rm){ leaveOnline(); showMulti(); return; }
+  onlineStarted=false; roster={}; peerChg={}; LAST_RS=null;
+  game='menu'; players=[]; round=0; setCourt(0); court.reset(PLAYER_BALL[0]);
+  rm.presence({ ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, rs:null, ls:null }).catch(()=>{});
+  const hp=hostPeer(); if(hp && !hp.sameTab && hp.presence.ph==='go') lastG=Math.max(lastG, num(hp.presence.g));   // yeni oyun ben dönmeden başladıysa ortasına girme
+  joinedAt=Date.now(); renderLobby(); showOnly('ovLobby');
+}
 document.getElementById('rMenu').onclick=()=>{ document.getElementById('ovRound').classList.add('hidden'); adGate(menuAfterResults); };
 function menuAfterResults(){ if(MODE==='solo' && FREE_GAME){ document.getElementById('ovRound').classList.add('hidden'); goMenu(); showSolo(true); return; } if(MODE==='level'){ document.getElementById('ovRound').classList.add('hidden'); MODE='solo'; clearLevelEnv(); game='menu'; court.reset(PLAYER_BALL[0]); showLevels(); return; } const wasOnline=MODE==='online'; goMenu(); if(wasOnline) showMulti(); }
 setInterval(()=>{ if(MODE==='online' && !onlineStarted && !document.getElementById('ovLobby').classList.contains('hidden')) renderLobby(); }, 1000);
@@ -3276,7 +3309,7 @@ onCloud(()=>{ if(visible('ovStats')) renderStats(); });
 
 let roomStatKey='';
 function statRoomOnce(rows){
-  const h=hostPeer(), key=myCode+'-'+(h ? num(h.presence.t0) : myT0);
+  const h=hostPeer(), key=myCode+'-'+(h ? num(h.presence.t0) : myT0)+'-'+lastG;
   if(roomStatKey===key || rows.length<2) return; roomStatKey=key;
   const i=rows.findIndex(r=>r.me); if(i<0) return;
   const me=rows[i], top=rows[0], same=r=>r.score===top.score && r.baskets===top.baskets, nTop=rows.filter(same).length;
