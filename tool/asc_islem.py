@@ -63,7 +63,7 @@ def call(method, path, body=None, quiet=False):
     except urllib.error.HTTPError as e:
         msg = e.read().decode(errors="replace")
         if not quiet:
-            print(f"HATA {method} {path} -> {e.code} {msg[:700]}")
+            print(f"HATA {method} {path} -> {e.code} {msg[:3000]}")
         e.body = msg
         raise
 
