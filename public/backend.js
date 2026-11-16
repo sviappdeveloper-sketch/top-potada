@@ -81,15 +81,28 @@ async function initFirebase(){
   });
   TP.signInApple = async ()=>{
     if(!(window.TPAndroid && typeof window.TPAndroid.appleSignIn==='function')) return;
-    const r = await nativeApple(); if(!r || !r.idToken) return;
     const prov = new A.OAuthProvider('apple.com');
-    const cred = prov.credential({ idToken:r.idToken, rawNonce:r.nonce }), cur = auth.currentUser;
+    // Apple onayı (idToken + nonce) tek kullanımlıktır: her deneme için yenisi alınır
+    const fresh = async ()=>{ const x = await nativeApple(); return (x && x.idToken) ? { r:x, cred: prov.credential({ idToken:x.idToken, rawNonce:x.nonce }) } : null; };
+    const sameEmail = e => e && (e.code==='auth/email-already-in-use' || e.code==='auth/account-exists-with-different-credential');
+    const googleErr = () => Object.assign(new Error('email-google'), { code:'tp/email-google' });
+    let x = await fresh(); if(!x) return;
+    let r = x.r; const cur = auth.currentUser;
     try{
-      if(cur && cur.isAnonymous) await A.linkWithCredential(cur, cred);   // misafir ilerlemesi korunur
-      else await A.signInWithCredential(auth, cred);
+      if(cur && cur.isAnonymous) await A.linkWithCredential(cur, x.cred);   // misafir ilerlemesi korunur
+      else await A.signInWithCredential(auth, x.cred);
     }catch(e){
-      if(e && (e.code==='auth/credential-already-in-use' || e.code==='auth/email-already-in-use')) await A.signInWithCredential(auth, A.OAuthProvider.credentialFromError(e) || cred);
-      else throw e;
+      if(sameEmail(e)) throw googleErr();                    // e-posta başka (Google) üyeliğe ait
+      if(!(e && e.code==='auth/credential-already-in-use')) throw e;
+      // Bu Apple hesabıyla daha önce üye olunmuş: misafir oturumu yerine o üyeliğe geçilir
+      let ok = false;
+      const again = A.OAuthProvider.credentialFromError(e);
+      if(again){ try{ await A.signInWithCredential(auth, again); ok = true; }catch(e2){ if(sameEmail(e2)) throw googleErr(); } }
+      if(!ok){
+        const y = await fresh(); if(!y) return;
+        r = y.r;
+        try{ await A.signInWithCredential(auth, y.cred); }catch(e3){ if(sameEmail(e3)) throw googleErr(); throw e3; }
+      }
     }
     // Apple adı yalnızca ilk girişte verir; varsa profile yaz
     if(r.name && !auth.currentUser.displayName){ try{ await A.updateProfile(auth.currentUser, { displayName:r.name }); }catch(e){} }

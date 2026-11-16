@@ -2048,11 +2048,16 @@ let signingIn=false;
 async function doSignIn(apple){
   if(signingIn || !window.TP) return; signingIn=true;
   try{ await (apple ? TP.signInApple() : TP.signInGoogle()); }
-  catch(e){ toastAll('Giriş yapılamadı. Tekrar dene.'); console.error(e); }
+  catch(e){
+    const code = String((e && (e.code || e.message)) || '').replace(/^auth\//,'').slice(0,60);
+    toastAll(code==='tp/email-google' ? 'Bu e-posta Google ile açılmış bir üyeliğe ait. O hesapla giriş yap.'
+      : 'Giriş yapılamadı. Tekrar dene.' + (code ? ' (' + code + ')' : ''), 6000);
+    console.error(e);
+  }
   signingIn=false;
 }
 document.addEventListener('click', e=>{ if(e.target.closest('.js-signin')){ e.preventDefault(); doSignIn(false); } else if(e.target.closest('.js-apple')){ e.preventDefault(); doSignIn(true); } });
-function toastAll(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toastAll.t); toastAll.t=setTimeout(()=>el.classList.remove('on'), 3200); }
+function toastAll(t, ms){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toastAll.t); toastAll.t=setTimeout(()=>el.classList.remove('on'), ms||3200); }
 
 let authUid=null;
 function onAuthChanged(u){
