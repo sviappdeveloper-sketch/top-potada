@@ -126,16 +126,21 @@ def create_cert():
         "csrContent": csr_pem, "certificateType": "DISTRIBUTION"}}})
 
 
-try:
-    cert = create_cert()
-except urllib.error.HTTPError:
-    existing = call("GET", "/certificates?filter[certificateType]=DISTRIBUTION&limit=50")["data"]
-    existing.sort(key=lambda c: c["attributes"].get("expirationDate", ""))
-    if not existing:
-        sys.exit(1)
-    print("Sertifika sınırı dolu; en eski dağıtım sertifikası iptal ediliyor:", existing[0]["id"])
-    call("DELETE", f"/certificates/{existing[0]['id']}")
-    cert = create_cert()
+cert = None
+for _deneme in range(6):
+    try:
+        cert = create_cert()
+        break
+    except urllib.error.HTTPError:
+        # Sınır doluysa en eski dağıtım sertifikasını iptal edip yeniden dene (gerekirse birkaç kez)
+        existing = call("GET", "/certificates?filter[certificateType]=DISTRIBUTION&limit=50")["data"]
+        existing.sort(key=lambda c: c["attributes"].get("expirationDate", ""))
+        if not existing:
+            sys.exit(1)
+        print("Sertifika sınırı dolu; en eski dağıtım sertifikası iptal ediliyor:", existing[0]["id"])
+        call("DELETE", f"/certificates/{existing[0]['id']}")
+if cert is None:
+    sys.exit(1)
 
 cert_id = cert["data"]["id"]
 x = x509.load_der_x509_certificate(base64.b64decode(cert["data"]["attributes"]["certificateContent"]))
