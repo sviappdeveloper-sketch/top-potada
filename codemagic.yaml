@@ -97,7 +97,7 @@ workflows:
         ASC_KEY_ID: 9PJ9V3965R
         ASC_ISSUER_ID: 195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e
         GONDER: evet
-        MIN_BUILD: "16"
+        MIN_BUILD: "17"
         BEKLE_DK: "100"
     triggering:
       events:
