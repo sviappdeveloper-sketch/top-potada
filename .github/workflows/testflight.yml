@@ -16,7 +16,7 @@ concurrency: { group: testflight, cancel-in-progress: true }
 
 jobs:
   ios:
-    runs-on: macos-15
+    runs-on: macos-15-intel   # ARM Mac sunucularında kuyruk uzun olabiliyor
     timeout-minutes: 60
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || '9PJ9V3965R' }}
