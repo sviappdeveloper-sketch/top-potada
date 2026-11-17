@@ -962,7 +962,7 @@ function hrand(a, b){ let h = (Math.imul(a|0, 374761393) + Math.imul(b|0, 668265
 function defenderWatch(d, balls){
   if(d.jt>=0 || d.wait>=0) return;
   for(const b of balls){
-    if(b.fade || !b.sid || d.seen[b.sid] || b.vx<=40 || b.x >= d.x-6) continue;
+    if(b.fade || !b.sid || b.clean || d.seen[b.sid] || b.vx<=40 || b.x >= d.x-6) continue;
     d.seen[b.sid]=true;
     const t=(d.x-b.x)/b.vx; if(t>2.2) continue;
     const yc = b.y + b.vy*t + .5*GRAV*t*t;                    // topun savunmacı hizasındaki yüksekliği
@@ -1061,7 +1061,7 @@ class Court {
           segHit(b, W-BOARD.x, BOARD.y1, BOARD.y2, 4, .55, v=>sfx.board(v));
           segHit(b, W-POLE.x, POLE.y1, POLE.y2, 3.5, .45, v=>sfx.board(v));
         }
-        if(this.defs.length && defendersHit(this.defs, b) && !b.blocked && b.vx<vx0b*.6){ b.blocked=true; this.floaters.push({ x:b.x, y:b.y-30, t:0, txt:'Blok!' }); }
+        if(this.defs.length && !b.clean && defendersHit(this.defs, b) && !b.blocked && b.vx<vx0b*.6){ b.blocked=true; this.floaters.push({ x:b.x, y:b.y-30, t:0, txt:'Blok!' }); }
         if(b.y > -BR){
           b.y=-BR;
           if(b.vy>0){ const v=b.vy; b.vy=-b.vy*.52; if(Math.abs(b.vy)<55) b.vy=0; if(v>120) sfx.bounce(v); }
@@ -1138,7 +1138,7 @@ class Court {
       case 'doubting': if(p.timer>1.4){ p.fig.go('sit',1.1); p.state='sitting'; } break;
       case 'standup': if(p.fig.done){ p.state='ready'; p.idle=0; } break;
       case 'releasing':
-        if(p.timer>=.09){ p.launch(p.pending.vx, p.pending.vy); p.state='follow'; p.timer=0; }
+        if(p.timer>=.09){ p.launch(p.pending.vx, p.pending.vy); if(p.pending.clean){ const lb=p.balls[p.balls.length-1]; if(lb) lb.clean=true; } p.state='follow'; p.timer=0; }
         break;
       case 'follow':
         if(p.timer>.32){
@@ -1242,6 +1242,7 @@ function prepareTurn(){
   game='turnwait';
   if(MODE==='level' && curLevel){ levelIntro(p); return; }
   if(MODE==='match' && curMatch.botPlays && turnIdx===1){
+    curMatch.plan = curMatch.kind==='league' ? botPlanFor(curMatch.tier, SHOTS) : null;
     document.getElementById('tRound').textContent = curMatch.stage + (curMatch.ot ? ` · Uzatma ${curMatch.ot}` : '');
     document.getElementById('tBall').style.background = p.color;
     document.getElementById('tSub').textContent = 'Önce rakibin atıyor';
@@ -1531,7 +1532,7 @@ function onlineRows(sortIt){
     const loc = me ? players[0] : null;
     const st = me ? (round>=ROUNDS ? 'done' : (game==='between'?'between':'playing')) : String(pr.st||'');
     const rd = me ? Math.min(round+1,ROUNDS) : num(pr.rd);
-    const r = { id:p.peer, me, nm:String(pr.nm).slice(0,14), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))],
+    const r = { id:p.peer, me, nm:String(pr.nm).slice(0,14)+tierTxt(num(pr.tb)), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))],
       score: me&&loc ? loc.score : num(pr.sc), baskets: me&&loc ? loc.baskets : num(pr.bk), roundPts: me&&loc ? loc.roundPts : num(pr.rp),
       rs: !me && pr.rs && Array.isArray(pr.rs.shots) && pr.rs.shots.length ? pr.rs : null,
       st, status: st==='done' ? 'bitirdi' : st==='between' ? `${Math.max(1,rd-1)}. tur bitti` : `${rd}. tur` };
@@ -1566,7 +1567,7 @@ async function enterRoom(code, host){
     if(others.length>=4) return bail('Oda dolu (en fazla 4 oyuncu).');
   }
   myCode=code; amHost=host; MODE='online'; onlineStarted=false; myT0=Date.now(); joinedAt=Date.now(); lastG=0; roster={}; peerChg={};
-  rm.presence({ nm:onNick, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0 }).catch(()=>{});
+  rm.presence({ nm:onNick, tb:UID ? tierOf(UID) : 0, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0 }).catch(()=>{});
   unsubPeers = rm.onPeers(onPeersChange, () => { if(MODE==='online'){ document.getElementById('lbWait').textContent='Bağlantı koptu.'; } });
   onMsg(''); document.getElementById('lbCode').textContent=code; renderLobby(); showOnly('ovLobby');
 }
@@ -1582,7 +1583,7 @@ function renderLobby(){
   let host=hostPeer();
   // kurucu odadan ayrıldıysa odada en uzun süredir bulunan oyuncu kurucu olur
   if(!host && rm && !amHost && Date.now()-joinedAt>3000 && ps.length && ps[0].sameTab){ amHost=true; rm.presence({ role:'host' }).catch(()=>{}); host=ps[0]; }
-  document.getElementById('lbRows').innerHTML = ps.concat(away).map((p,k)=>`<div${k>=ps.length?' style="opacity:.5"':''}><span><span class="dot" style="background:${PLAYER_BALL[k%4]}"></span>${esc(String(p.presence.nm).slice(0,14))}${p.sameTab?' <small>(sen)</small>':''}${k>=ps.length?' <small>(sonuç ekranında)</small>':''}</span><b>${p.presence.role==='host'?'<span class="badge">kurucu</span>':''}</b></div>`).join('');
+  document.getElementById('lbRows').innerHTML = ps.concat(away).map((p,k)=>`<div${k>=ps.length?' style="opacity:.5"':''}><span><span class="dot" style="background:${PLAYER_BALL[k%4]}"></span>${esc(String(p.presence.nm).slice(0,14))}${tierHtml(num(p.presence.tb))}${p.sameTab?' <small>(sen)</small>':''}${k>=ps.length?' <small>(sonuç ekranında)</small>':''}</span><b>${p.presence.role==='host'?'<span class="badge">kurucu</span>':''}</b></div>`).join('');
   const go=document.getElementById('btnGo'), wait=document.getElementById('lbWait');
   go.style.display = amHost ? '' : 'none';
   go.disabled = ps.length>4;
@@ -2288,7 +2289,7 @@ async function deleteMyData(){
 // =====================================================================
 const TIERS=[ {n:'Bronz', c:'#c58b5a'}, {n:'Gümüş', c:'#8f99a4'}, {n:'Altın', c:'#d9a920'}, {n:'Elmas', c:'#3fa7d6'} ];
 const BP_LEAGUE=[[5,3,1],[10,6,3],[15,9,5],[20,12,6]];
-const LG_DAILY=3, LG_MIN=5, LG_MOVE=0.2, BOT_BASE=[100,150,190,230];
+const LG_DAILY=3, LG_MIN=5, LG_MOVE=0.2, BOT_BASE=[100,190,290,340];   // gerçek rakip yoksa: Altın nadiren 250, Elmas nadiren 300 altı
 let LG={};            // ligkayit: "<sezon>_<uid>" -> kayıt
 let lgTab=null, lgBusy=false;
 const trNow = () => new Date(Date.now()+3*3600e3);     // Türkiye saati (UTC+3)
@@ -2805,8 +2806,25 @@ let nextDiff=null;
 const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 }, { n:'Elmas', c:'#3fa7d6', r:[4,5], def:2, far:40, defs:[{x:268,move:26,sp:1.3},{x:462,jumpH:128,react:.9}] } ];   // Elmas: pota daha geride; ön savunmacı ileri geri gider, arkadaki potanın dibinde pota hizasına kadar zıplar
 const CPU_TOP = CPU_TIERS.length-1;   // en üst kademe (Elmas)
 const rnd = (a,b) => a + Math.random()*(b-a);
+// Altın ve Elmas lig rakipleri: kaç basket atacağı baştan belli, hızlı atar.
+// Elmas: skor çok nadiren 300'ün altına düşer; Altın: çok nadiren 250'nin altına.
+const BOT_PLAN = {
+  2: { hits:[[5,.32],[4,.64],[3,.04]], wait:[2.2,3.4] },   // Altın: basket başı 70-80 puan (4 basket 280-320)
+  3: { hits:[[5,.50],[4,.46],[3,.04]], wait:[1.2,2.2] }    // Elmas: basket başı 80-90 puan (4 basket 320-360)
+};
+function botPlanFor(tier, shots){
+  const P=BOT_PLAN[tier]; if(!P) return null;
+  let x=Math.random(), n=P.hits[P.hits.length-1][0];
+  for(const [h,pr] of P.hits){ if(x<pr){ n=h; break; } x-=pr; }
+  n=Math.min(n, shots);
+  const a=Array.from({length:shots},(_,i)=>i<n);
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return { hit:a, wait:P.wait, i:0 };
+}
 // Bilgisayarın skoru: her atış için düşünme süresi ve isabet olasılığı (savunmacı düşürür)
-function botScore(r, def, shots){
+function botScore(r, def, shots, tier){
+  const pl = tier!=null ? botPlanFor(tier, shots||5) : null;
+  if(pl){ let sc=0, bk=0; pl.hit.forEach(h=>{ if(h){ bk++; sc += 10 + 10*Math.floor(Math.max(0, 10-rnd(pl.wait[0], pl.wait[1]))); } }); return { sc, bk }; }
   let sc=0, bk=0;
   for(let i=0;i<(shots||5);i++){
     const think = Math.max(.6, rnd(7.2-1.25*r, 9.2-1.35*r));
@@ -2818,7 +2836,7 @@ function botScore(r, def, shots){
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
 // bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
-const CPU_TIER_R = [.6, .4, 0, .55];   // rakip gücü kademe eki: Bronz +0.6, Elmas +0.55, Gümüş +0.4, Altın 0 (eskiden +0.3)
+const CPU_TIER_R = [.6, .85, 0, .55];   // rakip gücü kademe eki: Bronz +0.6, Gümüş +0.85 (17 Kasım: +0.4'ten iki kademe zor), Altın ve Elmas planlı atar (BOT_PLAN)
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
 if(CPU.league && num(CPU.league.adj)<2 && Array.isArray(CPU.league.teams)){
   const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
@@ -2862,6 +2880,11 @@ if(CPU.league && CPU.league.adj===5 && Array.isArray(CPU.league.teams)){
 if(CPU.league && CPU.league.adj===6 && Array.isArray(CPU.league.teams)){
   if(CPU.league.tier===3) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+.2)).toFixed(2); });
   CPU.league.adj=7; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+}
+// süren Gümüş sezonu: rakipler iki kademe güçlü (+0.4 → +0.85)
+if(CPU.league && CPU.league.adj===7 && Array.isArray(CPU.league.teams)){
+  if(CPU.league.tier===1) CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+.45)).toFixed(2); });
+  CPU.league.adj=8; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 // lig şampiyonlukları kademe kademe tutulur (eski sayaç yalnızca Altın şampiyonluklarıydı)
 if(!Array.isArray(CPU.lgChamps)){ CPU.lgChamps=[0,0,num(CPU.lgTitles),0]; try{ store('cpu', JSON.stringify(CPU)); }catch(e){} }
@@ -2923,7 +2946,7 @@ function renderCpuHub(){
     CPU_CHARS.map(c=>{ const s=q[c.id]||{}; return `<div class="bot" data-q="${c.id}" style="--bc:${c.c}">
       <div class="bt-top"><span class="bt-av">${esc(c.lvl[0])}</span><div><b>${c.lvl}</b><span class="bt-def">${c.def?`🛡 ${c.def} savunmacı`:'Savunmacı yok'}</span></div></div>
       <div class="bt-bio">${esc(c.bio)}</div>${recText(s)}</div>`; }).join('') + `</div>
-    <div class="hub-sec"><div class="opt-label">Lig</div><small>Bronz → Gümüş → Altın → Elmas</small></div>
+    <div class="hub-sec"><div class="opt-label">Lig</div></div>
     <div class="hc" data-go="lg" style="--hc:${T.c}">
       <div class="hc-row"><div><div class="hc-title">${lg ? `${T.n} ligi` : 'Bilgisayar ligi'}</div>
         <div class="hc-meta">${lg ? `${lg.season}. sezon` : 'Bronz ligden başla'}</div></div>
@@ -2988,7 +3011,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season){
   const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:7,
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:8,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
@@ -3037,12 +3060,12 @@ function renderCpuLeague(){
 }
 function playCpuLeagueWeek(){
   const L=CPU.league, T=CPU_TIERS[L.tier], pair=L.sched[L.week].find(p=>p[0]===0||p[1]===0), oi=pair[0]===0?pair[1]:pair[0], opp=L.teams[oi];
-  const b=botScore(opp.r, T.def, 5);
+  const b=botScore(opp.r, T.def, 5, L.tier);
   startCpuMatch({ kind:'league', tier:L.tier, far:T.far||0, defs:T.defs||null, botPlays:true, r:opp.r, stage:`${T.n} ligi · ${L.week+1}. hafta`, def:T.def, oppName:opp.name, os:b.sc, ob:b.bk, back:showCpuLeague, nextLabel:'Lig tablosu',
     onDone:(sc,bk,res)=>{
       const wk=L.sched[L.week].map(([a,c])=>{
         if(a===0||c===0){ const meA=a===0, os=num(curMatch.os); return { a, b:c, sa: meA?sc:os, sb: meA?os:sc }; }
-        const x=botScore(L.teams[a].r, T.def, 5).sc, y=botScore(L.teams[c].r, T.def, 5).sc; return { a, b:c, sa:x, sb:y };
+        const x=botScore(L.teams[a].r, T.def, 5, L.tier).sc, y=botScore(L.teams[c].r, T.def, 5, L.tier).sc; return { a, b:c, sa:x, sb:y };
       });
       L.results.push(wk); L.week++;
       if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(pos===1){ CPU.lgChamps[L.tier]=num(CPU.lgChamps[L.tier])+1; if(L.tier===2) CPU.lgTitles=num(CPU.lgTitles)+1; }
@@ -3226,22 +3249,30 @@ function fastLabel(){ const b=document.getElementById('botFast'); if(!b) return;
 function botTurn(){ return MODE==='match' && !!curMatch && !!curMatch.botPlays && turnIdx===1; }
 const randn=()=>{ let u=0,v=0; while(!u) u=Math.random(); while(!v) v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
 // nişan: çember ortasının biraz üstü; savunmacı varsa daha yüksek kavis; hata payı rakibin seviyesine göre
-function botAimVelocity(r, def){
+function botAimVelocity(r, def, exact){
   const rp=releasePoint(), tx=(RIM.x1+RIM.x2)/2, ty=RIM.y-10;
   const T=(0.8 + 0.11*(def||0)) * (1 + (tx-488)/900);
   const vx=(tx-rp.x)/T, vy=(ty-rp.y-.5*GRAV*T*T)/T;
-  const sig=Math.max(.006, BOT_SIG0 - BOT_SIGK*r);
+  const sig= exact ? 0 : Math.max(.006, BOT_SIG0 - BOT_SIGK*r);
   const k=1 + randn()*sig, ang=randn()*sig*.6, c=Math.cos(ang), s=Math.sin(ang);
   return { vx:(vx*c - vy*s)*k, vy:(vx*s + vy*c)*k };
+}
+// planlı atış: isabet edecekse tam nişan ve savunmacı o topa dokunmaz; kaçacaksa çemberden sekecek kadar sapma
+function botPlanAim(hit, def){
+  const v=botAimVelocity(5, def, true);
+  if(hit){ v.clean=true; return v; }
+  const k=1 + (Math.random()<.5 ? -1 : 1)*rnd(.09, .14);
+  return { vx:v.vx*k, vy:v.vy*k };
 }
 let BOT_SIG0=.15, BOT_SIGK=.028;   // ölçülen isabet (kendi maçında): Kolay ~%34, Orta ~%34, Zor ~%54, Efsane ~%68
 function botTick(dt){
   const p=court; if(p.state!=='ready' || !p.holding) return;
   const r=curMatch.r||2.5;
-  if(botWait===null){ botWait=Math.max(.6, rnd(6.6-1.15*r, 8.4-1.25*r)); botSet=false; }
+  const pl=curMatch.plan;
+  if(botWait===null){ botWait = pl ? rnd(pl.wait[0], pl.wait[1]) : Math.max(.6, rnd(6.6-1.15*r, 8.4-1.25*r)); botSet=false; }
   botWait-=dt;
   if(!botSet && botWait<.45){ p.fig.go('set',.3); botSet=true; }
-  if(botWait<=0){ p.pending=botAimVelocity(r, curMatch.def||0); p.fig.go('release',.09); p.state='releasing'; p.timer=0; botWait=null; }
+  if(botWait<=0){ p.pending = pl ? botPlanAim(pl.hit[pl.i++] !== false, curMatch.def||0) : botAimVelocity(r, curMatch.def||0); p.fig.go('release',.09); p.state='releasing'; p.timer=0; botWait=null; }
 }
 document.getElementById('botFast').addEventListener('click', ()=>{ botSpeed = botSpeed===1 ? 3 : 1; store('botSpeed', botSpeed); fastLabel(); });
 fastLabel();
@@ -3794,7 +3825,7 @@ function drawHUD(g){
   // skor tablosu
   const multi = MODE!=='solo' && MODE!=='level';
   const r = game==='replay' && REPLAY ? [ { nm:REPLAY.name, color:REPLAY.color||DEF_JERSEY, score:REPLAY.score, roundPts:0, i:-9 } ] : MODE==='level' && curLevel ? levelRows() : MODE==='online' ? onlineRows(true) : MODE==='local' ? ranked()
-          : MODE==='match' && curMatch ? [ { ...players[0], me:true, nm:onNick||'Sen' }, { nm:curMatch.oppName || nickOf(curMatch.opp)+badgeTxt(curMatch.opp), color:curMatch.oc||DEF_JERSEY, score:(curMatch.cpu ? (curMatch.botPlays ? (players[1] ? players[1].score : 0) : num(curMatch.os)) : null), roundPts:0, status:'rakip' } ] : players;
+          : MODE==='match' && curMatch ? [ { ...players[0], me:true, nm:(onNick||'Sen')+(curMatch.cpu && curMatch.kind==='league' && CPU.league ? tierTxt(CPU.league.tier) : badgeTxt(UID)) }, { nm:curMatch.oppName || nickOf(curMatch.opp)+badgeTxt(curMatch.opp), color:curMatch.oc||DEF_JERSEY, score:(curMatch.cpu ? (curMatch.botPlays ? (players[1] ? players[1].score : 0) : num(curMatch.os)) : null), roundPts:0, status:'rakip' } ] : players;
   let y=196;
   g.strokeStyle='rgba(38,34,30,.9)'; g.lineWidth=2; g.beginPath(); g.moveTo(36,y-4); g.lineTo(W-36,y-4); g.stroke();
   r.forEach((p,k)=>{
