@@ -2223,7 +2223,7 @@ async function deleteMyData(){
 // =====================================================================
 const TIERS=[ {n:'Bronz', c:'#c58b5a'}, {n:'Gümüş', c:'#8f99a4'}, {n:'Altın', c:'#d9a920'}, {n:'Elmas', c:'#3fa7d6'} ];
 const BP_LEAGUE=[[5,3,1],[10,6,3],[15,9,5],[20,12,6]];
-const LG_DAILY=3, LG_MIN=5, LG_MOVE=0.2, BOT_BASE=[100,150,190,230];
+const LG_DAILY=3, LG_MIN=5, LG_MOVE=0.2, BOT_BASE=[100,170,215,260];
 let LG={};            // ligkayit: "<sezon>_<uid>" -> kayıt
 let lgTab=null, lgBusy=false;
 const trNow = () => new Date(Date.now()+3*3600e3);     // Türkiye saati (UTC+3)
@@ -2739,13 +2739,15 @@ function botScore(r, def, shots){
 }
 function cpuLoad(){ try{ const o=JSON.parse(store('cpu')||'{}'); return o && typeof o==='object' ? o : {}; }catch(e){ return {}; } }
 let CPU = cpuLoad();
-// bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.40 (eskiden 0.25), Altın +0.30 (eskiden 0.50)
-const CPU_TIER_R = [0, .4, .3, .6];   // Elmas: Altın'dan bir kademe güçlü
+// bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.60, Altın +0.60, Elmas +0.95 (Kasım 2026: üst kademeler biraz zorlaştı; önceki 0 / .4 / .3 / .6)
+const CPU_TIER_R = [0, .6, .6, .95];
+const CPU_TIER_R2 = [0, .4, .3, .6];   // adj 2 sürümündeki ekler
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
-if(CPU.league && CPU.league.adj!==2 && Array.isArray(CPU.league.teams)){
-  const fix = CPU_TIER_R[CPU.league.tier] - [0,.25,.5][CPU.league.tier];
+if(CPU.league && CPU.league.adj!==3 && Array.isArray(CPU.league.teams)){
+  const tr=Math.max(0,Math.min(3,num(CPU.league.tier))), old = CPU.league.adj===2 ? CPU_TIER_R2[tr] : [0,.25,.5,.6][tr];
+  const fix = CPU_TIER_R[tr] - old;
   CPU.league.teams.forEach(t=>{ if(!t.me && typeof t.r==='number') t.r=+Math.max(1, Math.min(5, t.r+fix)).toFixed(2); });
-  CPU.league.adj=2; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
+  CPU.league.adj=3; try{ store('cpu', JSON.stringify(CPU)); }catch(e){}
 }
 // eskiden seçilen lig seviyesi standarda çekilir (rakipler Orta seviyeye kaydırılır; kademe korunur)
 if(CPU.league && typeof CPU.league.diff==='number' && CPU.league.diff!==1 && Array.isArray(CPU.league.teams)){
@@ -2874,7 +2876,7 @@ function lgSchedule(){ // 8 takım, 7 hafta, çember yöntemi
 }
 function newCpuLeague(tier, season){
   const diff=LG_STD_DIFF, D=CPU_DIFF[diff], names=pickNames(7);
-  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:2,
+  CPU.league = { tier, season, diff, week:0, teams:[ { name:'Sen', me:true } ].concat(names.map(n=>({ name:n, r:+Math.min(5, rnd(D.r[0],D.r[1]) + CPU_TIER_R[tier]).toFixed(2) }))), adj:3,
     sched: shuffle(lgSchedule()), results:[] };
   cpuSave();
 }
