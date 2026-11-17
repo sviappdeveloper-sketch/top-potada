@@ -378,7 +378,7 @@
       <li>Dört seviye ligi vardır: <b>Bronz, Gümüş, Altın, Elmas</b>. Her yeni üye Bronz’dan başlar.</li>
       <li>Her <b>takvim ayı bir sezondur</b> (Türkiye saatiyle). Her gün en fazla <b>3 lig maçı</b> oynayabilirsin.</li>
       <li>Lig maçı 5 atıştır, her top için 10 saniye vardır. Rakibin, aynı ligdeki rastgele bir oyuncunun son lig maçı skorudur; ligde başka oyuncu yoksa bilgisayar rakiple oynarsın. <b>Galibiyet 3, beraberlik 1, mağlubiyet 0 puan.</b></li>
-      <li>Savunmacı sayısı ligle artar: Bronz 0, Gümüş 1, Altın 2, Elmas 3.</li>
+      <li>Savunmacı sayısı ligle artar: Bronz 0, Gümüş 1, Altın 2. Elmas’ta 2 savunmacı var ama daha zorlu: öndeki ileri-geri hareket eder, arkadaki pota yüksekliğine kadar zıplar.</li>
       <li>Puanlar eşitse sezon boyunca attığın toplam puan belirler. Başlattığın lig maçını yarıda bırakırsan 0 puanla mağlubiyet sayılır.</li>
       <li><b>Sezon sonu:</b> En az 5 maç oynayanlar arasında ilk %20 bir üst lige çıkar, son %20 bir alt lige düşer. Her ligin ilk 3’ü basketpuan alır:</li>
     </ul>
@@ -906,6 +906,9 @@ sfx.buzzer = () => { tone(150, .7, 'sawtooth', .12); tone(153, .7, 'square', .05
 // ---------- savunmacılar ----------
 // ilk savunmacı atıcının hemen önünde (alçak/orta yayları keser), diğerleri potaya doğru (düz atışları keser)
 const DEF_X = { 1:[270], 2:[268,425], 3:[264,350,436] };
+// Elmas lig savunması: 2 kişi. Öndeki ileri-geri hareket eder, arkadaki pota yüksekliğine kadar zıplar.
+const DEF_ELMAS = [ { x:300, move:58, sp:1.25 }, { x:425, high:true } ];
+const DEF_JUMP_HIGH = 150;
 const DEF_JERSEY = '#4a4e57';
 function makeDefenders(n){
   return (DEF_X[n]||[]).map((x,i)=>{ const f=new Figure(x); f.facing=-1; f.jersey=DEF_JERSEY; f.pose={...POSES.guard}; f.from=f.pose; f.to=f.pose; f.t=1;
@@ -924,7 +927,7 @@ function hrand(a, b){ let h = (Math.imul(a|0, 374761393) + Math.imul(b|0, 668265
 function defenderWatch(d, balls){
   if(d.jt>=0 || d.wait>=0) return;
   for(const b of balls){
-    if(b.fade || !b.sid || d.seen[b.sid] || b.vx<=40 || b.x >= d.x-6) continue;
+    if(b.fade || !b.sid || b.clean || d.seen[b.sid] || b.vx<=40 || b.x >= d.x-6) continue;
     d.seen[b.sid]=true;
     const t=(d.x-b.x)/b.vx; if(t>2.2) continue;
     const yc = b.y + b.vy*t + .5*GRAV*t*t;                    // topun savunmacı hizasındaki yüksekliği
@@ -1015,7 +1018,7 @@ class Court {
         for(const rx of [RIM.x1, RIM.x2]) pointHit(b, rx, RIM.y, 2.5, .62, v=>sfx.clang(v));
         segHit(b, BOARD.x, BOARD.y1, BOARD.y2, 4, .55, v=>sfx.board(v));
         segHit(b, POLE.x, POLE.y1, POLE.y2, 3.5, .45, v=>sfx.board(v));
-        if(this.defs.length && defendersHit(this.defs, b) && !b.blocked && b.vx<vx0b*.6){ b.blocked=true; this.floaters.push({ x:b.x, y:b.y-30, t:0, txt:'Blok!' }); }
+        if(this.defs.length && !b.clean && defendersHit(this.defs, b) && !b.blocked && b.vx<vx0b*.6){ b.blocked=true; this.floaters.push({ x:b.x, y:b.y-30, t:0, txt:'Blok!' }); }
         if(b.y > -BR){
           b.y=-BR;
           if(b.vy>0){ const v=b.vy; b.vy=-b.vy*.52; if(Math.abs(b.vy)<55) b.vy=0; if(v>120) sfx.bounce(v); }
@@ -1091,7 +1094,7 @@ class Court {
       case 'doubting': if(p.timer>1.4){ p.fig.go('sit',1.1); p.state='sitting'; } break;
       case 'standup': if(p.fig.done){ p.state='ready'; p.idle=0; } break;
       case 'releasing':
-        if(p.timer>=.09){ p.launch(p.pending.vx, p.pending.vy); p.state='follow'; p.timer=0; }
+        if(p.timer>=.09){ p.launch(p.pending.vx, p.pending.vy); if(p.pending.clean){ const lb=p.balls[p.balls.length-1]; if(lb) lb.clean=true; } p.state='follow'; p.timer=0; }
         break;
       case 'follow':
         if(p.timer>.32){
@@ -1159,6 +1162,8 @@ const court = new Court();
 
 function releasePoint(){ const j=solve(POSES.release, PX, 1); return { x:j.hand.x+3, y:j.hand.y-6 }; }
 
+// Elmas lig maçı (bilgisayar ligi ya da online lig): özel 2 kişilik savunma
+const isElmasMatch = m => !!m && ((m.cpu && m.kind==='league' && num(m.tier)===3) || (m.league && num(m.tier)===3));
 function startTournament(){
   const isMatch = MODE==='match' && curMatch, isLevel = MODE==='level' && curLevel;
   if(!isLevel) clearLevelEnv();
@@ -1166,6 +1171,7 @@ function startTournament(){
   SHOTS = isMatch && curMatch.ot ? 1 : isLevel ? lvShots(curLevel) + LV_BONUS : 5; LV_BONUS = 0;
   PREVIEW_OVR = isMatch ? ((curMatch.league || curMatch.tid || curMatch.kind==='league' || curMatch.kind==='tour') ? cupPreview(curMatch) : MATCH_PREVIEW) : null;
   DEF_N = isMatch ? curMatch.def : 0;
+  if(isMatch && isElmasMatch(curMatch)){ DEF_CFG = DEF_ELMAS; DEF_N = DEF_ELMAS.length; }
   matchWritten = false;
   if(isLevel) applyLevelEnv(curLevel);
   const n = MODE==='local' ? nPlayers : (MODE==='match' && curMatch && curMatch.botPlays) ? 2 : 1;
@@ -1181,6 +1187,7 @@ function prepareTurn(){
   game='turnwait';
   if(MODE==='level' && curLevel){ levelIntro(p); return; }
   if(MODE==='match' && curMatch.botPlays && turnIdx===1){
+    curMatch.plan = curMatch.kind==='league' ? botPlanFor(curMatch.tier, SHOTS) : null;
     document.getElementById('tRound').textContent = curMatch.stage + (curMatch.ot ? ` · Uzatma ${curMatch.ot}` : '');
     document.getElementById('tBall').style.background = p.color;
     document.getElementById('tSub').textContent = 'Önce rakibin atıyor';
@@ -2289,7 +2296,7 @@ function renderLeague(){
     h += `<div class="lg-me" style="--tc:${T.c}"><div class="lg-tier">${T.n} ligi</div>
       <div class="lg-stats"><div><b>${r? num(r.w)*3+num(r.d) : 0}</b><small>puan</small></div><div><b>${r?num(r.w):0}-${r?num(r.d):0}-${r?num(r.l):0}</b><small>G-B-M</small></div><div><b>${pos||'–'}</b><small>sıra</small></div></div>
       <button data-lg="play" ${left<=0||lgBusy?'disabled':''}>${left>0 ? `Lig maçı oyna · bugün ${left}/${LG_DAILY}` : 'Bugünkü maçların bitti'}</button>
-      <p class="note">${left>0 ? `Rakibin ${T.n} liginden rastgele biri; ${myTier ? myTier+' savunmacı' : 'savunmacı yok'}. Kazanırsan 3, berabere kalırsan 1 puan.` : 'Yarın 3 yeni maç hakkın olacak.'}</p></div>`;
+      <p class="note">${left>0 ? `Rakibin ${T.n} liginden rastgele biri; ${myTier===3 ? '2 savunmacı (biri hareketli, biri pota boyu zıplar)' : myTier ? myTier+' savunmacı' : 'savunmacı yok'}. Kazanırsan 3, berabere kalırsan 1 puan.` : 'Yarın 3 yeni maç hakkın olacak.'}</p></div>`;
     // geçen sezon
     const ps=prevSeason(s), pr=LG[recId(ps, UID)];
     if(pr){
@@ -2546,7 +2553,7 @@ const starStr = k => '★'.repeat(k) + '☆'.repeat(3-k);
 function makeDefendersCfg(list){
   return list.map((c,i)=>{ const f=new Figure(c.x); f.facing=-1; f.jersey=c.boss?'#b03a2e':DEF_JERSEY; f.pose={...POSES.guard}; f.from=f.pose; f.to=f.pose; f.t=1;
     return { fig:f, x:c.x, baseX:c.x, move:c.move||0, sp:c.sp||1, boss:!!c.boss, t:RNG()*1.2, period: c.boss ? 1.05 : 1.25+RNG()*.9+i*.15,
-      i, jumpDur: c.boss ? .56 : .5, jumpH: c.boss ? DEF_JUMP_BOSS : DEF_JUMP, react: c.boss ? DEF_REACT_BOSS : DEF_REACT, jy:0, jt:-1, wait:-1, seen:{}, segs:[] }; });
+      i, jumpDur: c.high ? .64 : c.boss ? .56 : .5, jumpH: c.high ? DEF_JUMP_HIGH : c.boss ? DEF_JUMP_BOSS : DEF_JUMP, react: c.boss || c.high ? DEF_REACT_BOSS : DEF_REACT, jy:0, jt:-1, wait:-1, seen:{}, segs:[] }; });
 }
 function applyLevelEnv(lv){
   lvSeqIdx = lv.seq ? 0 : -1; lvSeqWait=false;
@@ -2724,11 +2731,13 @@ const diffOf = r => r<1.95 ? CPU_DIFF[0] : r<3.05 ? CPU_DIFF[1] : r<4.05 ? CPU_D
 const LG_STD_DIFF = 1;
 const lgDiff = L => LG_STD_DIFF;
 let nextDiff=null;
-const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 }, { n:'Elmas', c:'#3fa7d6', r:[3.5,5], def:3 } ];
+const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 }, { n:'Elmas', c:'#3fa7d6', r:[3.5,5], def:2, elmas:true } ];
 const CPU_TOP = CPU_TIERS.length-1;   // en üst kademe (Elmas)
 const rnd = (a,b) => a + Math.random()*(b-a);
 // Bilgisayarın skoru: her atış için düşünme süresi ve isabet olasılığı (savunmacı düşürür)
-function botScore(r, def, shots){
+function botScore(r, def, shots, tier){
+  const pl = tier!=null ? botPlanFor(tier, shots||5) : null;
+  if(pl){ let sc=0, bk=0; pl.hit.forEach(h=>{ if(h){ bk++; sc += 10 + 10*Math.floor(Math.max(0, 10-rnd(pl.wait[0], pl.wait[1]))); } }); return { sc, bk }; }
   let sc=0, bk=0;
   for(let i=0;i<(shots||5);i++){
     const think = Math.max(.6, rnd(7.2-1.25*r, 9.2-1.35*r));
@@ -2742,6 +2751,20 @@ let CPU = cpuLoad();
 // bilgisayar ligi rakip gücü kademe eki: Bronz 0, Gümüş +0.85, Altın +1.35, Elmas +1.90 (Kasım 2026: Altın ve Elmas %50 daha zor)
 const CPU_TIER_R = [0, .85, 1.35, 1.9];
 const CPU_TIER_R4 = [0, .85, .9, 1.25];  // adj 4 sürümündeki ekler
+// Altın ve Elmas lig rakipleri: kaç basket atacağı baştan belli, hızlı atar.
+// Elmas: skor çok nadiren 300'ün altına düşer; Altın: çok nadiren 250'nin altına.
+const BOT_PLAN = {
+  2: { hits:[[5,.30],[4,.62],[3,.08]], wait:[2.2,3.4] },   // Altın: basket başı 70-80 puan (4 basket 280-320)
+  3: { hits:[[5,.50],[4,.46],[3,.04]], wait:[1.2,2.2] }    // Elmas: basket başı 80-90 puan (4 basket 320-360)
+};
+function botPlanFor(tier, shots){
+  const P=BOT_PLAN[tier]; if(!P) return null;
+  let x=Math.random(), n=P.hits[P.hits.length-1][0];
+  for(const [h,pr] of P.hits){ if(x<pr){ n=h; break; } x-=pr; }
+  n=Math.min(n, shots);
+  const hit=shuffle(Array.from({length:shots},(_,i)=>i<n));
+  return { hit, wait:P.wait, i:0 };
+}
 const CPU_TIER_R2 = [0, .4, .3, .6];    // adj 2 sürümündeki ekler
 const CPU_TIER_R3 = [0, .6, .6, .95];   // adj 3 sürümündeki ekler
 // süren sezondaki rakipleri de yeni ayara çek (bir kez)
@@ -2906,7 +2929,7 @@ function renderCpuLeague(){
     const pair=L.sched[L.week].find(p=>p[0]===0||p[1]===0), opp=L.teams[pair[0]===0?pair[1]:pair[0]];
     h+=`<div class="lg-me" style="--tc:${T.c}"><div class="lg-tier">${T.n} ligi${tierIcon(L.tier)}</div>
       <div class="nx-vs">Bu haftaki rakibin: <b>${esc(opp.name)}</b> <span class="lvtag" style="--bc:${diffOf(opp.r).c}">${diffOf(opp.r).n}</span></div>
-      <div class="nx-def">${T.def?T.def+' savunmacı':'Savunmacı yok'} · Galibiyet 3, beraberlik 1 puan</div>
+      <div class="nx-def">${T.elmas?'2 savunmacı (biri hareketli, biri pota boyu zıplar)':T.def?T.def+' savunmacı':'Savunmacı yok'} · Galibiyet 3, beraberlik 1 puan</div>
       <button data-go="lgplay">${L.week+1}. haftayı oyna</button></div>`;
   } else {
     const up = L.tier<CPU_TOP && myPos<=2, down = L.tier>0 && myPos>=7, champ = L.tier===CPU_TOP && myPos===1;
@@ -2918,7 +2941,7 @@ function renderCpuLeague(){
     const z = (L.tier<CPU_TOP && i<2) ? 'up' : (L.tier>0 && i>=6) ? 'down' : '';
     const tm=L.teams[x.i], dv=tm && !tm.me ? diffOf(tm.r) : null;
     return `<tr class="${z}${x.me?' me':''}"><td>${i+1}</td><td>${x.me?'<b>Sen</b>'+tierIcon(L.tier):esc(x.name)+tierIcon(L.tier)+(dv?` <span class="lvtag" style="--bc:${dv.c}">${dv.n}</span>`:'')}</td><td>${x.o}</td><td>${x.w}-${x.d}-${x.l}</td><td><b>${x.pts}</b></td></tr>`; }).join('')+`</table>
-    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (2 savunmacı), Elmas (3 savunmacı).</p>`;
+    <p class="note">Yeşil: üst lige çıkar · Kırmızı: alt lige düşer. Eşit puanda atılan toplam puan belirler. Kademeler: Bronz (savunmacısız), Gümüş (1 savunmacı), Altın (2 savunmacı), Elmas (2 savunmacı: öndeki ileri-geri gider, arkadaki pota boyu zıplar).</p>`;
   if(L.results.length){ const last=L.results[L.results.length-1];
     h+=`<div class="opt-label" style="margin-top:14px">${L.results.length}. hafta sonuçları</div><div class="mlist">`+last.map(m=>{
       const A=L.teams[m.a], B=L.teams[m.b]; const me=A.me||B.me;
@@ -2928,12 +2951,12 @@ function renderCpuLeague(){
 }
 function playCpuLeagueWeek(){
   const L=CPU.league, T=CPU_TIERS[L.tier], pair=L.sched[L.week].find(p=>p[0]===0||p[1]===0), oi=pair[0]===0?pair[1]:pair[0], opp=L.teams[oi];
-  const b=botScore(opp.r, T.def, 5);
-  startCpuMatch({ kind:'league', botPlays:true, r:opp.r, stage:`${T.n} ligi · ${L.week+1}. hafta`, def:T.def, oppName:opp.name, os:b.sc, ob:b.bk, back:showCpuLeague, nextLabel:'Lig tablosu',
+  const b=botScore(opp.r, T.def, 5, L.tier);
+  startCpuMatch({ kind:'league', botPlays:true, r:opp.r, tier:L.tier, stage:`${T.n} ligi · ${L.week+1}. hafta`, def:T.def, oppName:opp.name, os:b.sc, ob:b.bk, back:showCpuLeague, nextLabel:'Lig tablosu',
     onDone:(sc,bk,res)=>{
       const wk=L.sched[L.week].map(([a,c])=>{
         if(a===0||c===0){ const meA=a===0, os=num(curMatch.os); return { a, b:c, sa: meA?sc:os, sb: meA?os:sc }; }
-        const x=botScore(L.teams[a].r, T.def, 5).sc, y=botScore(L.teams[c].r, T.def, 5).sc; return { a, b:c, sa:x, sb:y };
+        const x=botScore(L.teams[a].r, T.def, 5, L.tier).sc, y=botScore(L.teams[c].r, T.def, 5, L.tier).sc; return { a, b:c, sa:x, sb:y };
       });
       L.results.push(wk); L.week++;
       if(L.week>=7){ const pos=lgTable(L).findIndex(x=>x.me)+1; if(L.tier===CPU_TOP && pos===1) CPU.lgTitles=num(CPU.lgTitles)+1;
@@ -3117,22 +3140,29 @@ function fastLabel(){ const b=document.getElementById('botFast'); if(!b) return;
 function botTurn(){ return MODE==='match' && !!curMatch && !!curMatch.botPlays && turnIdx===1; }
 const randn=()=>{ let u=0,v=0; while(!u) u=Math.random(); while(!v) v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
 // nişan: çember ortasının biraz üstü; savunmacı varsa daha yüksek kavis; hata payı rakibin seviyesine göre
-function botAimVelocity(r, def){
+function botAimVelocity(r, def, exact){
   const rp=releasePoint(), tx=(RIM.x1+RIM.x2)/2, ty=RIM.y-10;
   const T=(0.8 + 0.11*(def||0)) * (1 + (tx-488)/900);
   const vx=(tx-rp.x)/T, vy=(ty-rp.y-.5*GRAV*T*T)/T;
-  const sig=Math.max(.006, BOT_SIG0 - BOT_SIGK*r);
+  const sig= exact ? 0 : Math.max(.006, BOT_SIG0 - BOT_SIGK*r);
   const k=1 + randn()*sig, ang=randn()*sig*.6, c=Math.cos(ang), s=Math.sin(ang);
   return { vx:(vx*c - vy*s)*k, vy:(vx*s + vy*c)*k };
+}
+// planlı atış: isabet edecekse savunmacının üstünden temiz atış, kaçacaksa çemberden sekecek kadar sapma
+function botPlanAim(hit, def){
+  if(hit){ const v=botAimVelocity(5, def, true); v.clean=true; return v; }
+  const v=botAimVelocity(5, def), k=1 + (Math.random()<.5 ? -1 : 1)*rnd(.09, .14);
+  return { vx:v.vx*k, vy:v.vy*k };
 }
 let BOT_SIG0=.15, BOT_SIGK=.028;   // ölçülen isabet (kendi maçında): Kolay ~%34, Orta ~%34, Zor ~%54, Efsane ~%68
 function botTick(dt){
   const p=court; if(p.state!=='ready' || !p.holding) return;
   const r=curMatch.r||2.5;
-  if(botWait===null){ botWait=Math.max(.6, rnd(6.6-1.15*r, 8.4-1.25*r)); botSet=false; }
+  const pl=curMatch.plan;
+  if(botWait===null){ botWait = pl ? rnd(pl.wait[0], pl.wait[1]) : Math.max(.6, rnd(6.6-1.15*r, 8.4-1.25*r)); botSet=false; }
   botWait-=dt;
   if(!botSet && botWait<.45){ p.fig.go('set',.3); botSet=true; }
-  if(botWait<=0){ p.pending=botAimVelocity(r, curMatch.def||0); p.fig.go('release',.09); p.state='releasing'; p.timer=0; botWait=null; }
+  if(botWait<=0){ p.pending = pl ? botPlanAim(pl.hit[pl.i++] !== false, curMatch.def||0) : botAimVelocity(r, curMatch.def||0); p.fig.go('release',.09); p.state='releasing'; p.timer=0; botWait=null; }
 }
 document.getElementById('botFast').addEventListener('click', ()=>{ botSpeed = botSpeed===1 ? 3 : 1; store('botSpeed', botSpeed); fastLabel(); });
 fastLabel();
