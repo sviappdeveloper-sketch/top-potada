@@ -6,8 +6,8 @@ android {
     applicationId 'com.toppotada.oyun'
     minSdk 24
     targetSdk 36
-    versionCode 20
-    versionName '1.0.18'
+    versionCode 21
+    versionName '1.0.19'
   }
   signingConfigs {
     // Sabit test anahtarı: deneme APK'ları birbirinin üzerine kurulabilsin ve Google girişi çalışsın.
