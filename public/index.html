@@ -281,7 +281,7 @@
 <button id="botFast" class="fastbtn" aria-label="İzleme hızı"></button>
 <div id="hud" class="off">
   <button id="hudBp" aria-label="Basketpuan">🏀 <b id="hudBpN">0</b><small>BP</small></button>
-  <button id="hudLives" aria-label="Can">❤ <b id="hudLivesN">3</b><small id="hudLivesT"></small></button>
+  <button id="hudLives" aria-label="Can">❤ <b id="hudLivesN">5</b><small id="hudLivesT"></small></button>
   <button id="gameMenuBtn" aria-label="Oyun menüsü">☰</button>
 </div>
 <div class="ov hidden" id="ovExtra" style="z-index:11"><div class="card">
@@ -448,7 +448,7 @@
 
     <h3>Can</h3>
     <ul>
-      <li>Oyuna <b>3 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>3 cana kadar</b> (uygulama kapalıyken de); 3'ün üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
+      <li>Oyuna <b>5 canla</b> başlarsın; en fazla <b>10 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>5 cana kadar</b> (uygulama kapalıyken de); 5'in üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
       <li><b>Puan kazanılan her yerde kaybetmek 1 can götürür:</b> online maçlar (hızlı maç, oda, lig, turnuva), bilgisayara karşı lig ve turnuva maçları, Macera’da yıldızsız biten level. Bu maçları ya da leveli yarıda bırakmak da 1 can götürür. Beraberlik can götürmez. Can yoksa Macera, online hızlı maç, oda, online lig ve bilgisayar ligi/turnuvası maçları açılmaz (online turnuvadaki maçların oynanabilir). Bilgisayarla hızlı maç ve serbest antrenman puan da can da götürmez.</li>
       <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>50 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +1 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
@@ -2806,9 +2806,10 @@ let nextDiff=null;
 const CPU_TIERS = [ { n:'Bronz', c:'#c58b5a', r:[1,2.4], def:0 }, { n:'Gümüş', c:'#8f99a4', r:[2,3.6], def:1 }, { n:'Altın', c:'#d9a920', r:[3,4.8], def:2 }, { n:'Elmas', c:'#3fa7d6', r:[4,5], def:2, far:40, defs:[{x:268,move:26,sp:1.3},{x:462,jumpH:128,react:.9}] } ];   // Elmas: pota daha geride; ön savunmacı ileri geri gider, arkadaki potanın dibinde pota hizasına kadar zıplar
 const CPU_TOP = CPU_TIERS.length-1;   // en üst kademe (Elmas)
 const rnd = (a,b) => a + Math.random()*(b-a);
-// Altın ve Elmas lig rakipleri: kaç basket atacağı baştan belli, hızlı atar.
+// Gümüş, Altın ve Elmas lig rakipleri: kaç basket atacağı baştan belli, hızlı atar.
 // Elmas: skor çok nadiren 300'ün altına düşer; Altın: çok nadiren 250'nin altına.
 const BOT_PLAN = {
+  1: { hits:[[5,.30],[4,.45],[3,.25]], wait:[.85,2.15] },   // Gümüş (19 Kasım): %20 zor — eskiden ort. ~3.3 basket, şimdi ~4.05 basket, aynı hız
   2: { hits:[[5,.32],[4,.64],[3,.04]], wait:[2.2,3.4] },   // Altın: basket başı 70-80 puan (4 basket 280-320)
   3: { hits:[[5,.50],[4,.46],[3,.04]], wait:[1.2,2.2] }    // Elmas: basket başı 80-90 puan (4 basket 320-360)
 };
@@ -3493,11 +3494,13 @@ function statRoomOnce(rows){
 // =====================================================================
 // lig galibiyeti: en alt lig (Bronz) 5, orta (Gümüş) 10, diğerleri (Altın, Elmas) 15 BP
 const lgWinBp = tier => tier<=0 ? 5 : tier===1 ? 10 : 15;
-const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=3, LIFE_MAX=10, LIFE_AD=1, LIFE_CHAMP=2;
+const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=5, LIFE_MAX=10, LIFE_AD=1, LIFE_CHAMP=2;
 function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
 let ECO = ecoLoad() || { bp:0, spent:0, lives:LIFE_START, given:{}, init:false };
 ECO.given = ECO.given && typeof ECO.given==='object' ? ECO.given : {};
 ECO.lives = Math.min(LIFE_MAX, num(ECO.lives));
+// can sayısı 3'ten 5'e çıktı: mevcut oyunculara bir kez 5'e kadar tamamla
+if(!ECO.l5){ if(num(ECO.lives)<LIFE_START) ECO.lives=LIFE_START; ECO.l5=1; try{ store('eco', JSON.stringify(ECO)); }catch(e){} }
 function ecoSave(){ store('eco', JSON.stringify(ECO)); ecoCloudSoon(); }
 function awardBp(){ if(!UID || cloudState!=='ready' || !isMember()) return 0; const r=standings().find(x=>x.uid===UID); return r ? num(r.award) : 0; }
 const totalBp = () => num(ECO.bp) + awardBp();                    // genel puan (kazanılan)
@@ -3524,9 +3527,9 @@ function onlineResult(res, key){
 const earnResult = onlineResult;   // eski adla çağrılan yerler için
 function loseLife(why){ const had=num(ECO.lives); if(had>=LIFE_REGEN_MAX) ECO.regenAt=Date.now(); ECO.lives=Math.max(0, had-1); ecoSave(); hudSync(); if(had){ hudPop('hudLives'); if(why) toastAll(`-1 can · ${why}`); } }
 const hasLife = () => num(ECO.lives)>0;
-// her 20 dakikada 1 can kendiliğinden dolar, ama yalnızca 3 cana kadar (daha fazlası BP, reklam ve
+// her 20 dakikada 1 can kendiliğinden dolar, ama yalnızca 5 cana kadar (daha fazlası BP, reklam ve
 // şampiyonlukla; toplam en fazla 10). Uygulama kapalıyken geçen süre de sayılır.
-const LIFE_REGEN_MS = 20*60*1000, LIFE_REGEN_MAX = 3;
+const LIFE_REGEN_MS = 20*60*1000, LIFE_REGEN_MAX = 5;
 function regenTick(){
   const now=Date.now();
   if(num(ECO.lives)>=LIFE_REGEN_MAX || !num(ECO.regenAt) || num(ECO.regenAt)>now){ ECO.regenAt=now; store('eco', JSON.stringify(ECO)); return; }
