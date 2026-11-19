@@ -2809,7 +2809,7 @@ const rnd = (a,b) => a + Math.random()*(b-a);
 // Gümüş, Altın ve Elmas lig rakipleri: kaç basket atacağı baştan belli, hızlı atar.
 // Elmas: skor çok nadiren 300'ün altına düşer; Altın: çok nadiren 250'nin altına.
 const BOT_PLAN = {
-  1: { hits:[[5,.30],[4,.45],[3,.25]], wait:[.85,2.15] },   // Gümüş (19 Kasım): %20 zor — eskiden ort. ~3.3 basket, şimdi ~4.05 basket, aynı hız
+  1: { hits:[[4,.40],[3,.60]], wait:[3.6,4.8] },   // Gümüş (20 Kasım): skor çoğunlukla 180-260, ortalama ~220 (3-4 basket, basket başı 60-70)
   2: { hits:[[5,.32],[4,.64],[3,.04]], wait:[2.2,3.4] },   // Altın: basket başı 70-80 puan (4 basket 280-320)
   3: { hits:[[5,.50],[4,.46],[3,.04]], wait:[1.2,2.2] }    // Elmas: basket başı 80-90 puan (4 basket 320-360)
 };
