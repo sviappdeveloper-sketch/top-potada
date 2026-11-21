@@ -376,11 +376,11 @@
       <li><b>Tek oyuncu → Online oyna:</b> <b>Hızlı maç</b>ta rastgele gerçek bir oyuncunun son skoruna karşı oynarsın; online oda ve turnuvalara da buradan geçebilirsin.</li>
       <li><b>Tek oyuncu → Macera:</b> 7 bölüm (Mahalle, Şehir Potaları, Sahil Kupası, Dağ Köyü, Gece Ligi, Kış Turnuvası, Efsaneler Ligi), 100 level, en çok puan usulü. Çoğu levelde 5 top var (bazılarında 3, 7 ya da 9) ve her levelin kendi macerası var: rüzgâr, fırtına, gece, sis, kar, yağmur, ağır ya da hafif top, uzak, kayan, her topta yer değiştiren potalar, dar ya da daralıp genişleyen çember, altın son top, zıplayan ve kayan savunmacılar, <b>çift pota</b> (iki uçta pota, sen ortadasın; sayıdan sonra öbür potaya atmalısın, aynı potaya üst üste sayı geçmez); her bölümün sonunda da bir patron. Zorluk level level artar. Yıldızsız biten ya da yarıda bırakılan level 1 can götürür; can yoksa Macera açılmaz. Puanına göre 1–3 yıldız kazanırsın; 1 yıldız sonraki leveli açar. Bitirdiğin bir leveli sonuç ekranından ya da level haritasından istediğin kadar <b>tekrar oynayabilirsin</b>; oyun içi menüden de leveli baştan başlatabilirsin (1 can gider). Toplam puanın, her levelin en iyi skorlarının toplamıdır ve bu cihazda saklanır.</li>
       <li><b>Tek oyuncu → Serbest antrenman:</b> klasik 3 tur, her tur 5 top. Zorluğu (Kolay, Orta, Zor, Efsane: yardım çizgisinin uzunluğu) ve savunmacı olup olmayacağını sen seçersin. Can gitmez, basketpuan vermez.</li>
-      <li><b>Online oda:</b> Biri <b>Oda kur</b>’a basar ve 4 harfli bir kod alır. Diğerleri kendi telefonlarında <b>Çoklu oyuncu → Katıl</b>’a bu kodu yazar. En fazla 4 kişi. Kurucu <b>Başlat</b>’a basınca 3’ten geri sayılır ve <b>herkes aynı anda</b> kendi sahasında oynar. Üstteki tablo herkesin puanını ve hangi turda olduğunu canlı gösterir. Herkes bitirince kazanan ilan edilir.</li>
+      <li><b>Online oda:</b> Biri <b>Oda kur</b>’a basar ve 4 harfli bir kod alır. Diğerleri kendi telefonlarında <b>Çoklu oyuncu → Katıl</b>’a bu kodu yazar. En fazla 4 kişi. Kurucu <b>Başlat</b>’a basınca 3’ten geri sayılır ve oyun <b>sırayla</b> oynanır: sıra kimdeyse o 5 atışını yapar, diğerleri onu canlı izleyip bekler. Sıra kurucudan başlar, odaya giriş sırasıyla devam eder; herkes bir kez attıktan sonra sonraki tura geçilir. 3 tur sonunda <b>en çok puanı toplayan kazanır</b>; sonuç herkesin ekranında aynıdır. Oyun ortasında odadan çıkan sıradan atlanır.</li>
       <li><b>Aynı telefonda:</b> 2–4 kişi telefonu elden ele verir; her oyuncu 5 atışını bitirince sıra sonrakine geçer.</li>
       <li><b>Hazırım ekranı:</b> online oyunlarda ve aynı telefonda sıra gelince çıkan “Hazırım, başlat” ekranına dokunulmasa da <b>10 saniye</b> sonra atışlar kendiliğinden başlar.</li>
       <li><b>Lig işaretleri:</b> Altın ligdeki herkesin adının yanında altın 🪙, Elmas ligdekilerin yanında elmas 💎 görünür (online lig; bilgisayar liginde Altın'daysan senin adının yanında da 🪙).</li>
-      <li><b>Rakibi izle:</b> Rakipli bütün maçlarda rakibin atışlarını sahada izlersin. Online turnuva, lig ve hızlı maçta rakibin senden önce oynadıysa maçından önce onun oyunu yeniden oynatılır; online odada sonuç ekranındaki <b>İzle</b> ile rakiplerin son turunu izleyebilirsin. Rakibin <b>nişan çizgisi gizlidir</b>; yalnızca topun gidişini görürsün. Aynı maçta iki rakip aynı savunma hareketlerine karşı oynar.</li>
+      <li><b>Rakibi izle:</b> Rakipli bütün maçlarda rakibin atışlarını sahada izlersin. Online turnuva, lig ve hızlı maçta rakibin senden önce oynadıysa maçından önce onun oyunu yeniden oynatılır; online odada sırası gelen oyuncuyu canlı izlersin, oyun bitince sonuç ekranındaki <b>İzle</b> ile rakiplerin son turunu yeniden izleyebilirsin. Rakibin <b>nişan çizgisi gizlidir</b>; yalnızca topun gidişini görürsün. Aynı maçta iki rakip aynı savunma hareketlerine karşı oynar.</li>
       <li class="note">Online oda, turnuvalar, lig ve puan durumu için internet bağlantısı gerekir. Oyun ortasında odadan çıkan oyuncu tablodan düşer.</li>
     </ul>
 
@@ -1028,7 +1028,7 @@ class Court {
     if(ptsOverride==null && game==='play' && MODE==='level' && curLevel && curLevel.gold && this.left===1 && !this.extra){ b.pts*=3; b.gold=true; b.color='#e9b949';
       this.floaters.push({ x:PX+60, y:-215, t:0, txt:'Altın top ×3' }); }
     if(ptsOverride!=null) b.pts=ptsOverride;
-    if(game==='play') SHOTLOG.push([this.simTick||0, vx, vy, b.pts]);
+    if(game==='play'){ SHOTLOG.push([this.simTick||0, vx, vy, b.pts]); if(MODE==='online' && LIVE){ LIVE.sh=packShots(shotPack()); pushPresence(); } }
     if(game==='play' && MODE==='online' && rm){ myShotN++; rm.presence({ ls:{ n:myShotN, vx:Math.round(vx), vy:Math.round(vy), rd:round, pts:b.pts } }).catch(()=>{}); }
     this.balls.push(b); this.holding=false; sfx.throw(); this.lastLaunch=performance.now();
     timeLeft=BALL_TIME; lastTick=99;
@@ -1259,15 +1259,16 @@ function prepareTurn(){
     document.getElementById('tInfo').textContent = `${SHOTS} atış · her top ${BALL_TIME} saniye · ` + (DEF_N ? `${DEF_N} savunmacı` : 'savunmacı yok') + ' · Başlayınca maç yarıda bırakılamaz';
     document.getElementById('ovTurn').classList.remove('hidden'); sfx.turn(); return;
   }
+  if(MODE==='online' && !(onlineTurn()||{}).me){ game='onwait'; onlineStep(); return; }
   document.getElementById('tRound').textContent = MODE==='local' ? `${round+1}. tur · ${turnIdx+1}/${players.length}. oyuncu` : MODE==='online' ? `${round+1}. tur · online oda ${myCode}` : `${round+1}. tur`;
   document.getElementById('tBall').style.background = p.color;
-  document.getElementById('tSub').textContent = MODE==='local' ? 'Sıra sende' : 'Hazır olduğunda';
+  document.getElementById('tSub').textContent = MODE==='local'||MODE==='online' ? 'Sıra sende' : 'Hazır olduğunda';
   document.getElementById('tName').textContent = MODE==='local' ? nameOf(p.i) : MODE==='online' ? onNick : `${round+1}. tur`;
   pushPresence('playing');
   const extra = [];
   if(round>0 && PREVIEW[round]<PREVIEW[round-1]) extra.push('yardım çizgisi kısaldı');
   if(round>0 && DIST[round][0]>DIST[round-1][0]) extra.push('pota uzaklaştı');
-  document.getElementById('tInfo').textContent = `${SHOTS} atış · her top ${BALL_TIME} saniye` + (extra.length && turnIdx===0 ? ` · ${extra.join(', ')}` : '');
+  document.getElementById('tInfo').textContent = `${SHOTS} atış · her top ${BALL_TIME} saniye` + (extra.length && turnIdx===0 ? ` · ${extra.join(', ')}` : '') + (MODE==='online' ? ' · diğerleri seni canlı izliyor' : '');
   document.getElementById('ovTurn').classList.remove('hidden');
   sfx.turn();
 }
@@ -1297,6 +1298,7 @@ function turnGo(){
   if(MODE==='match' && curMatch && curMatch.replay && !curMatch.replayDone){ runMatchReplay(); return; }
   game='play'; court.idle=0; court.syncStart(playSeed());
   if(MODE==='match') matchStarted();
+  if(MODE==='online'){ LIVE={ r:round, seed:SEED, sh:'' }; pushPresence('playing'); }
 }
 
 function endTurn(){
@@ -1308,7 +1310,7 @@ function endTurn(){
   }
   turnIdx++;
   if(turnIdx<players.length){ prepareTurn(); return; }
-  if(MODE==='online') LAST_RS = { r:round, seed:SEED, shots:shotPack(), sc:players[0] ? players[0].roundPts : 0 };
+  if(MODE==='online') LAST_RS = { r:round, seed:SEED, shots:packShots(shotPack()), sc:players[0] ? players[0].roundPts : 0 };
   round++;
   pushPresence(round>=ROUNDS ? 'done' : 'between');
   showRoundResults();
@@ -1325,7 +1327,7 @@ function showRoundResults(){
   if(last) ADS.games++;
   if(MODE==='level' && curLevel){ levelResults(); el('ovRound').classList.remove('hidden'); return; }
   if(MODE==='match' && curMatch && curMatch.cpu){ cpuMatchDone(); return; }
-  if(MODE==='online'){ renderOnlineResults(); el('ovRound').classList.remove('hidden'); return; }
+  if(MODE==='online'){ game='onwait'; onlineStep(); return; }
   if(MODE==='match' && curMatch && curMatch.league){
     const me=players[0];
     renderLeagueResult(); el('ovRound').classList.remove('hidden');
@@ -1491,7 +1493,12 @@ let roomApi=null, rm=null, myCode='', amHost=false, myColorIdx=0, onlineStarted=
 // lastG: oynanan son oyunun numarası (rövanşta aynı odada yeni oyun). roster: oyuna başlayan herkesin son bilinen durumu
 // (odadan düşen oyuncu sıralamadan silinmesin). peerChg: oyuncunun durumu en son ne zaman değişti.
 let lastG=0, roster={}, peerChg={};
-const STALE_MS = 45000;   // ben bitirdikten sonra bu kadar süre hiç ilerlemeyen oyuncu beklenmez
+// Sıralı oyun: onOrd oyuna başlayanların sırası (kurucu belirler), onFinal bitişte dondurulan sonuç tablosu,
+// LIVE sırası gelen oyuncunun o anki atışları (izleyenler sahada birebir yeniden oynatır).
+let onOrd=[], onReady=false, onFinal=null, LIVE=null;
+// Firestore iç içe dizi saklayamıyor: atışlar "tick,vx,vy,pts;..." metni olarak gider
+const packShots = a => (Array.isArray(a)?a:[]).map(x=>x.map(v=>Math.round(+v*100)/100).join(',')).join(';');
+const unpackShots = v => Array.isArray(v) ? v : typeof v==='string' && v ? v.split(';').map(t=>t.split(',').map(Number)).filter(x=>x.length>=3 && x.every(isFinite)).slice(0,12) : [];
 const CODE_CHARS='ABCDEFGHJKLMNPRSTUVYZ';
 const esc = t => String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num = v => (typeof v==='number' && isFinite(v)) ? v : 0;
@@ -1520,34 +1527,79 @@ function hostPeer(){ return orderedPeers().find(p=>p.presence.role==='host'); }
 function pushPresence(st){
   if(MODE!=='online' || !rm) return;
   const p=players[0]||{score:0,baskets:0,roundPts:0};
-  const patch={ sc:p.score, bk:p.baskets, rp:p.roundPts, rd:Math.min(round+1,ROUNDS), ci:myColorIdx, rs:LAST_RS };
+  const patch={ sc:p.score, bk:p.baskets, rp:p.roundPts, rd:Math.min(round+1,ROUNDS), nd:round, ci:myColorIdx, rs:LAST_RS, lv:LIVE };
   if(st) patch.st=st;
   rm.presence(patch).catch(()=>{});
 }
-// canlı tablo satırları (oyuna başlamış herkes)
+// sıra: tur tur, kurucunun belirlediği sırayla; odadan ayrılan atlanır
+function onlineTurn(){
+  const by={}; onlinePeers().forEach(p=>{ by[p.peer]=p; });
+  for(let r=0;r<ROUNDS;r++) for(const id of onOrd){
+    const p=by[id]; if(!p) continue;
+    const nd = p.sameTab ? round : num(p.presence.nd);
+    if(nd<=r) return { r, id, p, me:!!p.sameTab };
+  }
+  return null;
+}
+// canlı tablo satırları (oyundaki herkes; ayrılanlar son skorlarıyla altta)
 function onlineRows(sortIt){
-  const now=Date.now(), iDone=round>=ROUNDS, live=new Set(orderedPeers().map(p=>p.peer));
-  const rows = orderedPeers().filter(p=>p.sameTab || (p.presence.st && p.presence.st!=='lobby')).map(p=>{
-    const pr=p.presence, me=p.sameTab;
-    const loc = me ? players[0] : null;
-    const st = me ? (round>=ROUNDS ? 'done' : (game==='between'?'between':'playing')) : String(pr.st||'');
-    const rd = me ? Math.min(round+1,ROUNDS) : num(pr.rd);
-    const r = { id:p.peer, me, nm:String(pr.nm).slice(0,14)+tierTxt(num(pr.tb)), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))],
-      score: me&&loc ? loc.score : num(pr.sc), baskets: me&&loc ? loc.baskets : num(pr.bk), roundPts: me&&loc ? loc.roundPts : num(pr.rp),
-      rs: !me && pr.rs && Array.isArray(pr.rs.shots) && pr.rs.shots.length ? pr.rs : null,
-      st, status: st==='done' ? 'bitirdi' : st==='between' ? `${Math.max(1,rd-1)}. tur bitti` : `${rd}. tur` };
-    // ilerleme takibi: skor/tur/durum değişmedikçe saat ilerlemez
-    const sig=[st,rd,r.score,r.baskets].join('|');
-    if(!peerChg[p.peer] || peerChg[p.peer].sig!==sig) peerChg[p.peer]={ sig, at:now };
-    if(!me && iDone && st!=='done' && now-peerChg[p.peer].at > STALE_MS){ r.st='done'; r.status='yanıt vermiyor'; }
-    if(onlineStarted) roster[p.peer]={ ...r, me:false, rs:null };
+  const t = onReady && !onFinal ? onlineTurn() : null;
+  const R = game==='replay' && REPLAY && REPLAY.live!==undefined && !REPLAY.ended ? REPLAY : null;
+  const src = onOrd.length ? orderedPeers().filter(p=>onOrd.includes(p.peer)) : orderedPeers().filter(p=>p.sameTab || (p.presence.st && p.presence.st!=='lobby'));
+  const rows = src.map(p=>{
+    const pr=p.presence, me=p.sameTab, loc = me ? players[0] : null;
+    const nd = me ? round : num(pr.nd), cur = !!t && t.id===p.peer;
+    let score = me&&loc ? loc.score : num(pr.sc), roundPts = me&&loc ? loc.roundPts : num(pr.rp);
+    if(R && R.pid===p.peer && !me){ score = Math.max(0, score-num(pr.rp)) + R.score; roundPts = R.score; }   // izlenen atışlarla aynı anda artsın
+    const st = nd>=ROUNDS ? 'done' : cur ? 'playing' : 'wait';
+    const rs = !me && pr.rs && unpackShots(pr.rs.shots).length ? { ...pr.rs, shots:unpackShots(pr.rs.shots) } : null;
+    const r = { me, id:p.peer, cur, nm:String(pr.nm).slice(0,14)+tierTxt(num(pr.tb)), color:PLAYER_BALL[Math.max(0,Math.min(3, me ? myColorIdx : num(pr.ci)))],
+      score, baskets: me&&loc ? loc.baskets : num(pr.bk), roundPts, rs,
+      st, status: st==='done' ? 'bitirdi' : cur ? 'oynuyor' : `${Math.min(nd,ROUNDS)}/${ROUNDS} tur` };
+    if(onReady) roster[p.peer]={ ...r, me:false, cur:false, rs:null };
     return r;
   });
-  // oyun sırasında odadan düşen/çıkan oyuncular son skorlarıyla listede kalır, beklenmez
-  // önce "Tekrar oyna" diyen oyuncu son skoruyla kalır ("yeni oyunda"), gerçekten çıkan "odadan ayrıldı" görünür
-  if(onlineStarted) for(const id in roster) if(!rows.some(r=>r.id===id)) rows.push({ ...roster[id], st:'done', status: live.has(id) ? 'tekrar oynamak istiyor' : 'odadan ayrıldı' });
   if(sortIt) rows.sort((a,b)=>b.score-a.score || b.baskets-a.baskets);
+  if(onReady) for(const id of onOrd) if(roster[id] && !rows.some(r=>r.id===id)) rows.push({ ...roster[id], left:true, st:'done', status:'odadan ayrıldı' });
   return rows.slice(0,4);
+}
+// oyunun akışı: sırası geleni bul; sen isen oyna, değilse onu canlı izle ya da bekle
+function liveShots(lv){ return unpackShots(lv && lv.sh); }
+function onlineStep(){
+  if(MODE!=='online' || !onReady || onFinal) return;
+  if(game==='play' || game==='turnwait') return;
+  const t=onlineTurn();
+  if(game==='replay' && REPLAY && REPLAY.live!==undefined){
+    const R=REPLAY, pp=onlinePeers().find(p=>p.peer===R.pid);
+    if(pp && num(pp.presence.nd)<=R.round){     // hâlâ oynuyor: yeni atışları ekle
+      const lv=pp.presence.lv; if(lv && num(lv.r)===R.round){ R.shots=liveShots(lv); R.lastK = R.shots.length ? num(R.shots[R.shots.length-1][0]) : 0; }
+      return;
+    }
+    if(pp){                                      // turunu bitirdi: son atışları al, izleme kendiliğinden biter
+      const lv=pp.presence.lv; if(lv && num(lv.r)===R.round) R.shots=liveShots(lv);
+      R.lastK = R.shots.length ? num(R.shots[R.shots.length-1][0]) : 0;
+      R.live=false; return;
+    }
+    REPLAY=null; game='onwait';                  // oyuncu odadan ayrıldı
+  }
+  if(game==='replay') return;                    // sonuç ekranından açılan izleme
+  if(!t){ finishOnline(); return; }
+  if(t.me){ document.getElementById('ovRound').classList.add('hidden'); turnIdx=0; prepareTurn(); return; }
+  const lv=t.p.presence.lv;
+  if(lv && num(lv.r)===t.r && typeof lv.seed==='string'){
+    document.getElementById('ovRound').classList.add('hidden');
+    const pr=t.p.presence;
+    startReplay({ name:String(pr.nm).slice(0,14), color:PLAYER_BALL[Math.max(0,Math.min(3,num(pr.ci)))], shots:liveShots(lv), seed:lv.seed, def:0, round:t.r,
+      live:true, pid:t.id, onEnd:()=>{ if(MODE!=='online' || !onReady) return; game='onwait'; onlineStep(); } });
+    court.rack = SHOTS-1;
+    return;
+  }
+  game='onwait'; renderOnlineResults(t);
+}
+function finishOnline(){
+  if(onFinal) return;
+  onFinal = onlineRows(true).map(r=>({ ...r, cur:false }));
+  game='between'; renderOnlineResults();
 }
 async function enterRoom(code, host){
   if(needLife()) return;
@@ -1567,14 +1619,16 @@ async function enterRoom(code, host){
     if(others.length>=4) return bail('Oda dolu (en fazla 4 oyuncu).');
   }
   myCode=code; amHost=host; MODE='online'; onlineStarted=false; myT0=Date.now(); joinedAt=Date.now(); lastG=0; roster={}; peerChg={};
-  rm.presence({ nm:onNick, tb:UID ? tierOf(UID) : 0, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0 }).catch(()=>{});
+  onOrd=[]; onReady=false; onFinal=null; LIVE=null; LAST_RS=null;
+  rm.presence({ nm:onNick, tb:UID ? tierOf(UID) : 0, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, lv:null, rs:null }).catch(()=>{});
   unsubPeers = rm.onPeers(onPeersChange, () => { if(MODE==='online'){ document.getElementById('lbWait').textContent='Bağlantı koptu.'; } });
   onMsg(''); document.getElementById('lbCode').textContent=code; renderLobby(); showOnly('ovLobby');
 }
 function leaveOnline(){
   if(unsubPeers){ try{ unsubPeers(); }catch(e){} unsubPeers=null; }
   if(rm){ rm.leave().catch(()=>{}); rm=null; }
-  MODE='solo'; onlineStarted=false; amHost=false;
+  if(REPLAY && REPLAY.live!==undefined) REPLAY=null;
+  MODE='solo'; onlineStarted=false; amHost=false; onReady=false; onFinal=null; onOrd=[]; LIVE=null;
 }
 function renderLobby(){
   const all=orderedPeers().filter(p=>p.sameTab || p.presence.st==='lobby' || p.presence.ph);
@@ -1615,19 +1669,21 @@ function onPeersChange(){
   if(!onlineStarted){
     if(host && host.presence.ph==='go' && !host.sameTab && num(host.presence.g)>lastG) beginOnline();
     else if(!document.getElementById('ovLobby').classList.contains('hidden')) renderLobby();
-  } else if(game==='between'){
-    renderOnlineResults();
-  }
+  } else onlineStep();
 }
 function beginOnline(){
   if(onlineStarted) return; onlineStarted=true; myShotN=0; for(const k in ghostSeen) delete ghostSeen[k];
   const hp=hostPeer(); if(hp && !hp.sameTab) lastG=Math.max(lastG, num(hp.presence.g));
   roster={}; peerChg={};
-  const ps=orderedPeers();
-  myColorIdx=Math.max(0, Math.min(3, ps.findIndex(p=>p.sameTab)));
-  rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1 }).catch(()=>{});
+  const ps=orderedPeers().filter(p=>p.sameTab || p.presence.st==='lobby'), me=ps.find(p=>p.sameTab);
+  const ho = hp && Array.isArray(hp.presence.ord) ? hp.presence.ord.filter(x=>typeof x==='string').slice(0,4) : null;
+  onOrd = ho && ho.length ? ho.slice() : ps.slice(0,4).map(p=>p.peer);
+  if(me && !onOrd.includes(me.peer)) onOrd.push(me.peer);
+  myColorIdx=Math.max(0, Math.min(3, me ? onOrd.indexOf(me.peer) : 0));
+  onFinal=null; LIVE=null; LAST_RS=null;
+  rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1, nd:0, lv:null, rs:null }).catch(()=>{});
   showOnly('ovCount'); let n=3; const el=document.getElementById('cNum'); el.textContent=n; sfx.turn();
-  const iv=setInterval(()=>{ n--; if(n>0){ el.textContent=n; sfx.turn(); } else { clearInterval(iv); showOnly(null); startTournament(); } }, 1000);
+  const iv=setInterval(()=>{ n--; if(n>0){ el.textContent=n; sfx.turn(); } else { clearInterval(iv); showOnly(null); if(MODE!=='online') return; onReady=true; startTournament(); } }, 1000);
 }
 let roomAwarded='';
 function awardRoom(rows){
@@ -1638,37 +1694,42 @@ function awardRoom(rows){
   if(!isMember()) return;
   initCloud().then(()=>{ if(cloudState==='ready') writeMy({ nick:onNick||'Oyuncu', room:{ [key]:{ p:place, bp, n:rows.length, at:Date.now() } } }); });
 }
-function renderOnlineResults(){
+function renderOnlineResults(t){
   const el=id=>document.getElementById(id);
-  const rows=onlineRows(true), last=round>=ROUNDS, me=players[0];
-  const allDone = rows.length>0 && rows.every(r=>r.st==='done');
-  const myRank = rows.findIndex(r=>r.me)+1;
-  const st=r=> r.me ? 'sen' : r.status;
-  el('rRows').innerHTML = rows.map((r,k)=>`<div class="${k===0&&(allDone||!last)?'win':''}"><span><span class="rk">${k+1}.</span><span class="dot" style="background:${r.color}"></span>${esc(r.nm)}<small>${esc(st(r))}</small>${r.rs?` <button class="mini" data-watch="${k}">İzle</button>`:''}</span><b>${fmt(r.score)}<small>${r.baskets} sayı</small></b></div>`).join('');
+  const rows = onFinal || onlineRows(true);
+  el('rRows').innerHTML = rows.map((r,k)=>`<div class="${(onFinal&&k===0&&!r.left&&rows.filter(x=>!x.left).length>1) || r.cur ?'win':''}"${r.left?' style="opacity:.55"':''}><span><span class="rk">${k+1}.</span><span class="dot" style="background:${r.color}"></span>${esc(r.nm)}<small>${esc(r.me && !r.cur ? 'sen' : r.status)}</small>${onFinal&&r.rs?` <button class="mini" data-watch="${k}">İzle</button>`:''}</span><b>${fmt(r.score)}<small>${r.baskets} sayı</small></b></div>`).join('');
   el('rMenu').style.display='block'; el('rMenu').textContent='Odadan çık';
-  if(!last){
-    el('rTitle').textContent=`${round}. tur bitti · Canlı sıralama`;
-    el('rScore').textContent=`+${fmt(me.rounds[round-1]||0)}`;
-    el('rMsg').textContent=`Şu an ${myRank}. sıradasın. Diğerleri kendi turunu oynuyor.`;
-    el('rHint').textContent=nextHint();
-    el('btnNext').style.display=''; el('btnNext').textContent=`${round+1}. tura geç`;
-  } else if(!allDone){
-    el('rTitle').textContent='Sen bitirdin';
-    el('rScore').textContent=fmt(me.score);
-    el('rMsg').textContent='Diğer oyuncular bitiriyor… Sıralama canlı güncelleniyor.';
-    el('rMenu').textContent='Beklemeden odadan çık';
-    el('rHint').textContent=''; el('btnNext').style.display='none';
+  if(!onFinal){
+    t = t || onlineTurn(); if(!t) return;
+    const nm=String(t.p.presence.nm).slice(0,14);
+    let ahead=0, found=false;
+    for(let r=t.r;r<ROUNDS && !found;r++) for(const id of onOrd){
+      const p=onlinePeers().find(x=>x.peer===id); if(!p) continue;
+      const nd=p.sameTab?round:num(p.presence.nd); if(nd>r) continue;
+      if(p.sameTab){ found=true; break; } ahead++;
+    }
+    el('rTitle').textContent=`${t.r+1}. tur · ${ROUNDS} turun`;
+    el('rScore').textContent=`Sıra: ${nm}`;
+    el('rMsg').textContent=`${nm} hazırlanıyor. Atmaya başlayınca canlı izleyeceksin.`;
+    el('rHint').textContent = !found ? 'Sen bütün turlarını bitirdin; diğerlerini bekliyorsun.' : ahead<=1 ? 'Sıradaki sensin.' : `Senden önce ${ahead} oyuncu var.`;
+    el('btnNext').style.display='none';
   } else {
-    const lead=rows[0], tie=rows.length>1 && rows[1].score===lead.score && rows[1].baskets===lead.baskets;
-    awardRoom(rows); statRoomOnce(rows);
-    el('rTitle').textContent='Turnuva bitti';
-    el('rScore').textContent = tie ? 'Berabere' : (lead.me ? 'Kazandın!' : lead.nm);
-    const myPlace=rows.findIndex(r=>r.me)+1, myBp = rows.length>=2 && myPlace<=3 ? BP_ROOM[myPlace-1] : 0;
-    el('rHint').textContent = isMember() ? '' : 'Misafirsin: basketpuan yalnızca üyelere verilir.';
-    el('rMsg').textContent = (tie ? `${fmt(lead.score)} puanda eşitlik.` : `${fmt(lead.score)} puanla ${lead.me?'turnuvanın galibisin':'turnuvanın galibi'}.`) + (myBp ? ` Sen ${myPlace}. oldun: +${myBp} basketpuan.` : '');
+    const ranked=rows.filter(r=>!r.left), lead=ranked[0], tie=ranked.length>1 && ranked[1].score===lead.score && ranked[1].baskets===lead.baskets;
+    awardRoom(ranked); statRoomOnce(ranked);
+    el('rTitle').textContent='Oyun bitti';
+    if(ranked.length<2){
+      el('rScore').textContent=fmt(lead ? lead.score : 0);
+      el('rMsg').textContent='Rakiplerin odadan ayrıldı; kazanan ilan edilmedi.';
+      el('rHint').textContent='';
+    } else {
+      el('rScore').textContent = tie ? 'Berabere' : (lead.me ? 'Kazandın!' : `${lead.nm} kazandı`);
+      const myPlace=ranked.findIndex(r=>r.me)+1, myBp = myPlace>=1 && myPlace<=3 ? BP_ROOM[myPlace-1] : 0;
+      el('rMsg').textContent = (tie ? `${fmt(lead.score)} puanda eşitlik.` : `${fmt(lead.score)} puanla en çok puanı ${lead.me?'sen topladın':lead.nm+' topladı'}.`) + (myPlace ? ` Sen ${myPlace}. oldun` + (myBp ? `: +${myBp} basketpuan.` : '.') : '');
+      el('rHint').textContent = isMember() ? '' : 'Misafirsin: basketpuan yalnızca üyelere verilir.';
+    }
     el('btnNext').style.display=''; el('btnNext').textContent='Tekrar oyna';
-    el('rMenu').textContent='Odadan çık';
   }
+  el('ovRound').classList.remove('hidden');
 }
 document.getElementById('btnCreate').onclick=async()=>{ audio(); if(!readNick()) return; await enterRoom(newCode(), true); };
 document.getElementById('btnJoin').onclick=async()=>{
@@ -1681,7 +1742,7 @@ document.getElementById('joinCode').addEventListener('input', e=>{ e.target.valu
 document.getElementById('btnGo').onclick=()=>{
   if(!amHost || !rm) return;
   lastG++;
-  rm.presence({ ph:'go', g:lastG }).catch(()=>{});
+  rm.presence({ ph:'go', g:lastG, ord: orderedPeers().filter(p=>p.sameTab || p.presence.st==='lobby').slice(0,4).map(p=>p.peer) }).catch(()=>{});
   beginOnline();
 };
 document.getElementById('lbLeave').onclick=()=>{ leaveOnline(); showMulti(); };
@@ -1689,15 +1750,15 @@ document.getElementById('lbLeave').onclick=()=>{ leaveOnline(); showMulti(); };
 function rematch(){
   document.getElementById('ovRound').classList.add('hidden');
   if(!rm){ leaveOnline(); showMulti(); return; }
-  onlineStarted=false; roster={}; peerChg={}; LAST_RS=null;
+  onlineStarted=false; roster={}; peerChg={}; LAST_RS=null; onReady=false; onFinal=null; onOrd=[]; LIVE=null;
   game='menu'; players=[]; round=0; setCourt(0); court.reset(PLAYER_BALL[0]);
-  rm.presence({ ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, rs:null, ls:null }).catch(()=>{});
+  rm.presence({ ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, rs:null, ls:null, lv:null }).catch(()=>{});
   const hp=hostPeer(); if(hp && !hp.sameTab && hp.presence.ph==='go') lastG=Math.max(lastG, num(hp.presence.g));   // yeni oyun ben dönmeden başladıysa ortasına girme
   joinedAt=Date.now(); renderLobby(); showOnly('ovLobby');
 }
 document.getElementById('rMenu').onclick=()=>{ document.getElementById('ovRound').classList.add('hidden'); adGate(menuAfterResults); };
 function menuAfterResults(){ document.getElementById('btnRetry').style.display='none'; if(MODE==='solo' && FREE_GAME){ document.getElementById('ovRound').classList.add('hidden'); goMenu(); showSolo(true); return; } if(MODE==='level'){ document.getElementById('ovRound').classList.add('hidden'); MODE='solo'; clearLevelEnv(); game='menu'; court.reset(PLAYER_BALL[0]); showLevels(); return; } const wasOnline=MODE==='online'; goMenu(); if(wasOnline) showMulti(); }
-setInterval(()=>{ if(MODE==='online' && !onlineStarted && !document.getElementById('ovLobby').classList.contains('hidden')) renderLobby(); }, 1000);
+setInterval(()=>{ if(MODE==='online' && !onlineStarted && !document.getElementById('ovLobby').classList.contains('hidden')) renderLobby(); if(MODE==='online' && onReady) onlineStep(); }, 1000);
 
 // =====================================================================
 // BULUT: kimlik, oyuncu kayıtları, turnuvalar, basketpuan
@@ -3306,7 +3367,7 @@ function replayTick(){
   }
 }
 function replayCheckEnd(){
-  const R=REPLAY; if(!R || R.ended) return;
+  const R=REPLAY; if(!R || R.ended || R.live) return;
   const allOut = R.i>=R.shots.length, still = court.balls.every(b=>b.fade || b.y>=-BR-1.5);
   if(allOut && still && court.simTick > R.lastK + 220){
     R.ended=true;
@@ -3339,11 +3400,11 @@ function watchRoomPlayer(r){
   if(!r || !r.rs) return;
   document.getElementById('ovRound').classList.add('hidden');
   startReplay({ name:r.nm, color:r.color, shots:r.rs.shots, seed:r.rs.seed, def:0, round:num(r.rs.r), onEnd:()=>{
-    game='between'; renderOnlineResults(); document.getElementById('ovRound').classList.remove('hidden'); } });
+    if(MODE!=='online') return; game='between'; renderOnlineResults(); } });
 }
 document.getElementById('rRows').addEventListener('click', e=>{
   const b=e.target.closest('[data-watch]'); if(!b) return;
-  const rows=onlineRows(true), r=rows[+b.dataset.watch]; audio(); watchRoomPlayer(r);
+  const rows=onFinal||onlineRows(true), r=rows[+b.dataset.watch]; audio(); watchRoomPlayer(r);
 });
 
 // =====================================================================
@@ -3827,12 +3888,12 @@ function drawHUD(g){
 
   // skor tablosu
   const multi = MODE!=='solo' && MODE!=='level';
-  const r = game==='replay' && REPLAY ? [ { nm:REPLAY.name, color:REPLAY.color||DEF_JERSEY, score:REPLAY.score, roundPts:0, i:-9 } ] : MODE==='level' && curLevel ? levelRows() : MODE==='online' ? onlineRows(true) : MODE==='local' ? ranked()
+  const r = game==='replay' && REPLAY && !(MODE==='online' && REPLAY.live!==undefined) ? [ { nm:REPLAY.name, color:REPLAY.color||DEF_JERSEY, score:REPLAY.score, roundPts:0, i:-9 } ] : MODE==='level' && curLevel ? levelRows() : MODE==='online' ? onlineRows(true) : MODE==='local' ? ranked()
           : MODE==='match' && curMatch ? [ { ...players[0], me:true, nm:(onNick||'Sen')+(curMatch.cpu && curMatch.kind==='league' && CPU.league ? tierTxt(CPU.league.tier) : badgeTxt(UID)) }, { nm:curMatch.oppName || nickOf(curMatch.opp)+badgeTxt(curMatch.opp), color:curMatch.oc||DEF_JERSEY, score:(curMatch.cpu ? (curMatch.botPlays ? (players[1] ? players[1].score : 0) : num(curMatch.os)) : null), roundPts:0, status:'rakip' } ] : players;
   let y=196;
   g.strokeStyle='rgba(38,34,30,.9)'; g.lineWidth=2; g.beginPath(); g.moveTo(36,y-4); g.lineTo(W-36,y-4); g.stroke();
   r.forEach((p,k)=>{
-    const cur = (MODE==='online'||MODE==='match') ? (botTurn() ? !p.me : !!p.me) : (p.i===turnIdx && (game==='play' || game==='turnwait'));
+    const cur = MODE==='online' ? !!p.cur : MODE==='match' ? (botTurn() ? !p.me : !!p.me) : (p.i===turnIdx && (game==='play' || game==='turnwait'));
     const nPlayers = multi ? 2 : 1;   // yerleşim için
     const rowY = y + 50*k + 34;
     if(cur){ g.fillStyle='rgba(38,34,30,.06)'; g.fillRect(36, y+50*k, W-72, 50); }
