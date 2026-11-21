@@ -154,6 +154,9 @@ adim("Telif", lambda: call("PATCH", f"/appStoreVersions/{SID}", {"data": {"type"
 def surum_metinleri():
     locs = call("GET", f"/appStoreVersions/{SID}/appStoreVersionLocalizations")["data"]
     attrs = {k: META[k] for k in ("description", "keywords", "promotionalText", "supportUrl", "marketingUrl")}
+    # "Bu sürümdeki yenilikler" yalnızca güncellemelerde istenir/kabul edilir
+    if META.get("whatsNew") and VER != "1.0.0":
+        attrs["whatsNew"] = META["whatsNew"]
     l = next((x for x in locs if x["attributes"]["locale"] == LOC), None)
     if l:
         call("PATCH", f"/appStoreVersionLocalizations/{l['id']}", {"data": {"type": "appStoreVersionLocalizations", "id": l["id"], "attributes": attrs}})

@@ -1,0 +1,29 @@
+name: App Store - incelemeye gönder (GitHub)
+# Mağaza metinlerini günceller, son TestFlight derlemesini sürüme bağlar ve Apple incelemesine gönderir.
+# Codemagic dakikası harcamaz. Elle başlatılır ya da bu dosya/metinler değişince çalışır.
+on:
+  push:
+    branches: [hesap-ayri-kayit, 'asc-gonder*']
+    paths: ['.github/workflows/asc-gonder.yml', 'app-store/**', 'tool/asc_islem.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: { group: asc-gonder, cancel-in-progress: false }
+jobs:
+  gonder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID || '9PJ9V3965R' }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || '195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e' }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+      GONDER: evet
+      MIN_BUILD: "111"
+      BEKLE_DK: "100"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hazırla ve incelemeye gönder
+        run: |
+          python3 -m pip install --quiet pyjwt cryptography
+          python3 tool/asc_islem.py | tee /tmp/asc.txt
+          grep -q "İNCELEMEYE GÖNDERİLDİ" /tmp/asc.txt && echo "::notice title=asc::İncelemeye gönderildi" || { echo "::error title=asc::İncelemeye gönderilemedi, günlüğe bak"; exit 1; }
