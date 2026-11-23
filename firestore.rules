@@ -9,11 +9,18 @@ service cloud.firestore {
     function isGoogle() { return signedIn() && request.auth.token.firebase.sign_in_provider in ['google.com', 'apple.com', 'password']; }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
 
+    // Oyuncu kaydında bariz hileleri engelle: takma ad kısa yazı, lig seviyesi 0–3 (Bronz–Elmas).
+    function plOk(d) {
+      return (!('nick' in d) || (d.nick is string && d.nick.size() <= 20))
+        && (!('lgTier' in d) || (d.lgTier is int && d.lgTier >= 0 && d.lgTier <= 3));
+    }
+
     // Oyuncu kaydı: herkes yalnızca kendininkini yazar; "member: true" yalnızca Google girişiyle
     match /pl/{uid} {
       allow read: if signedIn();
       allow create, update: if self(uid)
-        && (!('member' in request.resource.data) || request.resource.data.member != true || isGoogle());
+        && (!('member' in request.resource.data) || request.resource.data.member != true || isGoogle())
+        && plOk(request.resource.data);
       allow delete: if self(uid);
     }
 
@@ -42,7 +49,7 @@ service cloud.firestore {
     // Online odalar: herkes yalnızca kendi katılımcı belgesini yazar
     match /rooms/{room}/peers/{uid} {
       allow read: if signedIn();
-      allow write: if self(uid);
+      allow write: if self(uid) && room.size() <= 40;
     }
 
     match /{document=**} { allow read, write: if false; }
