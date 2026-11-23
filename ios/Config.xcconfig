@@ -3,7 +3,7 @@
 // Not: xcconfig'te "//" yorum başlatır; değerlere adres (https://...) yazma.
 // =====================================================================
 
-MARKETING_VERSION = 1.0.3
+MARKETING_VERSION = 1.0.4
 CURRENT_PROJECT_VERSION = 4
 PRODUCT_BUNDLE_IDENTIFIER = com.toppotada.oyun
 

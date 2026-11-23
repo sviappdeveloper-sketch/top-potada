@@ -128,6 +128,29 @@ INFO_ID = adim("Uygulama bilgileri", uygulama_bilgileri)
 # ---------------------------------------------------------------- 3) sürüm
 cfg = open(os.path.join(ROOT, "ios", "Config.xcconfig"), encoding="utf-8").read()
 VER = re.search(r"^MARKETING_VERSION\s*=\s*(\S+)", cfg, re.M).group(1)
+# İncelemede bekleyen eski bir gönderim varsa geri çekilir (yeni derleme onun yerine gönderilecek)
+def bekleyeni_geri_cek():
+    acik = call("GET", f"/reviewSubmissions?filter[app]={APP_ID}&filter[platform]=IOS"
+                       f"&filter[state]=WAITING_FOR_REVIEW,IN_REVIEW&limit=5")["data"]
+    if not acik:
+        print("   incelemede bekleyen gönderim yok")
+        return
+    for sub in acik:
+        print("   geri çekiliyor:", sub["attributes"].get("state"))
+        call("PATCH", f"/reviewSubmissions/{sub['id']}", {"data": {"type": "reviewSubmissions", "id": sub["id"],
+             "attributes": {"canceled": True}}})
+    for _ in range(30):   # sürüm düzenlenebilir hâle gelene kadar bekle (en fazla ~5 dk)
+        s = call("GET", f"/apps/{APP_ID}/appStoreVersions?filter[platform]=IOS"
+                        f"&filter[appStoreState]=WAITING_FOR_REVIEW,IN_REVIEW&limit=5")["data"]
+        if not s:
+            print("   eski gönderim geri çekildi")
+            return
+        time.sleep(10)
+    print("   uyarı: eski gönderim hâlâ geri çekiliyor")
+
+
+adim("İncelemedeki eski gönderimi geri çek", bekleyeni_geri_cek)
+
 DUZENLENEBILIR = "PREPARE_FOR_SUBMISSION,DEVELOPER_REJECTED,REJECTED,METADATA_REJECTED,INVALID_BINARY"
 surumler = call("GET", f"/apps/{APP_ID}/appStoreVersions?filter[platform]=IOS&filter[appStoreState]={DUZENLENEBILIR}&limit=5")["data"]
 if surumler:
@@ -285,8 +308,12 @@ def derleme():
         builds = call("GET", f"/builds?filter[app]={APP_ID}&filter[preReleaseVersion.version]={VER}"
                              f"&filter[preReleaseVersion.platform]=IOS&sort=-uploadedDate&limit=5")["data"]
         if not builds:
-            eksikler.append(f"{VER} sürümü için yüklenmiş derleme yok: önce 'iOS TestFlight' işlemini çalıştır (main'e gönderim).")
-            return None
+            if time.time() > deadline:
+                eksikler.append(f"{VER} sürümü için yüklenmiş derleme yok: önce 'iOS TestFlight' işlemini çalıştır.")
+                return None
+            print(f"   {VER} sürümünün derlemesi bekleniyor…")
+            time.sleep(60)
+            continue
         son = builds[0]
         a = son["attributes"]
         print(f"   derleme {a['version']}: {a['processingState']}")

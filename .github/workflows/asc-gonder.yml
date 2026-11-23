@@ -3,7 +3,7 @@ name: App Store - incelemeye gönder (GitHub)
 # Codemagic dakikası harcamaz. Elle başlatılır ya da bu dosya/metinler değişince çalışır.
 on:
   push:
-    branches: [hesap-ayri-kayit, 'asc-gonder*']
+    branches: [main, 'asc-gonder*']
     paths: ['.github/workflows/asc-gonder.yml', 'app-store/**', 'tool/asc_islem.py']
   workflow_dispatch:
 permissions:
@@ -18,7 +18,7 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID || '195bfec6-edd0-4a8e-8cd8-6a1d5d51bb6e' }}
       ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
       GONDER: evet
-      MIN_BUILD: "111"
+      MIN_BUILD: "112"
       BEKLE_DK: "100"
     steps:
       - uses: actions/checkout@v4
