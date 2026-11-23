@@ -1628,10 +1628,48 @@ function onlineStep(){
   }
   game='onwait'; renderOnlineResults(t);
 }
+// Bitiş: sonucu tek bir telefon (kurucu) hesaplayıp odaya yazar, herkes AYNI tabloyu gösterir.
+// Böylece iki telefon farklı skor görüp ikisi de "Kazandın" diyemez. Kurucu yoksa sıradaki ilk oyuncu hesaplar.
+let finWaitAt=0;
+function finAuthority(){
+  const h=hostPeer(); if(h) return h;
+  const by={}; onlinePeers().forEach(p=>{ by[p.peer]=p; });
+  for(const id of onOrd) if(by[id]) return by[id];
+  return null;
+}
+const packFin = rows => rows.map(r=>[r.id, Math.round(num(r.score)), Math.round(num(r.baskets)), r.left?1:0].join(':')).join(';');
 function finishOnline(){
   if(onFinal) return;
-  onFinal = onlineRows(true).map(r=>({ ...r, cur:false }));
-  game='between'; renderOnlineResults();
+  const local = onlineRows(true).map(r=>({ ...r, cur:false }));
+  const auth = finAuthority();
+  if(!auth || auth.sameTab){                       // sonucu ben hesaplıyorum ve herkese yayınlıyorum
+    onFinal = local;
+    if(rm) rm.presence({ fin:{ g:lastG, t:packFin(local) } }).catch(()=>{});
+  } else {
+    const f = auth.presence.fin;
+    if(f && num(f.g)===lastG && typeof f.t==='string' && f.t){
+      const byId={}; local.forEach(r=>{ byId[r.id]=r; });
+      const rows=[];
+      for(const part of f.t.split(';')){
+        const [id, sc, bk, lf] = part.split(':'); const base = byId[id] || roster[id]; if(!base) continue;
+        rows.push({ ...base, me: !!(byId[id] && byId[id].me), cur:false, score:+sc||0, baskets:+bk||0, left: lf==='1', st:'done', status: lf==='1' ? 'odadan ayrıldı' : 'bitirdi' });
+      }
+      if(!rows.length) rows.push(...local);
+      onFinal = rows;
+    } else {                                        // kurucunun sonucu bekleniyor (en fazla 10 sn, sonra kendi hesabı)
+      if(!finWaitAt) finWaitAt=Date.now();
+      if(Date.now()-finWaitAt < 10000){
+        game='onwait';
+        const el=id=>document.getElementById(id);
+        el('rTitle').textContent='Oyun bitti'; el('rScore').textContent='Sonuç hesaplanıyor…';
+        el('rMsg').textContent='Herkesin puanı karşılaştırılıyor.'; el('rHint').textContent='';
+        el('btnNext').style.display='none'; el('ovRound').classList.remove('hidden');
+        return;
+      }
+      onFinal = local;
+    }
+  }
+  finWaitAt=0; game='between'; renderOnlineResults();
 }
 async function enterRoom(code, host){
   if(needLife()) return;
@@ -1652,7 +1690,7 @@ async function enterRoom(code, host){
   }
   myCode=code; amHost=host; MODE='online'; onlineStarted=false; myT0=Date.now(); joinedAt=Date.now(); lastG=0; roster={}; peerChg={};
   onOrd=[]; onReady=false; onFinal=null; LIVE=null; LAST_RS=null;
-  rm.presence({ nm:onNick, tb:UID ? tierOf(UID) : 0, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, lv:null, rs:null }).catch(()=>{});
+  rm.presence({ nm:onNick, tb:UID ? tierOf(UID) : 0, t0:myT0, role: host?'host':'p', ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, lv:null, rs:null, fin:null }).catch(()=>{});
   unsubPeers = rm.onPeers(onPeersChange, () => { if(MODE==='online'){ document.getElementById('lbWait').textContent='Bağlantı koptu.'; } });
   onMsg(''); document.getElementById('lbCode').textContent=code; renderLobby(); showOnly('ovLobby');
 }
@@ -1713,7 +1751,7 @@ function beginOnline(){
   if(me && !onOrd.includes(me.peer)) onOrd.push(me.peer);
   myColorIdx=Math.max(0, Math.min(3, me ? onOrd.indexOf(me.peer) : 0));
   onFinal=null; LIVE=null; LAST_RS=null;
-  rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1, nd:0, lv:null, rs:null }).catch(()=>{});
+  finWaitAt=0; rm.presence({ st:'playing', ci:myColorIdx, sc:0, bk:0, rp:0, rd:1, nd:0, lv:null, rs:null, fin:null }).catch(()=>{});
   showOnly('ovCount'); let n=3; const el=document.getElementById('cNum'); el.textContent=n; sfx.turn();
   const iv=setInterval(()=>{ n--; if(n>0){ el.textContent=n; sfx.turn(); } else { clearInterval(iv); showOnly(null); if(MODE!=='online') return; onReady=true; startTournament(); } }, 1000);
 }
@@ -1784,7 +1822,7 @@ function rematch(){
   if(!rm){ leaveOnline(); showMulti(); return; }
   onlineStarted=false; roster={}; peerChg={}; LAST_RS=null; onReady=false; onFinal=null; onOrd=[]; LIVE=null;
   game='menu'; players=[]; round=0; setCourt(0); court.reset(PLAYER_BALL[0]);
-  rm.presence({ ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, rs:null, ls:null, lv:null }).catch(()=>{});
+  finWaitAt=0; rm.presence({ ph:'lobby', st:'lobby', sc:0, bk:0, rp:0, rd:0, nd:0, rs:null, ls:null, lv:null, fin:null }).catch(()=>{});
   const hp=hostPeer(); if(hp && !hp.sameTab && hp.presence.ph==='go') lastG=Math.max(lastG, num(hp.presence.g));   // yeni oyun ben dönmeden başladıysa ortasına girme
   joinedAt=Date.now(); renderLobby(); showOnly('ovLobby');
 }
