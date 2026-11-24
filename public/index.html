@@ -448,7 +448,7 @@
 
     <h3>Can</h3>
     <ul>
-      <li>Oyuna <b>10 canla</b> başlarsın; en fazla <b>20 can</b> toplanabilir. <b>Her 20 dakikada 1 can</b> kendiliğinden dolar, ama yalnızca <b>10 cana kadar</b> (uygulama kapalıyken de); 10'un üstü basketpuan, reklam ve şampiyonlukla toplanır. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
+      <li>Oyuna <b>10 canla</b> başlarsın; en fazla <b>10 can</b> olur, 10'u geçmez. <b>Her 20 dakikada 1 can</b> kendiliğinden 10'a kadar dolar (uygulama kapalıyken de); basketpuan, reklam ve şampiyonluk da 10'a kadar can tamamlar. Sağ üstte ❤ yanında sonraki cana kalan süre görünür.</li>
       <li><b>Puan kazanılan her yerde kaybetmek 1 can götürür:</b> online maçlar (hızlı maç, oda, lig, turnuva), bilgisayara karşı lig ve turnuva maçları, Macera’da yıldızsız biten level. Bu maçları ya da leveli yarıda bırakmak da 1 can götürür. Beraberlik can götürmez. Can yoksa Macera, online hızlı maç, oda, online lig ve bilgisayar ligi/turnuvası maçları açılmaz (online turnuvadaki maçların oynanabilir). Bilgisayarla hızlı maç ve serbest antrenman puan da can da götürmez.</li>
       <li>Basketpuan birikir, <b>kendiliğinden cana dönüşmez</b>. İstersen can ekranında <b>50 basketpuan verip 1 can</b> alırsın. Turnuvada ya da ligde <b>1. olursan +2 can</b>, ödüllü <b>reklam izlersen +2 can</b> kazanırsın. Sağ üstteki 🏀 ya da ❤ simgesine dokunarak can ekranını açabilirsin.</li>
     </ul>
@@ -3619,14 +3619,14 @@ function statRoomOnce(rows){
 // BP: online maçlarda galibiyet +10, beraberlik +3; bilgisayara karşı yalnızca lig ve turnuva
 //     galibiyeti +10; Macera'da en az 1 yıldız +10. BP birikir, kendiliğinden cana dönüşmez:
 //     oyuncu isterse can ekranında 50 BP ile 1 can alır.
-// Can: başlangıçta 10, en fazla 20; süreyle (20 dk'da 1) yalnız 10'a kadar dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
+// Can: başlangıçta 10, en fazla 10; süreyle (20 dk'da 1) yalnız 10'a kadar dolar. Online maç kaybı ve Macera'da yıldızsız/yarıda bırakılan level
 //     1 can götürür. Can yoksa Macera ve yeni online maç (hızlı maç, oda, lig) açılmaz.
-//     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (20'yi geçmez).
+//     Turnuva ya da ligde 1. olmak +2 can, ödüllü reklam +2 can (10'u geçmez).
 // Genel puan = kazanılan toplam BP (maç BP'si + üyelerin turnuva/lig/oda ödül BP'si); harcananlar düşmez.
 // =====================================================================
 // lig galibiyeti: en alt lig (Bronz) 5, orta (Gümüş) 10, diğerleri (Altın, Elmas) 15 BP
 const lgWinBp = tier => tier<=0 ? 5 : tier===1 ? 10 : 15;
-const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=10, LIFE_MAX=20, LIFE_AD=2, LIFE_CHAMP=2;
+const BP_3STAR=5, BP_WIN=10, BP_DRAW=3, BP_PER_LIFE=50, LIFE_START=10, LIFE_MAX=10, LIFE_AD=2, LIFE_CHAMP=2;
 function ecoLoad(){ try{ const o=JSON.parse(store('eco')||'null'); if(o && typeof o==='object') return o; }catch(e){} return null; }
 let ECO = ecoLoad() || { bp:0, spent:0, lives:LIFE_START, given:{}, init:false };
 ECO.given = ECO.given && typeof ECO.given==='object' ? ECO.given : {};
@@ -3662,7 +3662,7 @@ const earnResult = onlineResult;   // eski adla çağrılan yerler için
 function loseLife(why){ const had=num(ECO.lives); if(had>=LIFE_REGEN_MAX) ECO.regenAt=Date.now(); ECO.lives=Math.max(0, had-1); ecoSave(); hudSync(); if(had){ hudPop('hudLives'); if(why) toastAll(`-1 can · ${why}`); } }
 const hasLife = () => num(ECO.lives)>0;
 // her 20 dakikada 1 can kendiliğinden dolar, ama yalnızca 10 cana kadar (daha fazlası BP, reklam ve
-// şampiyonlukla; toplam en fazla 20). Uygulama kapalıyken geçen süre de sayılır.
+// şampiyonlukla; toplam en fazla 10). Uygulama kapalıyken geçen süre de sayılır.
 const LIFE_REGEN_MS = 20*60*1000, LIFE_REGEN_MAX = 10;
 function regenTick(){
   const now=Date.now();
